@@ -34,12 +34,12 @@ clean: Makefile.coq plugin/Makefile.coq plugin/plugin-bootstrap/Makefile.coq
 	cd plugin && make clean
 	cd plugin/plugin-bootstrap && make clean
 
-plugin/Makefile.coq: plugin/_CoqProject
-	cd plugin && make Makefile.coq
+plugin/Makefile.coq: plugin/plugin/_CoqProject
+	cd plugin/plugin && make Makefile.coq
 
-plugin: coq plugin/Makefile.coq extraction_plugin extraction_ocaml_ffi
-	cd plugin && ./clean_extraction.sh
-	+make -C plugin
+plugin: coq plugin/plugin/Makefile.coq extraction_plugin extraction_ocaml_ffi
+	cd plugin/plugin && ./clean_extraction.sh
+	+make -C plugin/plugin
 
 test: 
 	cd plugin/tests && make 

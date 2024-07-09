@@ -61,7 +61,7 @@ doc/equations_intro.tex
 doc/equations_intro.html
 doc/coqdoc.css
 doc/index.html
-plugin/extraction
+plugin/plugin/extraction
 plugin/Makefile.conf
 plugin/g_verified_extraction.ml
 plugin/*.mlf
@@ -96,3 +96,4 @@ coq_verified_extraction_malfunction_ffi/coq_verified_extraction_malfunction_ffi.
 coq_verified_extraction_ocaml_ffi/coq_verified_extraction_ocaml_ffi.opam
 plugin/plugin/Makefile.coq.conf
 plugin/plugin/Makefile.coq
+plugin/plugin/g_verified_extraction_ocaml.ml

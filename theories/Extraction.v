@@ -40,10 +40,10 @@ Extraction Inline FFI.coq_user_error.
 (* Extract Constant PCUICWfEnvImpl.guard_impl => "(fun _ _ _ _ -> true)".
 Extract Constant PCUICTyping.guard_checking => "(fun _ _ _ _ -> true)". *)
 
-Cd "plugin/extraction".
+Cd "plugin/plugin/extraction".
 
 Separate Extraction compile_malfunction 
          (* The following directives ensure separate extraction does not produce name clashes *)
          Coq.Strings.String utils Template.UnivSubst ELiftSubst EGlobalEnv.
 
-Cd "../..".
+Cd "../../..".
