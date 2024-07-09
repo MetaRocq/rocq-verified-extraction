@@ -1,5 +1,5 @@
-From Malfunction.Plugin Require Import Extract.
 From Malfunction Require Import FFI.
+From Malfunction.Plugin Require Import Extract.
 From MetaCoq.Utils Require Import bytestring MCString.
 Local Open Scope bs. (* bytestrings *)
 

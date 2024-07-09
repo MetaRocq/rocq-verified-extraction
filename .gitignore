@@ -61,7 +61,7 @@ doc/equations_intro.tex
 doc/equations_intro.html
 doc/coqdoc.css
 doc/index.html
-plugin/extraction
+plugin/plugin/extraction
 plugin/Makefile.conf
 plugin/g_verified_extraction.ml
 plugin/*.mlf
@@ -92,3 +92,10 @@ plugin/test_lfact_typed_opt
 plugin/test_primint
 plugin/Makefile.coq
 plugin/Makefile.coq.conf
+coq_verified_extraction_malfunction_ffi/coq_verified_extraction_malfunction_ffi.opam
+coq_verified_extraction_ocaml_ffi/coq_verified_extraction_ocaml_ffi.opam
+plugin/plugin/Makefile.coq.conf
+plugin/plugin/Makefile.coq
+plugin/plugin/g_verified_extraction_ocaml.ml
+examples/prim-integers/append1_and_sort
+examples/prim-integers/append1_and_sort.mlf

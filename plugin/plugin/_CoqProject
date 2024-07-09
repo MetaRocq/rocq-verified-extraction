@@ -170,7 +170,6 @@ PrimFloat.v
 PrimArray.v
 CoqMsgFFI.v
 OCamlFFI.v
-Show.v
 Extract.v
 
 # tests/test_extract.v
