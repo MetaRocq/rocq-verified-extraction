@@ -1,4 +1,4 @@
-From Malfunction.Plugin Require Import Loader.
+From VerifiedExtraction.Plugin Require Import Loader.
 From VerifiedExtraction Require Import PrimInt63 PrimFloat PrimArray.
 From Malfunction Require Import Pipeline.
 From Malfunction Require Import CoqMsgFFI.

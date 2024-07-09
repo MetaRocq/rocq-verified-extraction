@@ -6,7 +6,9 @@ We use Malfunction as target for extraction from Coq, and rely on the Malfunctio
 In particular, Coq programs extracted like this can interact with other OCaml programs and with Coq programs extracted using the existing extraction.
 
 The implementation of extraction is fully functional and supports primitive integers and floats, but no cofixpoints yet.
-Verification is work in progress.
+Verification of the more advanced features like Extract Inductive is work in progress.
+The article ["Verified Extraction from Coq to OCaml"](https://dl.acm.org/doi/10.1145/3656379) published and awarded at PLDI'24 
+describes this development.
 
 ## Installation
 
@@ -26,6 +28,31 @@ After `From VerifiedExtraction Require Import Extraction.`
 the commands `Verified Extraction <definition>` and `Verified Extraction <definition> "<file>.mlf"` can be used to run the new extraction process.
 Multiple functions can be extracted at the same time with `MetaCoq Extraction (<d1>,<d2>,...)`.
 To add an `mli` file one can add the output of the (unverified) generator `MetaCoq Run Print mli <definition>.` to a `.mli` file.
+
+`Verified Extraction` supports the following options:
+
+- `-time`: prints compilation and run times
+- `-typed`: uses typed extraction to perform more agressive argument removal
+- `-bypass-qeds`: by default, Qed's proofs are turned into opaque constants during reification in MetaCoq, so 
+   that the reified environment is smaller, this bypasses this behavior and reifies everything (can be uterly slow).
+   Axioms are turned into external function calls, so if some remain in the extracted code they will have to be implemented
+   (in the produced `Axioms.ml` file)
+- `-compile-plugin`: compile the code as a Coq plugin that can be loaded.
+- `-compile-with-coq`: compile the code as a standalone program that however links with Coq's codebase (c.f. the `CoqMsgFFi.v` file)
+- `-compile`: compile the code as a fully standalone program not depending on Coq (can be run from the shell)
+- `-optimize`: Use "malfunction -O2" to compile produced code.
+- `-load`: load the plugin into Coq
+- `-run`: Runs the compiled program or linked plugin and readback it's computed value. Plugins using the `CoqMsgFFI.v` can 
+  output information in Coq's info, notice and error channels while running.
+- `-verbose`: More verbose compiler output
+- `-fmt`: Use malfunctions automatic formatting to produce the .mlf file (for more readable generated code)
+- `-unsafe`: Use unsafe optimizations (can be a comma separated list of):
+    + `cofix-to-lazy`: unverified cofixpoints to lazy/force translation
+    + `reorder-constructors`: honor `Verified Extract Inductive` directives to reorder constructors
+    + `inlining`: honor `Verified Extract Inline` directives.
+    + `unboxing`: perform unboxing of types having a single constructor with a single computational argument 
+      This is run after typed erasure for more opportunities to unbox.
+    + `betared`: perform apparent beta reductions (useful when combined with inlining)
 
 ## Structure
 

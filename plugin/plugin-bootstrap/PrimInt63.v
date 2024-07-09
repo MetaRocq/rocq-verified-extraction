@@ -1,4 +1,4 @@
-From Malfunction.Plugin Require Loader.
+From VerifiedExtraction.Plugin Require Loader.
 
 (** Primitive ints *)
 Verified Extract Constants [

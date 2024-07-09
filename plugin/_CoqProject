@@ -1,6 +1,6 @@
 META.coq-verified-extraction-ocaml
 -I extraction
--R . Malfunction.Plugin
+-R . VerifiedExtraction.Plugin
 -I .
 
 # ls extraction/*.ml{i,}

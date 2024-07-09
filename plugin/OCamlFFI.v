@@ -1,6 +1,6 @@
 Require Import MetaCoq.Utils.bytestring.
-From Malfunction.Plugin Require Import Loader.
-From Malfunction.Plugin Require Import PrimInt63.
+From VerifiedExtraction.Plugin Require Import Loader.
+From VerifiedExtraction.Plugin Require Import PrimInt63.
 
 Axiom (print_int : PrimInt63.int -> unit).
 Axiom (print_float : Coq.Floats.PrimFloat.float -> unit).
