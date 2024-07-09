@@ -92,3 +92,5 @@ plugin/test_lfact_typed_opt
 plugin/test_primint
 plugin/Makefile.coq
 plugin/Makefile.coq.conf
+coq_verified_extraction_malfunction_ffi/coq_verified_extraction_malfunction_ffi.opam
+coq_verified_extraction_ocaml_ffi/coq_verified_extraction_ocaml_ffi.opam
