@@ -97,3 +97,5 @@ coq_verified_extraction_ocaml_ffi/coq_verified_extraction_ocaml_ffi.opam
 plugin/plugin/Makefile.coq.conf
 plugin/plugin/Makefile.coq
 plugin/plugin/g_verified_extraction_ocaml.ml
+examples/prim-integers/append1_and_sort
+examples/prim-integers/append1_and_sort.mlf
