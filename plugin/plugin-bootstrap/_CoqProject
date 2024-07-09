@@ -1,8 +1,8 @@
 -I .
--I ../plugin/
--Q ../theories Malfunction
--Q ../plugin VerifiedExtraction.Plugin
+-I ..
+-Q ../../theories Malfunction
 -Q . VerifiedExtraction
+-Q .. Malfunction.Plugin
 
 META.coq-verified-extraction-malfunction
 

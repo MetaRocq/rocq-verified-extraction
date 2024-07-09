@@ -1,5 +1,5 @@
 Require Import MetaCoq.Utils.bytestring.
-From VerifiedExtraction.Plugin Require Import Loader.
+From Malfunction.Plugin Require Import Loader.
 From Malfunction Require Import FFI.
 
 Verified Extract Constants [ 

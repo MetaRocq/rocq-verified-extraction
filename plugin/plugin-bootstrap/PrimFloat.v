@@ -1,4 +1,4 @@
-From VerifiedExtraction.Plugin Require Loader.
+From Malfunction.Plugin Require Loader.
 From Coq.Floats Require Import PrimFloat.
 
 Verified Extract Constants [ 

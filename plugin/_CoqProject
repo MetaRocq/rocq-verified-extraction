@@ -1,6 +1,6 @@
 META.coq-verified-extraction-ocaml
 -I extraction
--R . VerifiedExtraction.Plugin
+-R . Malfunction.Plugin
 -I .
 
 # ls extraction/*.ml{i,}
@@ -170,7 +170,6 @@ PrimFloat.v
 PrimArray.v
 CoqMsgFFI.v
 OCamlFFI.v
-Show.v
 Extract.v
 
 # tests/test_extract.v
