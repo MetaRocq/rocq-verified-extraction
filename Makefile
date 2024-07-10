@@ -34,7 +34,7 @@ clean: Makefile.coq plugin/Makefile.coq plugin/plugin-bootstrap/Makefile.coq
 	cd plugin && make clean
 	cd plugin/plugin-bootstrap && make clean
 
-plugin/Makefile.coq: plugin/plugin/_CoqProject
+plugin/plugin/Makefile.coq: plugin/plugin/_CoqProject
 	cd plugin/plugin && make Makefile.coq
 
 plugin: coq plugin/plugin/Makefile.coq extraction_plugin extraction_ocaml_ffi

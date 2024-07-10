@@ -35,10 +35,6 @@ jobs:
             startGroup "opam pin"
               opam pin -n -y "https://github.com/stedolan/malfunction.git#master"
             endGroup
-          after_install: |
-            startGroup "make"
-              make -j 2 bootstrap
-            endGroup
           script: |
             startGroup "fix permission issues"
               sudo chown -R coq:coq .
