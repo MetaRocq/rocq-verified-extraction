@@ -32,6 +32,9 @@ jobs:
             startGroup "fix permission issues"
               sudo chown -R coq:coq .
             endGroup
+            startGroup "opam pin"
+              opam pin -n -y "https://github.com/stedolan/malfunction.git#master"
+            endGroup
             startGroup "install dependencies for benchmarks"
               opam install -y core_bench.v0.16.0 
             endGroup
@@ -39,7 +42,7 @@ jobs:
             startGroup "Install dependencies"
               # sudo apt-get update -y -q
               opam pin add -n -y -k path $PACKAGE $WORKDIR
-              opam update -y default
+              # opam update -y
               opam install --confirm-level=unsafe-yes -j 2 $PACKAGE --deps-only
             endGroup
           script: |
