@@ -39,7 +39,7 @@ jobs:
             startGroup "Install dependencies"
               # sudo apt-get update -y -q
               opam pin add -n -y -k path $PACKAGE $WORKDIR
-              # opam update -y
+              opam update -y default
               opam install --confirm-level=unsafe-yes -j 2 $PACKAGE --deps-only
             endGroup
           script: |

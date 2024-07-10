@@ -24,14 +24,14 @@ install-coq: Makefile.coq coq
 	cd lib/coq_verified_extraction_plugin && dune install
 	cd plugin/plugin-bootstrap && make -f Makefile.coq install
 
-clean: Makefile.coq plugin/Makefile.coq plugin/plugin-bootstrap/Makefile.coq
+clean: Makefile.coq plugin/plugin/Makefile.coq plugin/plugin-bootstrap/Makefile.coq
 	+make -f Makefile.coq clean
 	rm -f Makefile.coq
 	rm -f Makefile.coq.conf
 	cd lib/coq_verified_extraction_malfunction_ffi && dune clean
 	cd lib/coq_verified_extraction_ocaml_ffi && dune clean
 	cd lib/coq_verified_extraction_plugin && dune clean
-	cd plugin && make clean
+	cd plugin/plugin && make clean
 	cd plugin/plugin-bootstrap && make clean
 
 plugin/plugin/Makefile.coq: plugin/plugin/_CoqProject
@@ -48,7 +48,7 @@ Makefile.coq: _CoqProject
 	coq_makefile -f _CoqProject -o Makefile.coq
 
 plugin/plugin-bootstrap/Makefile.coq: plugin/plugin-bootstrap/_CoqProject
-	cd plugin && make Makefile.coq
+	cd plugin/plugin-bootstrap && make Makefile.coq
 
 bootstrap: coq plugin extraction_plugin extraction_malfunction_ffi
 	+make -C plugin/plugin-bootstrap -j 1
