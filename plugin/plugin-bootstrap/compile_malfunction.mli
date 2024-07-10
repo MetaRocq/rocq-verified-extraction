@@ -13,8 +13,15 @@ type unsafe_passes = { cofix_to_lazy : bool;
     inlining : bool;
     unboxing : bool;
     betared : bool }
-type erasure_configuration = { enable_unsafe : unsafe_passes ; enable_typed_erasure : bool ; enable_fast_remove_params : bool ; dearging_config : dearging_config ; 
-    inlined_constants : t_ }
+type inductive = { inductive_mind : (modpath * t); inductive_ind : nat }
+type inductive_mapping = inductive * (t * nat list)
+type inductives_mapping = inductive_mapping list
+type erasure_configuration = { enable_unsafe : unsafe_passes ; 
+   enable_typed_erasure : bool ; 
+   enable_fast_remove_params : bool ; 
+   dearging_config : dearging_config ; 
+   inductives_mapping : inductives_mapping; 
+   inlined_constants : t_ }
 type 'id prim_def = Global of 'id * 'id | Primitive of t * nat | Erased 
 type malfunction_pipeline_config = { erasure_config : erasure_configuration ; prims : (t * t  prim_def)  list ;  }
 type program_type = Standalone | Shared_lib of t * t
