@@ -22,6 +22,7 @@ install-coq: Makefile.coq coq
 	cd lib/coq_verified_extraction_malfunction_ffi && dune install
 	cd lib/coq_verified_extraction_ocaml_ffi && dune install
 	cd lib/coq_verified_extraction_plugin && dune install
+	cd plugin/plugin && make -f Makefile.coq install
 	cd plugin/plugin-bootstrap && make -f Makefile.coq install
 
 clean: Makefile.coq plugin/plugin/Makefile.coq plugin/plugin-bootstrap/Makefile.coq

@@ -1,5 +1,5 @@
 -I .
--I ..
+-I ../plugin
 -Q ../../theories Malfunction
 -Q . VerifiedExtraction
 -Q ../plugin Malfunction.Plugin

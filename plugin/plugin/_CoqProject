@@ -1,6 +1,7 @@
 META.coq-verified-extraction-ocaml
 -I extraction
--R . Malfunction.Plugin
+-Q ../../theories Malfunction
+-Q . Malfunction.Plugin
 -I .
 
 # ls extraction/*.ml{i,}
