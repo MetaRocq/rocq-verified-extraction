@@ -1,17 +1,15 @@
 -I .
--I ../plugin
 -Q ../../theories Malfunction
 -Q . VerifiedExtraction
--Q ../plugin Malfunction.Plugin
 
 META.coq-verified-extraction-malfunction
 
 g_verified_extraction_malfunction.mlg
 verified_extraction_malfunction.mlpack
 
+Loader.v
 PrimInt63.v
 PrimFloat.v
 PrimArray.v
 OCamlFFI.v
-extract_extraction.v
 Extraction.v

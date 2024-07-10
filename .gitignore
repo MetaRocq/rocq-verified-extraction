@@ -100,3 +100,5 @@ plugin/plugin/Makefile.coq
 plugin/plugin/g_verified_extraction_ocaml.ml
 examples/prim-integers/append1_and_sort
 examples/prim-integers/append1_and_sort.mlf
+plugin/plugin-bootstrap/Makefile.bootstrap
+plugin/plugin-bootstrap/Makefile.bootstrap.conf

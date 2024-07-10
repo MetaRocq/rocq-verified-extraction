@@ -1,4 +1,4 @@
-From VerifiedExtraction Require Loader PrimInt63.
+From Malfunction.Plugin Require Loader PrimInt63.
 From Coq Require Import PArray.
 
 (* This only interfaces with primitive integers, so no wrapping is needed. *)

@@ -1,5 +1,5 @@
 From Malfunction.Plugin Require Import Loader CoqMsgFFI.
-From VerifiedExtraction Require Import PrimInt63 PrimFloat PrimArray.
+From VerifiedExtractionBootstrap Require Import BootstrapPrimInt63 BootstrapPrimFloat BootstrapPrimArray.
 From Malfunction Require Import Pipeline.
 
 Set Verified Extraction Build Directory "_build".
