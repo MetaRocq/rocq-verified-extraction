@@ -626,6 +626,7 @@ let compile opts names tyinfos fname =
         loaded_modules := CString.Set.add freshname !loaded_modules;
         freshfname
       in
+      let packages = "coq_verified_extraction.plugin" :: packages in
       let compile_cmd = 
         Printf.sprintf "%s cmx %s -shared -package %s %s" malfunction optimize 
           (String.concat "," packages) fname

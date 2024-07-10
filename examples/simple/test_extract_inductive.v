@@ -1,4 +1,3 @@
-(* From Malfunction.Plugin Require Import Extract OCamlFFI. *)
 From VerifiedExtraction Require Import Extraction.
 From MetaCoq.Template Require Import All.
 From Coq Require Import String.

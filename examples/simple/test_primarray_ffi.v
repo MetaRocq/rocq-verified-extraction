@@ -1,9 +1,8 @@
 From Malfunction Require Import utils_array.
-From Malfunction.Plugin Require Import Extract.
 From MetaCoq.Template Require Import All.
 From MetaCoq.Utils Require Import bytestring.
 From MetaCoq.Common Require Import Primitive.
-From Malfunction.Plugin Require Import OCamlFFI.
+From VerifiedExtraction Require Import Extraction OCamlFFI.
 
 Set Verified Extraction Build Directory "_build".
 
@@ -23,5 +22,5 @@ Definition prim_array_get := (print_int (int_of_nat gettest)).
 Definition prim_array_get_set := (print_int (int_of_nat getsettest)).
 
 Verified Extraction -fmt -typed -compile-with-coq val "val.mlf".
-Verified Extraction -fmt -typed -compile-with-coq -run prim_array_get "prim_array_get.mlf".
+Verified Extraction -fmt -typed -unsafe -compile-with-coq -run prim_array_get "prim_array_get.mlf".
 Verified Extraction -fmt -typed -compile-with-coq -run prim_array_get_set "prim_array_get_set.mlf".
