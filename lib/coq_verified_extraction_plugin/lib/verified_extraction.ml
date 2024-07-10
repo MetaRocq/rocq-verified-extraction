@@ -514,7 +514,7 @@ struct
       (match Inductiveops.find_inductive env sigma dom with
       | exception Not_found -> invalid_type ?loc env sigma dom
       | (hd, u), args -> 
-        if Names.GlobRef.equal (Coqlib.lib_ref "core.unit.type") (IndRef hd) then
+        if Environ.QGlobRef.equal env (Coqlib.lib_ref "core.unit.type") (IndRef hd) then
           let tt = Coqlib.lib_ref "core.unit.tt" in
           let sigma, ttc = Evd.fresh_global env sigma tt in
           IsThunk (check_reifyable_value_type ?loc env sigma (EConstr.Vars.subst1 ttc codom))
@@ -696,7 +696,7 @@ let decompose_argument env sigma c =
   let rec aux c =
     let fn, args = EConstr.decompose_app sigma c in
     match EConstr.kind sigma fn with
-    | Construct (cstr, u) when Names.GlobRef.equal (ConstructRef cstr) (Coqlib.lib_ref "core.prod.intro") ->
+    | Construct (cstr, u) when Environ.QGlobRef.equal env (ConstructRef cstr) (Coqlib.lib_ref "core.prod.intro") ->
       (match CArray.to_list args with
        | [ _; _; fst; snd ]
           -> aux fst @ [Reify.check_reifyable_thunk_or_value env sigma snd]
