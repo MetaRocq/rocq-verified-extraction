@@ -49,6 +49,9 @@ jobs:
             startGroup "fix permission issues"
               sudo chown -R coq:coq .
             endGroup
+            startGroup "Build"
+              opam install -y -v -j 2 $PACKAGE
+            endGroup
           after_script: |
             startGroup "List installed packages"
               opam list
