@@ -44,13 +44,17 @@ jobs:
               opam pin add -n -y -k path $PACKAGE $WORKDIR
               # opam update -y
               opam install --confirm-level=unsafe-yes -j 2 $PACKAGE --deps-only
+              opam install malfunction
             endGroup
           script: |
             startGroup "fix permission issues"
               sudo chown -R coq:coq .
             endGroup
             startGroup "Build"
-              opam install -y -v -j 2 $PACKAGE
+              make
+            endGroup
+            startGroup "Install"
+              make install
             endGroup
           after_script: |
             startGroup "List installed packages"
