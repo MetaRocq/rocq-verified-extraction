@@ -12,4 +12,5 @@ PrimInt63.v
 PrimFloat.v
 PrimArray.v
 OCamlFFI.v
+CoqMsgFFI.v
 Extraction.v
