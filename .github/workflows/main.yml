@@ -32,9 +32,6 @@ jobs:
             startGroup "fix permission issues"
               sudo chown -R coq:coq .
             endGroup
-            startGroup "opam pin"
-              opam pin -n -y "https://github.com/stedolan/malfunction.git#master"
-            endGroup
           script: |
             startGroup "fix permission issues"
               sudo chown -R coq:coq .
