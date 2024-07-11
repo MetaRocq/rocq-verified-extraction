@@ -711,7 +711,7 @@ let set_opam_env opts =
     | Some s -> s
     | None -> run_command opts "which opam"
   in
-  let opam_binpath = run_command opts (opam_path ^ " var bin") in
+  let opam_binpath = run_command opts (opam_path ^ " var --safe bin") in
   Unix.putenv "PATH" (opam_binpath ^ ":" ^ path)
 
 let extract_and_run
