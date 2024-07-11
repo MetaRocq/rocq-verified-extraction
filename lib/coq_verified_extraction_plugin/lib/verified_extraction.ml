@@ -86,7 +86,38 @@ let get_opam_path_opt =
   
 (* When building standalone programs still relying on Coq's/MetaCoq's FFIs, use these packages for linking *)
 let statically_linked_pkgs =
-  "coq-core.boot,coq-core.clib,coq-core.config,coq-core,coq-core.engine,coq-core.gramlib,coq-core.interp,coq-core.kernel,coq-core.lib,coq-core.library,coq-core.parsing,coq-core.pretyping,coq-core.printing,coq-core.proofs,coq-core.stm,coq-core.sysinit,coq-core.tactics,coq-core.toplevel,coq-core.vernac,coq-core.vm,coq-metacoq-template-ocaml,coq-metacoq-template-ocaml.plugin,coq_verified_extraction_ocaml_ffi,dynlink,findlib,findlib.dynload,findlib.internal,stdlib-shims,str,threads,threads.posix,unix,zarith"
+  ["coq-core.boot";
+    "coq-core.clib";
+    "coq-core.config";
+    "coq-core";
+    "coq-core.engine";
+    "coq-core.gramlib";
+    "coq-core.interp";
+    "coq-core.kernel";
+    "coq-core.lib";
+    "coq-core.library";
+    "coq-core.parsing";
+    "coq-core.pretyping";
+    "coq-core.printing";
+    "coq-core.proofs";
+    "coq-core.stm";
+    "coq-core.sysinit";
+    "coq-core.tactics";
+    "coq-core.toplevel";
+    "coq-core.vernac";
+    "coq-core.vm";
+    "coq-metacoq-template-ocaml";
+    "coq-metacoq-template-ocaml.plugin";
+    "dynlink";
+    "findlib";
+    "findlib.dynload";
+    "findlib.internal";
+    "stdlib-shims";
+    "str";
+    "threads";
+    "threads.posix";
+    "unix";
+    "zarith"]
 
 let notice opts pp = 
   if opts.verbose then
@@ -482,7 +513,7 @@ struct
       (match Inductiveops.find_inductive env sigma dom with
       | exception Not_found -> invalid_type ?loc env sigma dom
       | (hd, u), args -> 
-        if Names.GlobRef.equal (Coqlib.lib_ref "core.unit.type") (IndRef hd) then
+        if Environ.QGlobRef.equal env (Coqlib.lib_ref "core.unit.type") (IndRef hd) then
           let tt = Coqlib.lib_ref "core.unit.tt" in
           let sigma, ttc = Evd.fresh_global env sigma tt in
           IsThunk (check_reifyable_value_type ?loc env sigma (EConstr.Vars.subst1 ttc codom))
@@ -582,7 +613,6 @@ let compile opts names tyinfos fname =
     let malfunction = run_command opts (opam_command "which malfunction") in
     let ocamlfind = run_command opts (opam_command "which ocamlfind") in
     let packages = get_global_packages () in
-    let packages = String.concat "," packages in
     let optimize = if opts.optimize then "-O2" else "" in
     match t with
     | Plugin -> 
@@ -595,15 +625,18 @@ let compile opts names tyinfos fname =
         loaded_modules := CString.Set.add freshname !loaded_modules;
         freshfname
       in
+      let packages = "coq_verified_extraction.plugin" :: packages in
       let compile_cmd = 
-        Printf.sprintf "%s cmx %s -shared -package %s %s" malfunction optimize packages fname
+        Printf.sprintf "%s cmx %s -shared -package %s %s" malfunction optimize 
+          (String.concat "," packages) fname
       in
       let _out, _err = execute opts compile_cmd in (* we now have fname . cmx *)
       let cmxfile =  Filename.chop_extension fname ^ ".cmx" in
       let cmxsfile = Filename.chop_extension fname ^ ".cmxs" in
       (* Build the shared library *)
       let link_cmd = 
-        Printf.sprintf "%s opt -shared -package %s -o %s %s" ocamlfind packages cmxsfile cmxfile
+        Printf.sprintf "%s opt -shared -package %s -o %s %s" ocamlfind 
+         (String.concat "," packages) cmxsfile cmxfile
       in
       let _out, _err = execute opts link_cmd in
       Some (SharedLib (names, tyinfos, cmxsfile))
@@ -611,8 +644,8 @@ let compile opts names tyinfos fname =
       let output = Filename.chop_extension fname in
       let flags, packages =
         if link_coq then 
-          "-thread -linkpkg", statically_linked_pkgs ^ "," ^ packages
-        else "-thread -linkpkg", packages
+          "-thread -linkpkg", String.concat "," (statically_linked_pkgs @ packages)
+        else "-thread -linkpkg", String.concat "," packages
       in
       let compile_cmd = 
         Printf.sprintf "%s compile %s %s -package %s -o %s %s" 
@@ -663,7 +696,7 @@ let decompose_argument env sigma c =
   let rec aux c =
     let fn, args = EConstr.decompose_app sigma c in
     match EConstr.kind sigma fn with
-    | Construct (cstr, u) when Names.GlobRef.equal (ConstructRef cstr) (Coqlib.lib_ref "core.prod.intro") ->
+    | Construct (cstr, u) when Environ.QGlobRef.equal env (ConstructRef cstr) (Coqlib.lib_ref "core.prod.intro") ->
       (match CArray.to_list args with
        | [ _; _; fst; snd ]
           -> aux fst @ [Reify.check_reifyable_thunk_or_value env sigma snd]

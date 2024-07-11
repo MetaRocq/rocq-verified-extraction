@@ -1,3 +1,5 @@
+PLUGINPATH = ../../lib/coq_verified_extraction_plugin/_build/install/default/lib:../../lib/coq_verified_extraction_ocaml_ffi/_build/install/default/lib
+
 all: plugin
 
 Makefile.coq: _CoqProject
@@ -5,7 +7,7 @@ Makefile.coq: _CoqProject
 
 plugin: Makefile.coq
 	mkdir -p -m 0755 _build
-	$(MAKE) -f Makefile.coq
+	OCAMLPATH=$(PLUGINPATH) $(MAKE) -f Makefile.coq
 
 install: plugin
 	$(MAKE) -f Makefile.coq install

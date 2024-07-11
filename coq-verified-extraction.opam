@@ -18,7 +18,7 @@ depends: [
   "coq" { >= "8.19" & < "8.20~" }
   "coq-ceres" {= "0.4.1"}
   "coq-metacoq-erasure-plugin"
-  "malfunction" {= "0.5" }
+  # "malfunction" {= "0.6" }
 ]
 
 synopsis: "Verified extraction from Coq to OCaml"

@@ -1,7 +1,7 @@
-From Malfunction.Plugin Require Import Extract.
+From VerifiedExtraction Require Import Extraction.
 From MetaCoq.Template Require Import All.
 From MetaCoq.Utils Require Import bytestring.
-From Malfunction.Plugin Require Import OCamlFFI.
+From VerifiedExtraction Require Import OCamlFFI.
 
 Set Verified Extraction Build Directory "_build".
 

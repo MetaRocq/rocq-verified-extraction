@@ -84,7 +84,7 @@ From MetaCoq.Utils Require Import bytestring.
 
 Definition test := append1_and_sort [1%uint63] 1.
 Eval compute in test.
-From Malfunction.Plugin Require Import Show.
+From MetaCoq Require Import Show.
 Definition append1_and_sort_test := print_string (show test).
 
 MetaCoq Run Print mli append1_and_sort_test.

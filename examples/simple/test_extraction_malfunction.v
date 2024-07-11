@@ -1,3 +1,4 @@
+From MetaCoq.Utils Require Import Show.
 From MetaCoq.Template Require Import Loader.
 From MetaCoq.ErasurePlugin Require Import Loader.
 From VerifiedExtraction Require Import Extraction OCamlFFI.
@@ -15,6 +16,9 @@ Verified Extraction -verbose Uint63.max_int.
 
 Definition max_to_Z := print_string (string_of_Z (Uint63.to_Z Uint63.max_int)).
 Verified Extraction -verbose -compile-with-coq -run max_to_Z "max_to_Z.mlf".
+
+Definition check_lt := print_string (show (PrimInt63.ltb 1 0)).
+Verified Extraction -compile-with-coq -run check_lt "check_lt.mlf".
 
 From Coq Require Import PrimFloat.
 Definition test_float := print_float (7500.50)%float.

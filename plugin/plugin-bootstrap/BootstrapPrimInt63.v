@@ -1,5 +1,4 @@
-From VerifiedExtraction Require Loader.
-Require Int63.PrimInt63.
+From Malfunction.Plugin Require Loader.
 
 (** Primitive ints *)
 Verified Extract Constants [

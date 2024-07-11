@@ -36,7 +36,7 @@ jobs:
               opam pin -n -y "https://github.com/stedolan/malfunction.git#master"
             endGroup
             startGroup "install dependencies for benchmarks"
-              opam install -y core_bench.v0.16.0 
+              opam install -y core_bench.v0.16.0 sexp
             endGroup
           install: |
             startGroup "Install dependencies"
@@ -44,14 +44,17 @@ jobs:
               opam pin add -n -y -k path $PACKAGE $WORKDIR
               # opam update -y
               opam install --confirm-level=unsafe-yes -j 2 $PACKAGE --deps-only
-            endGroup
-          after_install: |
-            startGroup "make"
-              make -j 2 bootstrap
+              opam install malfunction
             endGroup
           script: |
             startGroup "fix permission issues"
               sudo chown -R coq:coq .
+            endGroup
+            startGroup "Build"
+              make
+            endGroup
+            startGroup "Install"
+              make install
             endGroup
           after_script: |
             startGroup "List installed packages"

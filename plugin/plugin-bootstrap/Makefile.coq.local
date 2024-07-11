@@ -16,7 +16,6 @@ compile_malfunction.cmi: compile_malfunction.mli
 	ocamlfind opt ${CAMLFLAGS} ${FINDLIBPKGS} -for-pack Verified_extraction_malfunction compile_malfunction.mli
 	
 compile_malfunction.cmx: axioms.cmx extract_extraction.vo compile_malfunction.cmi
-	cp _build/compile_malfunction.mlf compile_malfunction.mlf
 	# ocamlfind opt ${CAMLFLAGS} ${FINDLIBPKGS} -for-pack Verified_extraction_malfunction axioms.mli
 	malfunction cmx -O2 -shared ${FINDLIBPKGS} -for-pack Verified_extraction_malfunction compile_malfunction.mlf
 

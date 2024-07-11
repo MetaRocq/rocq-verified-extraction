@@ -1,5 +1,5 @@
-From Malfunction.Plugin Require Import Extract.
 From Malfunction Require Import FFI.
+From VerifiedExtraction Require Import Extraction.
 From MetaCoq.Utils Require Import bytestring MCString.
 Local Open Scope bs. (* bytestrings *)
 
@@ -7,7 +7,7 @@ Local Open Scope bs. (* bytestrings *)
  *)
 Definition test (x : unit) := coq_msg_info "Hello world!".
 
-Set Debug "verified-extraction".
+(* Set Debug "verified-extraction". *)
 Set Warnings "-primitive-turned-into-axiom".
 
 From Coq Require Import PrimFloat.
