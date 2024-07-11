@@ -47,7 +47,7 @@ To add an `mli` file one can add the output of the (unverified) generator `MetaC
   output information in Coq's info, notice and error channels while running.
 - `-verbose`: More verbose compiler output
 - `-fmt`: Use malfunctions automatic formatting to produce the .mlf file (for more readable generated code)
-- `-unsafe`: Use unsafe optimizations (can be a comma separated list of):
+- `-unsafe`: Use unsafe optimizations (all of them, or a subset by listing some of the following flags separated by spaces):
     + `cofix-to-lazy`: unverified cofixpoints to lazy/force translation
     + `reorder-constructors`: honor `Verified Extract Inductive` directives to reorder constructors
     + `inlining`: honor `Verified Extract Inline` directives.
