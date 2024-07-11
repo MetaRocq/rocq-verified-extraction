@@ -371,7 +371,7 @@ let run_command opts cmd =
 let opam_command cmd = 
   match get_opam_path_opt () with
   | Some s -> s ^ " exec -- " ^ cmd
-  | None -> "opam exec -- " ^ cmd
+  | None -> cmd
       
 let execute opts cmd =
   let status, out, err = execute cmd in
@@ -706,12 +706,17 @@ let decompose_argument env sigma c =
 
 let set_opam_env opts =
   let path = Unix.getenv "PATH" in
-  let opam_path = 
-    match get_opam_path_opt () with
-    | Some s -> s
-    | None -> run_command opts "which opam"
+  let opam_binpath = 
+    match Unix.getenv "OPAM_SWITCH_PREFIX" with
+    | exception Not_found ->
+      let opam_path = 
+      match get_opam_path_opt () with
+      | Some s -> s
+      | None -> run_command opts "which opam"
+      in
+      run_command opts (opam_path ^ " var --safe bin")
+    | pref -> pref ^ "/bin"
   in
-  let opam_binpath = run_command opts (opam_path ^ " var --safe bin") in
   Unix.putenv "PATH" (opam_binpath ^ ":" ^ path)
 
 let extract_and_run
