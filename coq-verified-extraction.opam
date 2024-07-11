@@ -9,7 +9,7 @@ authors: ["Yannick Forster"
           "Nicolas Tabareau"]
 license: "MIT"
 build: [
-  [echo]
+  [make]
 ]
 install: [
   [make "-j%{jobs}%"]
@@ -22,7 +22,3 @@ depends: [
 ]
 
 synopsis: "Verified extraction from Coq to OCaml"
-url {
-  git: "https://github.com/yforster/coq-verified-extraction/#main"
-}
-
