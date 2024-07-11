@@ -36,7 +36,7 @@ jobs:
               opam pin -n -y "https://github.com/stedolan/malfunction.git#master"
             endGroup
             startGroup "install dependencies for benchmarks"
-              opam install -y core_bench.v0.16.0 sexp
+              opam install -y core_bench.v0.16.0
             endGroup
           install: |
             startGroup "Install dependencies"
