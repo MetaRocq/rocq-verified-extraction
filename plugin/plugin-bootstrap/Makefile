@@ -2,12 +2,12 @@ PLUGINPATH = ../../lib/coq_verified_extraction_plugin/_build/install/default/lib
 
 all: Makefile.bootstrap Makefile.coq plugin
 	
-compile_malfunction.mlf: extract_extraction.v
+compile_malfunction:
 	mkdir -p _build
 	OCAMLPATH=$(PLUGINPATH) make -f Makefile.bootstrap
 	cp _build/compile_malfunction.mlf compile_malfunction.mlf
 	
-plugin: compile_malfunction.mlf
+plugin: compile_malfunction
 	OCAMLPATH=$(PLUGINPATH) make -f Makefile.coq
 
 install: Makefile.coq all

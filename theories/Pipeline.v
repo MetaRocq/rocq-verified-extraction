@@ -127,8 +127,8 @@ Fixpoint check_good_for_extraction_rec (fl : EWellformed.EEnvFlags) (Σ : (list 
   | (kn, EAst.ConstantDecl d) :: Σ =>
       match (EAst.cst_body d) with
       | Some b => if wellformed_fast fl Σ b 
-                  then ignore (coq_msg_info "Warning: environment contains constructors for which extraction is not verified") (check_good_for_extraction_rec fl Σ)
-                  else check_good_for_extraction_rec fl Σ
+                  then check_good_for_extraction_rec fl Σ
+                  else ignore (coq_msg_info "Warning: environment contains constructors for which extraction is not verified") (check_good_for_extraction_rec fl Σ)
       | None => ignore (coq_msg_info ("Warning: environment contains axiom " ++ Kernames.string_of_kername kn)) false
       end
   | (kn, EAst.InductiveDecl mind) :: Σ =>
@@ -151,7 +151,7 @@ Definition check_good_for_extraction fl (p : program (list (kername × EAst.glob
 
 Definition extraction_term_flags_mlf :=
   {|
-    EWellformed.has_tBox := false;
+    EWellformed.has_tBox := true;
     EWellformed.has_tRel := true;
     EWellformed.has_tVar := false;
     EWellformed.has_tEvar := false;
@@ -179,7 +179,7 @@ Definition extraction_env_flags_mlf :=
     EWellformed.cstr_as_blocks := true |}.
 
 Definition named_extraction_env_flags_mlf :=
-  switch_env_flags_to_named extraction_env_flags_mlf.
+  switch_env_flags_to_named (EImplementBox.switch_off_box extraction_env_flags_mlf).
 
 Axiom assume_can_be_extracted : forall erased_program, good_for_extraction extraction_env_flags_mlf erased_program.
 
@@ -209,7 +209,7 @@ From MetaCoq.Erasure Require Import EImplementBox EWellformed EProgram.
 Lemma implement_box_good_for_extraction
   (efl := extraction_env_flags_mlf : EEnvFlags) :
   forall (input : program EAst.global_declarations EAst.term),
-    good_for_extraction efl input -> good_for_extraction efl (implement_box_program input).
+    good_for_extraction efl input -> good_for_extraction (switch_off_box efl) (implement_box_program input).
 Proof.
   intros input p.
   destruct input as [Σ t].
@@ -220,7 +220,7 @@ Proof.
   + intros.
     rewrite lookup_inductive_implement_box in H. now eapply few_enough_constructors.
   + intros. rewrite lookup_inductive_implement_box in H. now eapply few_enough_arguments_in_constructors.
-  + cbn. refine (@implement_box_env_wf_glob _ _ _ _ _). reflexivity. reflexivity. apply p.
+  + cbn. refine (@implement_box_env_wf_glob _ Σ _ _ _). reflexivity. reflexivity. apply p.
   + apply transform_wellformed'. all: try reflexivity. apply p. apply p.
 Qed.
 
@@ -229,7 +229,7 @@ Program Definition implement_box_transformation (efl := extraction_env_flags_mlf
   {| name := "implementing box";
     transform p _ := EImplementBox.implement_box_program p ;
     pre p := good_for_extraction efl p ;
-    post p := good_for_extraction efl p /\ wf_eprogram (switch_off_box efl) p ;
+    post p := good_for_extraction (switch_off_box efl) p /\ wf_eprogram (switch_off_box efl) p ;
     obseq p hp p' v v' := v' = implement_box v |}.
 Next Obligation.
   intros. cbn in *. split. 2: split.
@@ -303,8 +303,8 @@ Arguments wf_glob : clear implicits.
 
 Lemma name_annotation_good_for_extraction:
   forall input : program EAst.global_declarations EAst.term,
-    good_for_extraction extraction_env_flags_mlf input ->
-    wf_eprogram extraction_env_flags_mlf input ->
+    good_for_extraction (switch_off_box extraction_env_flags_mlf) input ->
+    wf_eprogram (switch_off_box extraction_env_flags_mlf) input ->
     good_for_extraction named_extraction_env_flags_mlf (annotate_env [] input.1, annotate [] input.2).
 Proof.
   intros input H H0.
@@ -342,11 +342,11 @@ Program Definition name_annotation : Transform.t EAst.global_declarations (list 
   EAst.term EAst.term _ EWcbvEvalNamed.value
   (EProgram.eval_eprogram extraction_wcbv_flags) (fun p v => ∥EWcbvEvalNamed.eval p.1 [] p.2 v∥) :=
   {| name := "annotate names";
-      pre := fun p =>  good_for_extraction extraction_env_flags_mlf p /\ 
-        EProgram.wf_eprogram extraction_env_flags_mlf p ;
+      pre := fun p =>  good_for_extraction (switch_off_box extraction_env_flags_mlf) p /\ 
+        EProgram.wf_eprogram (switch_off_box extraction_env_flags_mlf) p ;
       transform p _ := (annotate_env [] p.1, annotate [] p.2) ;
       post := fun p => good_for_extraction named_extraction_env_flags_mlf p /\
-                      exists t, wellformed extraction_env_flags_mlf p.1 0 t 
+                      exists t, wellformed (switch_off_box extraction_env_flags_mlf) p.1 0 t 
                       /\ ∥represents [] [] p.2 t∥ ;
       obseq p _ p' v v' := ∥ represents_value v' v∥ |}.
 Next Obligation.
@@ -355,7 +355,7 @@ Next Obligation.
   destruct input as [Σ s].
   destruct H0 as [HΣ Hs]. cbn. exists s.
   cbn in *. split.
-  2:{ sq. eapply (nclosed_represents extraction_env_flags_mlf); cbn; eauto. }
+  2:{ sq. eapply (nclosed_represents (switch_off_box extraction_env_flags_mlf)); cbn; eauto. }
   clear - Hs. revert Hs. generalize 0. intros.
   induction s using EInduction.term_forall_list_ind in n, Hs |- *; cbn in *; eauto; rtoProp; eauto. 
   all: try now rtoProp; eauto. 
@@ -376,7 +376,7 @@ Next Obligation.
 Qed.
 Next Obligation.
   red. intros. destruct pr as [_ pr]. red in H. sq.
-  unshelve eapply (eval_to_eval_named_full extraction_env_flags_mlf) in H as [v_ Hv].
+  unshelve eapply (eval_to_eval_named_full (switch_off_box extraction_env_flags_mlf)) in H as [v_ Hv].
   3-9:eauto.
   - shelve.
   - exists v_. repeat split; sq. cbn. eapply Hv. eapply Hv.
@@ -395,11 +395,11 @@ Next Obligation.
     + cbn. destruct a as [? [ [[]]| ]]; intros; econstructor; eauto; cbn; eauto.
       2-4: eapply IHg; now invs H0.
       split; eauto. eexists. split. cbn. reflexivity.
-      eapply (nclosed_represents extraction_env_flags_mlf); cbn => //. invs H0. cbn in *. eauto.
+      eapply (nclosed_represents (switch_off_box extraction_env_flags_mlf)); cbn => //. invs H0. cbn in *. eauto.
   - eapply pr.  
 Qed.
 
-Lemma annotate_extends (efl := extraction_env_flags_mlf) Σ Σ' :
+Lemma annotate_extends (efl := switch_off_box extraction_env_flags_mlf) Σ Σ' :
    EGlobalEnv.extends Σ Σ' ->
    EGlobalEnv.extends (annotate_env [] Σ) (annotate_env [] Σ').
 Proof.
@@ -413,7 +413,7 @@ Program Definition compile_to_malfunction `{Heap}:
     EWcbvEvalNamed.value SemanticsSpec.value
     (fun p v => ∥EWcbvEvalNamed.eval p.1 [] p.2 v∥) (fun _ _ => True) :=
   {| name := "compile to Malfunction";
-      pre := fun p =>   EWellformed.wf_glob named_extraction_env_flags_mlf p.1 /\ (exists t, EWellformed.wellformed extraction_env_flags_mlf p.1 0 t /\ ∥ represents [] [] p.2 t∥) /\
+      pre := fun p =>   EWellformed.wf_glob named_extraction_env_flags_mlf p.1 /\ (exists t, EWellformed.wellformed (switch_off_box extraction_env_flags_mlf) p.1 0 t /\ ∥ represents [] [] p.2 t∥) /\
                        good_for_extraction named_extraction_env_flags_mlf p ;
       transform p _ := compile_program p ;
       post := fun p => CompileCorrect.wellformed (map (fun '(i,_) => i) p.1) [] p.2 ;
