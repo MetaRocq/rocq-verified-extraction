@@ -53,7 +53,6 @@ END
 
 ARGUMENT EXTEND unsafe_flag
 | [ "cofix-to-lazy" ] -> { CoFixToLazy }
-| [ "reorder-constructors" ] -> { ReorderConstructors }
 | [ "inlining" ] -> { Inlining }
 | [ "unboxing" ] -> { Unboxing }
 | [ "betared" ] -> { BetaRed }
@@ -64,7 +63,6 @@ ARGUMENT EXTEND extract_args
 | [ "-time" ] -> { Time }
 | [ "-typed" ] -> { Typed }
 | [ "-bypass-qeds" ] -> { BypassQeds }
-| [ "-fast" ] -> { Fast }
 | [ "-compile-plugin" ] -> { ProgramType Plugin }
 | [ "-compile-with-coq" ] -> { ProgramType (Standalone true) }
 | [ "-compile" ] -> { ProgramType (Standalone false) }

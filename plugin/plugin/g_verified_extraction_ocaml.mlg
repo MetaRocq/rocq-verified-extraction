@@ -40,7 +40,7 @@ let interp_inductive_mapping (ind, (tyna, tags)) =
 
 let interp_unsafe uns =
   { Erasure0.cofix_to_lazy = uns.cofix_to_lazy;
-    Erasure0.reorder_constructors = uns.reorder_constructors;
+    Erasure0.reorder_constructors = true;
     Erasure0.inlining = uns.inlining;
     Erasure0.unboxing = uns.unboxing;
     Erasure0.betared = uns.betared }
@@ -50,19 +50,19 @@ let interp_pipeline_config c =
     erasure_config = 
       { enable_unsafe = enable_unsafe; 
         enable_typed_erasure = enable_typed_erasure; 
-        enable_fast_remove_params = enable_fast_remove_params;
-        inductives_mapping; inlined_constants };
+        inlined_constants };
+    reorder_constructors = inductives_mapping;
     prims = prims } = c in
   let erasure_config = 
     Erasure0.({ 
-      enable_unsafe = interp_unsafe enable_unsafe; enable_typed_erasure; enable_fast_remove_params;
+      enable_unsafe = interp_unsafe enable_unsafe; enable_typed_erasure; 
       dearging_config = default_dearging_config;
-      inductives_mapping = List.map interp_inductive_mapping inductives_mapping;
       inlined_constants
       })
   in
   Pipeline.{ 
     erasure_config;
+    reorder_cstrs = List.map interp_inductive_mapping inductives_mapping;
     prims = interp_prims prims
   }
 

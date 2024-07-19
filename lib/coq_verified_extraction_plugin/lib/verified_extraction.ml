@@ -3,7 +3,6 @@ type inductives_mapping = inductive_mapping list
 
 type unsafe_passes = 
   { cofix_to_lazy : bool;
-    reorder_constructors : bool;
     inlining : bool;
     unboxing : bool;
     betared : bool }
@@ -11,8 +10,6 @@ type unsafe_passes =
 type erasure_configuration = { 
   enable_unsafe : unsafe_passes;
   enable_typed_erasure : bool;
-  enable_fast_remove_params : bool; 
-  inductives_mapping : inductives_mapping;
   inlined_constants : Kernames.KernameSet.t }
 
 type prim_def =
@@ -26,6 +23,7 @@ type primitives = prim list
 
 type malfunction_pipeline_config = { 
   erasure_config : erasure_configuration;
+  reorder_constructors : inductives_mapping;
   prims : primitives }
 
 type program_type =
@@ -34,7 +32,6 @@ type program_type =
 
 type unsafe_pass = 
   | CoFixToLazy
-  | ReorderConstructors
   | Inlining
   | Unboxing
   | BetaRed
@@ -45,7 +42,6 @@ type malfunction_command_args =
   | Time
   | Typed
   | BypassQeds
-  | Fast
   | ProgramType of program_type
   | Load
   | Run
@@ -258,7 +254,6 @@ let bytes_of_list l =
 
 let make_unsafe_flags b = 
   { cofix_to_lazy = b; 
-    reorder_constructors = b; 
     inlining = b;
     unboxing = b;
     betared = b }
@@ -266,16 +261,15 @@ let make_unsafe_flags b =
 let default_unsafe_flags = make_unsafe_flags false
 let all_unsafe_flags = make_unsafe_flags true
 
-let default_erasure_config inductives_mapping inlined_constants = 
-  { enable_unsafe = default_unsafe_flags; enable_typed_erasure = false; enable_fast_remove_params = false; 
-    inductives_mapping; inlined_constants }
+let default_erasure_config inlined_constants = 
+  { enable_unsafe = default_unsafe_flags; enable_typed_erasure = false;
+    inlined_constants }
 
 let default_malfunction_config inductives_mapping inlined_constants prims = 
-  { erasure_config = default_erasure_config inductives_mapping inlined_constants; prims }
+  { erasure_config = default_erasure_config inlined_constants; reorder_constructors = inductives_mapping; prims }
 
 let set_unsafe_flag fl = function
 | CoFixToLazy -> { fl with cofix_to_lazy = true }
-| ReorderConstructors -> { fl with reorder_constructors = true }
 | Inlining -> { fl with inlining = true }
 | Unboxing -> { fl with unboxing = true }
 | BetaRed -> { fl with betared = true }
@@ -305,9 +299,6 @@ let make_options loc l =
     | Typed :: l -> parse_options { opts with 
       malfunction_pipeline_config = { opts.malfunction_pipeline_config with erasure_config = 
       { opts.malfunction_pipeline_config.erasure_config with enable_typed_erasure = true } } } l
-    | Fast :: l -> parse_options { opts with
-      malfunction_pipeline_config = { opts.malfunction_pipeline_config with erasure_config = 
-      { opts.malfunction_pipeline_config.erasure_config with enable_fast_remove_params = true } } } l
     | BypassQeds :: l -> parse_options { opts with bypass_qeds = true } l
     | Time :: l -> parse_options { opts with time = true } l
     | Verbose :: l -> parse_options { opts with verbose = true } l
