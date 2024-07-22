@@ -40,7 +40,6 @@ let interp_inductive_mapping (ind, (tyna, tags)) =
 
 let interp_unsafe uns =
   { Erasure0.cofix_to_lazy = uns.cofix_to_lazy;
-    Erasure0.reorder_constructors = true;
     Erasure0.inlining = uns.inlining;
     Erasure0.unboxing = uns.unboxing;
     Erasure0.betared = uns.betared }
