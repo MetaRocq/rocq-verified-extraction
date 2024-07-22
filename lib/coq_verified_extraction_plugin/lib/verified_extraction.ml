@@ -102,7 +102,6 @@ let statically_linked_pkgs =
     "coq-core.toplevel";
     "coq-core.vernac";
     "coq-core.vm";
-    "coq-metacoq-template-ocaml";
     "coq-metacoq-template-ocaml.plugin";
     "dynlink";
     "findlib";

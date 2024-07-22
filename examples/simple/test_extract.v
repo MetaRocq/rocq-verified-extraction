@@ -8,7 +8,7 @@ From Coq Require Import String.
 From Coq Require Vector.
 
 (* Set Verified Extraction Build Directory "_build". *)
-(* Set MetaCoq Opam Path "/usr/local/bin/opam". *)
+(* Set Verified Extraction Opam Path "/usr/local/bin/opam". *)
 
 From Coq Require Import PrimInt63 Sint63.
 Definition test_primint := 

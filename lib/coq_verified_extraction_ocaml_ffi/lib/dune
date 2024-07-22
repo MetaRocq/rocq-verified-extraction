@@ -1,4 +1,5 @@
 (library
  (public_name coq_verified_extraction_ocaml_ffi)
  (name coq_verified_extraction_ocaml_ffi)
- (libraries coq-metacoq-template-ocaml.plugin stdlib-shims coq-core.kernel coq-core.lib))
+ (foreign_stubs (language c) (names coq_float64))
+ (libraries coq-metacoq-template-ocaml.plugin))
