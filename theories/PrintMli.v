@@ -37,6 +37,7 @@ Definition term_eqb (t1 t2 : term) :=
 Notation "t === u" := (term_eqb t u) (at level 70).
 
 Unset Guard Checking.
+  
 Section fix_global.
   
   Variable Σ : global_declarations.
@@ -158,12 +159,16 @@ Section fix_global.
     end.
 
 End fix_global.
+Set Guard Checking.
 
 Fixpoint print_globals (Σ : global_declarations) :=
   match Σ with
   | [] => ""
   | (na, InductiveDecl m) :: l =>
-      if (na == (MPfile ["Datatypes"; "Init"; "Coq"], "list"))
+      (* These types have matching representations with OCaml in generated code *)
+      if (na == (MPfile ["Datatypes"; "Init"; "Coq"], "unit"))
+        || (na == (MPfile ["Datatypes"; "Init"; "Coq"], "bool"))
+        || (na == (MPfile ["Datatypes"; "Init"; "Coq"], "list"))
         || (na == (MPfile ["Datatypes"; "Init"; "Coq"], "prod"))
         || (na == (MPfile ["Datatypes"; "Init"; "Coq"], "option"))
       then print_globals l

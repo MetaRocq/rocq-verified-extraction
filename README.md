@@ -29,6 +29,8 @@ After `From VerifiedExtraction Require Import Extraction.`
 the commands `Verified Extraction <definition>` and `Verified Extraction <definition> "<file>.mlf"` can be used to run the new extraction process.
 Multiple functions can be extracted at the same time with `Verified Extraction (<d1>,<d2>,...)`.
 To add an `mli` file one can add the output of the (unverified) generator `MetaCoq Run Print mli <definition>.` to a `.mli` file.
+Note that this metaprogram does not (yet) take into account the reordering of constructors, besides the one for booleans (see `Extract Inductives` below).
+It won't output declarations for `unit`, `bool`, `list`, `option` and `prod` that have matching representations in OCaml. 
 
 `Verified Extraction` supports the following options:
 
