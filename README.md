@@ -7,7 +7,6 @@ In particular, Coq programs extracted like this can interact with other OCaml pr
 
 The implementation of extraction is fully functional and supports all of Coq's constructs including
 primitive integers, floats and arrays, but the cofixpoint to lazy/force translations is not verified yet.
-Verification of more advanced extraction features like Extract Inductive is also work in progress.
 The article ["Verified Extraction from Coq to OCaml"](https://dl.acm.org/doi/10.1145/3656379) published and awarded at PLDI'24 
 describes this development.
 
