@@ -14,7 +14,6 @@ Definition function := function_or_nat true.
 Verified Extraction
   function.
 MetaCoq Run Print mli function.
-(* type bool = True  | False  *)
 (* val function : bool -> bool *)
 
 Extraction function_or_nat.
@@ -29,6 +28,4 @@ Require Import Extraction.
 Recursive Extraction assumes_purity.
 
 MetaCoq Run Print mli assumes_purity.
-(* type unit = Tt  *)
-(* type bool = True  | False  *)
 (* val assumes_purity : (unit -> bool) (* higher-order functions are not safe to extract *)  -> bool *)
