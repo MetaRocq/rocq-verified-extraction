@@ -52,6 +52,7 @@ Fixpoint compile_value `{Heap} (Σ : EAst.global_declarations) (s : EWcbvEvalNam
               ) mfix,
               idx)
   | vPrim v => to_primitive v
+  | vLazy t l => fail "lazy not supported" 
   end.
   
 Require Import FunctionalExtensionality.
@@ -426,6 +427,12 @@ Opaque Malfunction.Int63.wB PArray.max_length.
 Axiom unsupported_arrays : forall `{Heap} Σ Σ' Γ Γ_ h a p', 
   EWcbvEval.eval_primitive (EWcbvEvalNamed.eval Σ Γ) (Primitive.primArray; EPrimitive.primArrayModel a) p' ->
   eval Σ' Γ_ h (compile Σ (EAst.tPrim (Primitive.primArray; EPrimitive.primArrayModel a))) h (to_primitive p').
+
+Axiom unsupported_lazy : forall `{Heap} Σ Σ' Γ Γ_ h t , 
+  eval Σ' Γ_ h (Malfunction.Mlazy (compile Σ t)) h (compile_value Σ (vLazy t Γ)).
+
+Axiom unsupported_force : forall `{Heap} Σ Σ' Γ_ h t v, 
+  eval Σ' Γ_ h (Malfunction.Mforce (compile Σ t)) h (compile_value Σ v).
 
 (* We disable primitive arrays and fix/cofix for correctness. *)
 Definition extraction_env_flags_mlf := 
@@ -802,6 +809,8 @@ Proof.
     eapply nth_error_Some_length in E. lia.
   - destruct p as [? []]. 1-2:inversion ev; subst; simp compile; econstructor.
     cbn. now eapply unsupported_arrays.
+  - now eapply unsupported_lazy.
+  - now eapply unsupported_force.
 Qed.
 Print Assumptions compile_correct.
 
@@ -1001,7 +1010,7 @@ Proof.
     + simp compile.
     + simp compile.
       unfold EGlobalEnv.lookup_constructor_pars_args, lookup_constructor_args, EGlobalEnv.lookup_constructor in *.
-      destruct EGlobalEnv.lookup_inductive as [ [] | ]; cbn -[forallb mapi mapi_rec rev_map map map_InP In]; eauto. unfold Mcase. cbn [wellformed]. rtoProp.
+      revert H1. unfold EWellformed.wf_brs. destruct EGlobalEnv.lookup_inductive as [ [] | ]; cbn -[forallb mapi mapi_rec rev_map map map_InP In]; eauto. unfold Mcase. cbn [wellformed]. rtoProp.
       set (brs_ := p :: brs) in *. repeat split.
       * eauto.
       * clearbody brs_. clear p brs. rewrite map_InP_spec. eapply H in H3; eauto. clear - a IH H2 H3. unfold mapi. generalize 0 at 1, 0 at 1.
@@ -1113,13 +1122,18 @@ Proof.
       unfold lookup_constructor_args.
       set (p :: brs) in *. clearbody l.  
       destruct ind, i. cbn. pose proof (Hext := H0). specialize (H0 inductive_mind).
-      repeat eapply andb_and in Hwf as [Hwf ?]. cbn in H1.  
+      repeat eapply andb_and in Hwf as [Hwf ?].
+      repeat eapply andb_and in H1 as [H1 ?].
+      set (ind := {| Kernames.inductive_mind := _ |}) in H1.
+      assert (EWellformed.isSome (EGlobalEnv.lookup_inductive Σ ind)). revert H1.
+      unfold EWellformed.wf_brs. destruct EGlobalEnv.lookup_inductive; eauto.
+      clear H1; rename H4 into H1. cbn in H1.
       destruct (EGlobalEnv.lookup_env Σ inductive_mind); [| inversion H1].
       rewrite (H0 _ eq_refl). destruct g; eauto. destruct nth_error; eauto.
       repeat eapply andb_and in H1 as [H1 ?].
       f_equal. f_equal. f_equal; eauto. induction a; cbn in *; eauto. destruct IH.
       repeat eapply andb_and in H2 as [H2 ?]. inversion Heq. 
-      repeat (eauto; f_equal).   
+      repeat (eauto; f_equal).
   - repeat eapply andb_and in Hwf as [Hwf ?]. unfold EWellformed.wf_fix_gen in H0. clear Hwf.
     repeat eapply andb_and in H0 as [H0 ?]. clear H0.   
     clear H1 a Hbodies. do 4 f_equal.

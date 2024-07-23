@@ -89,6 +89,8 @@ Module evalnamed.
       unfold a', a'0. repeat f_equal; eauto. clear H4. eapply EPrimitive.All2_Set_All2 in ev0, ev1.
       clear -X ev1. revert v'0 ev1.  
       induction X; intros; inversion ev1; eauto. f_equal; eauto.
+    - reflexivity.
+    - eapply IHeval1 in Hev1. noconf Hev1. now eapply IHeval2.
   Qed.
 
 End evalnamed.

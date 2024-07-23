@@ -3,7 +3,6 @@ type inductives_mapping = inductive_mapping list
 
 type unsafe_passes = 
   { cofix_to_lazy : bool;
-    reorder_constructors : bool;
     inlining : bool;
     unboxing : bool;
     betared : bool }
@@ -11,8 +10,6 @@ type unsafe_passes =
 type erasure_configuration = { 
   enable_unsafe : unsafe_passes;
   enable_typed_erasure : bool;
-  enable_fast_remove_params : bool; 
-  inductives_mapping : inductives_mapping;
   inlined_constants : Kernames.KernameSet.t }
 
 type prim_def =
@@ -26,6 +23,7 @@ type primitives = prim list
 
 type malfunction_pipeline_config = { 
   erasure_config : erasure_configuration;
+  reorder_constructors : inductives_mapping;
   prims : primitives }
 
 type program_type =
@@ -34,7 +32,6 @@ type program_type =
   
 type unsafe_pass = 
   | CoFixToLazy
-  | ReorderConstructors
   | Inlining
   | Unboxing
   | BetaRed
@@ -45,7 +42,6 @@ type malfunction_command_args =
   | Time
   | Typed
   | BypassQeds
-  | Fast
   | ProgramType of program_type
   | Load
   | Run

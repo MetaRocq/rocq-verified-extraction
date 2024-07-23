@@ -191,13 +191,19 @@ let mulc x y =
 let equal (x : int) (y : int) = x = y
 [@@ocaml.inline always]
 
+(* This assumes comparison is defined as type comparison = Eq | Lt | Gt *)
+let to_compare = function
+  | 0 -> 0 (* Eq *)
+  | x when x < 0 -> 1 (* Lt *)
+  | _ -> 2 (* Gt *)
+
 let compare (x:int) (y:int) =
   let x = x lxor 0x4000000000000000 in
   let y = y lxor 0x4000000000000000 in
-  Int.compare x y
+  to_compare (Int.compare x y)
 
 let compares (x : int) (y : int) =
-  Int.compare x y
+  to_compare (Int.compare x y)
 
     (* head tail *)
 

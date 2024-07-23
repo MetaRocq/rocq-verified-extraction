@@ -1,4 +1,4 @@
-CAMLPKGS = coq-core.kernel,coq_verified_extraction.plugin,coq_verified_extraction_malfunction_ffi
+CAMLPKGS = coq-core.kernel,coq_verified_extraction.plugin,coq_verified_extraction_ocaml_ffi
 
 test: append.vo
 

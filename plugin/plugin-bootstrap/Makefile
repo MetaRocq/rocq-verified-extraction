@@ -1,4 +1,4 @@
-PLUGINPATH = ../../lib/coq_verified_extraction_plugin/_build/install/default/lib:../../lib/coq_verified_extraction_ocaml_ffi/_build/install/default/lib:../../lib/coq_verified_extraction_malfunction_ffi/_build/install/default/lib
+PLUGINPATH = ../../lib/coq_verified_extraction_plugin/_build/install/default/lib:../../lib/coq_verified_extraction_ocaml_ffi/_build/install/default/lib
 
 all: Makefile.bootstrap Makefile.coq plugin
 	

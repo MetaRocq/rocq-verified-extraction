@@ -46,6 +46,7 @@ From Malfunction Require Import Compile Serialize.
 
 Record malfunction_pipeline_config := 
   { erasure_config :> erasure_configuration; 
+    reorder_cstrs : EProgram.inductives_mapping;
     prims : Malfunction.primitives }.
 
 Definition int_to_nat (i : Uint63.int) : nat :=
@@ -366,7 +367,8 @@ Next Obligation.
     destruct nth_error; cbn in *; try congruence.
     repeat split; eauto.
     solve_all.
-  - unfold EGlobalEnv.lookup_inductive, EGlobalEnv.lookup_minductive in *. rewrite lookup_env_annotate. 
+  - revert H; unfold wf_brs. unfold EGlobalEnv.lookup_inductive, EGlobalEnv.lookup_minductive in *.
+    rewrite lookup_env_annotate. 
     destruct EGlobalEnv.lookup_env as [ [[ [] ] | ] | ]; cbn in *; eauto.
     destruct nth_error; cbn in *; try congruence.  
     repeat split; eauto.
@@ -485,7 +487,7 @@ Local Existing Instance CanonicalPointer.
 (* This also optionally runs typed erasure and/or the cofix to fix translation *)
 Program Definition switchable_erasure_pipeline econf :=
   if econf.(enable_typed_erasure) then verified_typed_erasure_pipeline econf
-  else verified_erasure_pipeline ▷ (optional_unsafe_transforms econf).
+  else verified_erasure_pipeline_mapping ▷ (optional_unsafe_transforms econf).
 Next Obligation.
 Proof.
   unfold optional_unsafe_transforms, optional_self_transform.
@@ -494,12 +496,12 @@ Qed.
 
 Program Definition malfunction_pipeline 
   (config : malfunction_pipeline_config) :
-  Transform.t _ _ _ _ _ _ TemplateProgram.eval_template_program
+  Transform.t _ _ _ _ _ _ eval_template_program_mapping
              (fun _ _ => True) :=
-  pre_erasure_pipeline ▷ 
+  pre_erasure_pipeline_mapping ▷ 
   switchable_erasure_pipeline config ▷ 
   post_verified_named_erasure_pipeline ▷ 
-  compile_to_malfunction .
+  compile_to_malfunction.
 Next Obligation.
   unfold switchable_erasure_pipeline.
   destruct enable_typed_erasure => //.
@@ -515,17 +517,17 @@ Fixpoint extract_names (t : Ast.term) : list ident :=
   | _ => []
   end.
 
-Axiom trust_coq_kernel : forall conf p, pre (malfunction_pipeline conf) p.
+Axiom trust_coq_kernel : forall conf p, pre (malfunction_pipeline conf) (conf.(reorder_cstrs), p).
 
 Definition compile_malfunction_gen config (pt : program_type) (p : Ast.Env.program) : list string * string := (* Exported names, code *)
   let nms := extract_names p.2 in
-  let p' := run (malfunction_pipeline config) p (trust_coq_kernel config p) in
+  let p' := run (malfunction_pipeline config) (config.(reorder_cstrs), p) (trust_coq_kernel config p) in
   let serialize p_c := @to_string _ (Serialize_module config.(prims) pt (rev nms)) p_c in
   let code := time "Pretty printing"%bs serialize p' in
   (nms, code).
 
 Definition default_malfunction_config : malfunction_pipeline_config :=
-  {| erasure_config := safe_erasure_config; prims := [] |}.
+  {| erasure_config := safe_erasure_config; reorder_cstrs := []; prims := [] |}.
 
 Definition compile_malfunction p := 
   (compile_malfunction_gen default_malfunction_config Standalone p).2.

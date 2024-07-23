@@ -1,16 +1,16 @@
 From Malfunction.Plugin Require Loader PrimInt63.
 From Coq Require Import PArray.
 
-(* This only interfaces with primitive integers, so no wrapping is needed. *)
+(* This only interfaces with primitive integers, so no particular wrapping is needed. *)
 (* However the polymorphic functions HAVE TO be masked to remove type argument 
-  applications, hence typed erasure is mandatory. *)
+  applications, hence typed erasure is required. *)
 
 Verified Extract Constants [ 
   Coq.Array.PArray.array erased,
-  Coq.Array.PArray.make => "Parray.make",
-  Coq.Array.PArray.get => "Parray.get",
-  Coq.Array.PArray.default => "Parray.default",
-  Coq.Array.PArray.set => "Parray.set",
-  Coq.Array.PArray.length => "Parray.length_int",
-  Coq.Array.PArray.copy => "Parray.copy" ]
-Packages [ "coq-core.kernel" ].
+  Coq.Array.PArray.make => "Coq_verified_extraction_ocaml_ffi__Parray.make",
+  Coq.Array.PArray.get => "Coq_verified_extraction_ocaml_ffi__Parray.get",
+  Coq.Array.PArray.default => "Coq_verified_extraction_ocaml_ffi__Parray.default",
+  Coq.Array.PArray.set => "Coq_verified_extraction_ocaml_ffi__Parray.set",
+  Coq.Array.PArray.length => "Coq_verified_extraction_ocaml_ffi__Parray.length_int",
+  Coq.Array.PArray.copy => "Coq_verified_extraction_ocaml_ffi__Parray.copy" ]
+Packages [ "coq_verified_extraction_ocaml_ffi" ].

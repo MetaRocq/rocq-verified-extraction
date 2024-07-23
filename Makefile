@@ -1,7 +1,4 @@
-all: coq extraction_plugin extraction_ocaml_ffi extraction_malfunction_ffi plugin bootstrap
-
-extraction_malfunction_ffi:
-	cd lib/coq_verified_extraction_malfunction_ffi && dune build
+all: coq extraction_plugin extraction_ocaml_ffi plugin bootstrap
 
 extraction_ocaml_ffi:
 	cd lib/coq_verified_extraction_ocaml_ffi && dune build
@@ -19,7 +16,6 @@ install: install-coq plugin
 
 install-coq: Makefile.coq coq
 	+make -f Makefile.coq install
-	cd lib/coq_verified_extraction_malfunction_ffi && dune install
 	cd lib/coq_verified_extraction_ocaml_ffi && dune install
 	cd lib/coq_verified_extraction_plugin && dune install
 	cd plugin/plugin && make -f Makefile.coq install
@@ -29,7 +25,6 @@ clean: Makefile.coq plugin/plugin/Makefile.coq plugin/plugin-bootstrap/Makefile.
 	+make -f Makefile.coq clean
 	rm -f Makefile.coq
 	rm -f Makefile.coq.conf
-	cd lib/coq_verified_extraction_malfunction_ffi && dune clean
 	cd lib/coq_verified_extraction_ocaml_ffi && dune clean
 	cd lib/coq_verified_extraction_plugin && dune clean
 	cd plugin/plugin && make clean
@@ -51,7 +46,7 @@ Makefile.coq: _CoqProject
 plugin/plugin-bootstrap/Makefile.coq: plugin/plugin-bootstrap/_CoqProject
 	cd plugin/plugin-bootstrap && make Makefile.coq
 
-bootstrap: coq plugin extraction_plugin extraction_malfunction_ffi
+bootstrap: coq plugin extraction_plugin extraction_ocaml_ffi
 	+make -C plugin/plugin-bootstrap -j 1
 
-.PHONY: extraction_plugin extraction_ocaml_ffi extraction_malfunction_ffi
+.PHONY: extraction_plugin extraction_ocaml_ffi

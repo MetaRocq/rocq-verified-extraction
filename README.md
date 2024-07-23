@@ -29,6 +29,8 @@ After `From VerifiedExtraction Require Import Extraction.`
 the commands `Verified Extraction <definition>` and `Verified Extraction <definition> "<file>.mlf"` can be used to run the new extraction process.
 Multiple functions can be extracted at the same time with `Verified Extraction (<d1>,<d2>,...)`.
 To add an `mli` file one can add the output of the (unverified) generator `MetaCoq Run Print mli <definition>.` to a `.mli` file.
+Note that this metaprogram does not (yet) take into account the reordering of constructors, besides the one for booleans (see `Extract Inductives` below).
+It won't output declarations for `unit`, `bool`, `list`, `option` and `prod` that have matching representations in OCaml. 
 
 `Verified Extraction` supports the following options:
 
@@ -49,12 +51,19 @@ To add an `mli` file one can add the output of the (unverified) generator `MetaC
 - `-fmt`: Use malfunctions automatic formatting to produce the .mlf file (for more readable generated code)
 - `-unsafe`: Use unsafe optimizations (all of them, or a subset by listing some of the following flags separated by spaces):
     + `cofix-to-lazy`: unverified cofixpoints to lazy/force translation
-    + `reorder-constructors`: honor `Verified Extract Inductive` directives to reorder constructors
     + `inlining`: honor `Verified Extract Inline` directives.
     + `unboxing`: perform unboxing of types having a single constructor with a single computational argument 
       This is run after typed erasure for more opportunities to unbox.
     + `betared`: perform apparent beta reductions (useful when combined with inlining)
 
+`Verified Extraction` also supports the directives:
+  + `Verified Extract Inductives [ ind [ name [ tags ] ], .. ]`: this declares a reordering of constructors 
+    to match existing ocaml datatype representations (tags are natural numbers). This reordering phase is 
+    verified. By default, Coq's booleans `Inductive bool := true | false` are mapped to OCaml's 
+    `type bool = false | true` by swapping their constructor tags.
+  + `Verified Extract Inline cst`: declares `cst` to be inlined (expanded everywhere) during extraction.
+    This phase is NOT verified at the moment.
+    
 ## Structure
 
 - the [`theories`](theories) directory contains the Coq files with implementation and verification of the plugin
