@@ -16,7 +16,7 @@ describes this development.
 opam switch create coq-malfunction --packages="ocaml-variants.4.14.1+options,ocaml-option-flambda"
 eval $(opam env --switch=coq-malfunction)
 opam repo add coq-released https://coq.inria.fr/opam/released
-opam pin -n -y "https://github.com/MetaCoq/metacoq.git#v1.3.1-8.19"
+opam pin -n -y "https://github.com/MetaCoq/metacoq.git#v1.3.2-8.19"
 opam pin -n -y "https://github.com/stedolan/malfunction.git#master"
 opam install . --deps-only
 make -j 4
