@@ -534,7 +534,28 @@ struct
     Feedback.msg_debug (Pp.str (Printf.sprintf "Ocaml get_boxed_ordinal ordinal: %u" (tag_int land 255)));
     tag_int land 255 *)
 
-  let reify env sigma ty v : Constr.t = 
+  let apply_reordering hd m cstrs =
+    try
+      let find_ind_ord (ind, (na, tags)) =
+        if Kernames.eq_inductive_def ind hd then
+          Some (Array.of_list (List.map (fun i -> cstrs.(i)) tags))
+        else None
+      in
+      CList.find_map_exn find_ind_ord m
+    with Not_found -> cstrs
+
+  let find_reverse_mapping hd m cstr =
+    try
+      let find_ind_ord (ind, (na, tags)) =
+        if Kernames.eq_inductive_def ind hd then
+          Some (CList.index0 Int.equal cstr tags)
+        else None
+      in
+      CList.find_map_exn find_ind_ord m
+    with Not_found -> cstr
+
+
+  let reify env sigma m ty v : Constr.t = 
     let open Declarations in
     let debug s = debug Pp.(fun () -> str ("reify: ") ++ s ()) in
     let rec aux ty v =
@@ -544,11 +565,13 @@ struct
     | IsInductive (hd, u, args) -> 
       let open Inductive in
       let open Inductiveops in
+      let qhd = match Metacoq_template_plugin.Ast_quoter.quote_global_reference (IndRef hd) with Kernames.IndRef i -> i | _ -> assert false in
       let spec = lookup_mind_specif env hd in
       let npars = inductive_params spec in
       let params, _indices = CList.chop npars args in
       let indfam = make_ind_family ((hd, u), params) in
       let cstrs = get_constructors env indfam in
+      let cstrs = apply_reordering qhd m cstrs in
       if Obj.is_block v then
         let ord = Obj.tag v in
         let () = debug Pp.(fun () -> str (Printf.sprintf "Reifying constructor block of tag %i" ord)) in
@@ -557,6 +580,7 @@ struct
           with Not_found -> ill_formed env sigma ty
         in
         let cstr = cstrs.(coqidx) in
+        let coqidx = find_reverse_mapping qhd m coqidx in
         let ctx = Vars.smash_rel_context cstr.cs_args in
         let vargs = List.init (List.length ctx) (Obj.field v) in
         let args' = List.map2 (fun decl v -> 
@@ -571,6 +595,7 @@ struct
           try find_nth_constant ord cstrs 
           with Not_found -> ill_formed env sigma ty 
         in
+        let coqidx = find_reverse_mapping qhd m coqidx in
         let () = debug Pp.(fun () -> str @@ Printf.sprintf "Reifying constant constructor: %i is %i in Coq" ord coqidx) in
         Term.applistc (Constr.mkConstructU ((hd, coqidx + 1), u)) params
     | IsPrimitive (c, u, _args) -> 
@@ -584,8 +609,9 @@ struct
     in aux ty v
 
   let reify opts env sigma tyinfo result =
-    if opts.time then time opts (Pp.str "Reification") (reify env sigma tyinfo) result
-    else reify env sigma tyinfo result
+    let mapping = opts.malfunction_pipeline_config.reorder_constructors in
+    if opts.time then time opts (Pp.str "Reification") (reify env sigma mapping tyinfo) result
+    else reify env sigma mapping tyinfo result
 
 end
 
