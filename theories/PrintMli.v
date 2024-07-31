@@ -123,7 +123,7 @@ Section fix_global.
     match ctx with
     | {| decl_name := {| binder_name := nNamed na |} ;
         decl_type := A
-      |} :: ctx => na ++ " : " ++ print_type_def true nms A ++ " ; " ++ print_record (na :: nms) ctx
+      |} :: ctx => (uncapitalize na) ++ " : " ++ print_type_def true nms A ++ " ; " ++ print_record (na :: nms) ctx
     | _ => ""
     end.
 
@@ -142,8 +142,8 @@ Section fix_global.
   Fixpoint print_inductive_bodies pars (names : list ident) (bds : list one_inductive_body) :=
     match bds with
     | [] => ""
-    | [b] => b.(ind_name) ++ " = " ++ print_constructors pars names b.(ind_ctors) 
-    | b :: bds => b.(ind_name) ++ " = " ++ print_constructors pars names b.(ind_ctors) ++ nl ++ "and " ++ print_inductive_bodies pars names bds 
+    | [b] => uncapitalize (b.(ind_name)) ++ " = " ++ print_constructors pars names b.(ind_ctors)
+    | b :: bds => uncapitalize (b.(ind_name)) ++ " = " ++ print_constructors pars names b.(ind_ctors) ++ nl ++ "and " ++ print_inductive_bodies pars names bds
     end.
 
   Definition print_inductive na (m : mutual_inductive_body) :=
@@ -151,10 +151,10 @@ Section fix_global.
     | Finite =>
         "type " ++
                 print_parens_around ", " (MCList.rev_map (fun d => typevariable_from_aname (d.(decl_name))) m.(ind_params)) ++
-          print_inductive_bodies m.(ind_npars) (map (fun d => typevariable_from_aname (d.(decl_name))) m.(ind_params) ++ MCList.rev_map ind_name m.(ind_bodies)) m.(ind_bodies)
+                print_inductive_bodies m.(ind_npars) (map (fun d => typevariable_from_aname (d.(decl_name))) m.(ind_params) ++ MCList.rev_map (fun x=> uncapitalize (ind_name x)) m.(ind_bodies)) m.(ind_bodies)
     | BiFinite => "type " ++
                    print_parens_around ", " (MCList.rev_map (fun d => typevariable_from_aname (d.(decl_name))) m.(ind_params)) ++
-                   na ++ " = " ++ "{ " ++ print_record_bodies m.(ind_npars) m.(ind_bodies) ++ " }"
+                   (uncapitalize na) ++ " = " ++ "{ " ++ print_record_bodies m.(ind_npars) m.(ind_bodies) ++ " }"
     | CoFinite => "<co recursive type not supported>"
     end.
 
@@ -184,7 +184,7 @@ Fixpoint decompose_prod (t : Ast.term) : list Ast.term :=
   end.
 
 Definition print_mli names (p : program) :=
-  print_globals (p.1.(declarations)) ++ nl ++ fold_right (fun '(na,t) str => "val " ++ na ++ " : " ++ print_type p.1.(declarations) t ++ nl ++ str) ""%bs (combine names (rev (decompose_prod p.2))).
+  print_globals (p.1.(declarations)) ++ nl ++ fold_right (fun '(na,t) str => "val " ++ (uncapitalize na) ++ " : " ++ print_type p.1.(declarations) t ++ nl ++ str) ""%bs (combine names (rev (decompose_prod p.2))).
 
 Import MCMonadNotation.
 
