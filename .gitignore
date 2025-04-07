@@ -71,7 +71,7 @@ plugin/META
 plugin/plugin-bootstrap/META
 plugin/plugin-bootstrap/Makefile.rocq
 plugin/plugin-bootstrap/Makefile.rocq.conf
-lib/coq_verified_extraction_ocaml_ffi/coq_verified_extraction_ocaml_ffi.opam
+lib/rocq_verified_extraction_ocaml_ffi/rocq_verified_extraction_ocaml_ffi.opam
 plugin/Makefile.theories.conf
 plugin/Makefile.theories
 plugin/Makefile.plugin.conf
@@ -79,7 +79,7 @@ plugin/Makefile.plugin
 examples/prim-integers/append.mlf
 examples/prim-integers/append.mlf.fmt
 plugin/g_verified_extraction_ocaml.ml
-lib/coq_verified_extraction_malfunction_ffi/coq_verified_extraction_malfunction_ffi.opam
+lib/rocq_verified_extraction_malfunction_ffi/rocq_verified_extraction_malfunction_ffi.opam
 .vscode/settings.json
 plugin/naturals
 plugin/ones
@@ -93,8 +93,8 @@ plugin/test_lfact_typed_opt
 plugin/test_primint
 plugin/Makefile.rocq
 plugin/Makefile.rocq.conf
-coq_verified_extraction_malfunction_ffi/coq_verified_extraction_malfunction_ffi.opam
-coq_verified_extraction_ocaml_ffi/coq_verified_extraction_ocaml_ffi.opam
+rocq_verified_extraction_malfunction_ffi/rocq_verified_extraction_malfunction_ffi.opam
+rocq_verified_extraction_ocaml_ffi/rocq_verified_extraction_ocaml_ffi.opam
 plugin/plugin/Makefile.rocq.conf
 plugin/plugin/Makefile.rocq
 plugin/plugin/g_verified_extraction_ocaml.ml

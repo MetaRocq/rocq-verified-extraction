@@ -1,13 +1,13 @@
-From Stdlib Require ZArith Lists.StreamMemo Vector.
+From Stdlib Require ZArith Vector Streams.StreamMemo.
 From Stdlib Require Import String.
 From Malfunction Require Import PrintMli.
-From VerifiedExtraction Require Import Extraction OCamlFFI.
+From VerifiedExtraction Require Import Loader Extraction OCamlFFI.
 From MetaRocq.Template Require Import All.
 
 Definition coq_true := true.
 
 (** By default, the [Verified Extraction] command prints out the extracted malfunction code (to the notices channel). *)
-Verified Extraction coq_true.
+Verified Extraction coq_true. 
 
 (** The generated code is 
    (module ($def_tutorial_coq_true 1) ($def_main $def_tutorial_coq_true) ($coq_true $def_tutorial_coq_true) ($main $def_main) (export $coq_true $main)) *)
@@ -56,6 +56,8 @@ MetaRocq Run Print mli coq_true.
 (** Besides producing standalone `.mlf` files, the plugin is also capable of compiling and running the 
   extracted programs itself. To do so, it relies on an `opam` installation to be available in the running 
   environment of the Rocq process, which should include the `malfunction` package. *)
+
+Set Verified Extraction Opam Path "/usr/local/bin/opam".
 
 (** For quick testing of extracted code, one can build the code as a plugin, which can be dynamically loaded 
     with Rocq and run directly. The value of the program should be firstorder so that it can be read back as a 

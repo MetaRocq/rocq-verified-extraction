@@ -1,4 +1,4 @@
-Require Import ssreflect ssrbool Eqdep_dec.
+From Stdlib Require Import ssreflect ssrbool Eqdep_dec.
 From Equations Require Import Equations. 
 From MetaRocq.Utils Require Import All_Forall MRSquash MRList.
 From MetaRocq.Common Require Import Transform config Kernames.
@@ -8,7 +8,7 @@ From MetaRocq.SafeChecker Require Import PCUICErrors PCUICWfEnv PCUICWfEnvImpl.
 
 From Malfunction Require Import Malfunction Interpreter SemanticsSpec utils_array Compile.
 
-Require Import ZArith Array.PArray List String Floats Lia Bool.
+From Stdlib Require Import ZArith Array.PArray List String Floats Lia Bool.
 Import ListNotations.
 From MetaRocq.Utils Require Import bytestring.
 
@@ -479,7 +479,7 @@ Lemma isPure_heap `{Heap} `{WcbvFlags} Σ locals h h' t v :
 Proof.
   rename H into HP. rename H0 into HH. rename H1 into HWF. 
   intros Hpure HΣ Hlocals. induction 1; try solve [inversion Hpure]; cbn in Hpure;
-  repeat rewrite MCProd.andb_and in Hpure; try solve [cbn; repeat split; eauto]; eauto. 
+  repeat rewrite MRProd.andb_and in Hpure; try solve [cbn; repeat split; eauto]; eauto. 
   - cbn in *. destruct Hpure as [? [? ?]].
     try (destruct IHeval1; eauto);
      try (destruct IHeval2; eauto); try (destruct IHeval3; eauto); try now eauto.
@@ -493,7 +493,7 @@ Proof.
     destruct H6. intros s. unfold Ident.Map.add. destruct (Ident.eqb s y); eauto.
     eapply isPure_add_self; eauto. 
   - cbn in *. destruct Hpure as [? [? ?]]; try (destruct IHeval1; eauto); now eauto.
-  - destruct Hpure as [? [? [? ?]]]. repeat rewrite MCProd.andb_and in IHeval.
+  - destruct Hpure as [? [? [? ?]]]. repeat rewrite MRProd.andb_and in IHeval.
     destruct IHeval ; eauto.
   - cbn in *. destruct Hpure as [[? ?] ?]; try (destruct IHeval1; eauto); try (destruct IHeval2; eauto); now eauto.  
   - cbn in *. destruct Hpure as [[? ?] ?]; try (destruct IHeval1; eauto); try (destruct IHeval2; eauto); try now eauto.
@@ -504,9 +504,9 @@ Proof.
     econstructor; eauto. destruct t0; cbn; eauto. destruct p. cbn in H2. destruct l; cbn ; eauto.
     destruct l; cbn ; eauto.
   - cbn in *. destruct Hpure as [? ?]; try (destruct IHeval1; eauto); try (destruct IHeval2; eauto); try now eauto.
-    induction cases; cbn in *. inversion H0. repeat rewrite MCProd.andb_and in H3. destruct H3.   
+    induction cases; cbn in *. inversion H0. repeat rewrite MRProd.andb_and in H3. destruct H3.   
     destruct a. destruct (existsb _ _); [inversion H0; subst; eauto|]. now eapply IHcases.
-  - cbn in *. clear H. induction H0; [now eauto|]. repeat rewrite MCProd.andb_and in Hpure.
+  - cbn in *. clear H. induction H0; [now eauto|]. repeat rewrite MRProd.andb_and in Hpure.
     destruct Hpure. destruct IHForall2_acc; eauto. cbn. destruct H as [? H]; eauto. destruct H as [? H]; eauto. cbn; split; now eauto.
   - cbn in *. destruct IHeval; eauto. split; eauto. eapply Forall_nth; eauto. now eapply Forall_map_inv in H2.
   - cbn in *. now eauto.
@@ -528,7 +528,7 @@ Lemma isPure_heap_irr `{Heap} `{WcbvFlags} h h' Σ locals t v :
 Proof.
   rename H into HP; rename H0 into H; rename H1 into H0. 
   intros Hpure HΣ Hlocals. induction 1; try solve [inversion Hpure]; cbn in Hpure;
-  repeat rewrite MCProd.andb_and in Hpure; try solve [cbn; destruct Hpure; econstructor; eauto]; 
+  repeat rewrite MRProd.andb_and in Hpure; try solve [cbn; destruct Hpure; econstructor; eauto]; 
   try solve [cbn; econstructor; eauto].
   - intro. destruct Hpure as [? [? ?]]. econstructor 3; eauto.
     eapply isPure_heap in H1_, H1_0; eauto. destruct H1_ as [[Hlocals' He] _].  
@@ -542,23 +542,23 @@ Proof.
     destruct H1_0. intros s. unfold Ident.Map.add. destruct (Ident.eqb s y); eauto.
     eapply isPure_add_self; eauto. 
   - intro. destruct Hpure as [? [? ?]]. econstructor 6; eauto.
-    eapply IHeval; eauto. cbn. now repeat rewrite MCProd.andb_and.
+    eapply IHeval; eauto. cbn. now repeat rewrite MRProd.andb_and.
   - intro. destruct Hpure as [[? ?] ?]. econstructor; eauto. eapply IHeval2; eauto. 
-    cbn. now repeat rewrite MCProd.andb_and.
+    cbn. now repeat rewrite MRProd.andb_and.
   - intro. destruct Hpure as [[? ?] ?]. econstructor; eauto. eapply IHeval2; eauto. 
-    cbn. now repeat rewrite MCProd.andb_and. 
+    cbn. now repeat rewrite MRProd.andb_and. 
     intros s. unfold Ident.Map.add. destruct (Ident.eqb s x); eauto. eapply isPure_heap in H1_; now eauto. 
   - intro. destruct Hpure as [[? ?] ?]. econstructor; eauto. rewrite H1 in IHeval. eapply IHeval; eauto; cbn.
-    now repeat rewrite MCProd.andb_and. intro s. eapply isPure_add_self; eauto.
+    now repeat rewrite MRProd.andb_and. intro s. eapply isPure_add_self; eauto.
     unfold rfunc, RFunc_build.
     eapply forallb_Forall in H3. clear -H3. induction recs; eauto; cbn. destruct a; cbn in *. inversion H3; subst.
     econstructor; eauto. destruct t0; cbn; eauto. destruct p. cbn in H2. destruct l; cbn ; eauto.
     destruct l; cbn ; eauto. 
   - destruct Hpure. econstructor; eauto. eapply IHeval2; eauto.   
-    induction cases; cbn in *. inversion H1. repeat rewrite MCProd.andb_and in H3. destruct H3.   
+    induction cases; cbn in *. inversion H1. repeat rewrite MRProd.andb_and in H3. destruct H3.   
     destruct a. destruct (existsb _ _); [inversion H1; subst; eauto|]. now eapply IHcases.
   - econstructor; eauto. clear H1. induction H2; [econstructor; eauto|].
-    cbn in Hpure. rewrite MCProd.andb_and in Hpure. destruct Hpure. econstructor; eauto. destruct H1; eauto. 
+    cbn in Hpure. rewrite MRProd.andb_and in Hpure. destruct Hpure. econstructor; eauto. destruct H1; eauto. 
 Qed.
 
 Class CompatibleHeap {P P' : Pointer} {H : CompatiblePtr P P'} 

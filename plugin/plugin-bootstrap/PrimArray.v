@@ -13,4 +13,4 @@ Verified Extract Constants [
   Stdlib.Array.PArray.set => "Rocq_verified_extraction_ocaml_ffi__Parray.set",
   Stdlib.Array.PArray.length => "Rocq_verified_extraction_ocaml_ffi__Parray.length_int",
   Stdlib.Array.PArray.copy => "Rocq_verified_extraction_ocaml_ffi__Parray.copy" ]
-Packages [ "coq_verified_extraction_ocaml_ffi" ].
+Packages [ "rocq_verified_extraction_ocaml_ffi" ].

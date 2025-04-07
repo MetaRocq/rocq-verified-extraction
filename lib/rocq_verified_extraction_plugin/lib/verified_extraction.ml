@@ -136,6 +136,7 @@ type package = string (* Findlib package names to link for external references *
 
 let globref_of_qualid ?loc (gr : Libnames.qualid) : Names.GlobRef.t  =
   match Constrintern.locate_reference gr with
+  | exception Not_found -> CErrors.user_err ?loc Pp.(Libnames.pr_qualid gr ++ str " not found.")
   | None -> CErrors.user_err ?loc Pp.(Libnames.pr_qualid gr ++ str " not found.")
   | Some g -> g
     
@@ -641,7 +642,7 @@ let compile opts names tyinfos fname =
         loaded_modules := CString.Set.add freshname !loaded_modules;
         freshfname
       in
-      let packages = "coq_verified_extraction.plugin" :: packages in
+      let packages = "rocq_verified_extraction.plugin" :: packages in
       let compile_cmd = 
         Printf.sprintf "%s cmx %s -shared -package %s %s" malfunction optimize 
           (String.concat "," packages) fname

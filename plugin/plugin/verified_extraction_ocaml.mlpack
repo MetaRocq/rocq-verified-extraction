@@ -1,6 +1,9 @@
 MSetWeakList
 EqdepFacts
 Ssrbool
+ListDef
+PosDef
+IntDef
 
 Utils
 Utils_array
@@ -14,6 +17,12 @@ Init
 Fin
 VectorDef
 Vector
+
+MRCompare
+MRPrelude
+MRReflect
+MRProd
+MROption
 
 WcbvEval
 Classes0

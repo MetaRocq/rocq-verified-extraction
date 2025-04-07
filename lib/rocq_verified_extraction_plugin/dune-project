@@ -1,6 +1,6 @@
 (lang dune 3.7)
 
-(name coq_verified_extraction)
+(name rocq_verified_extraction)
 
 (generate_opam_files true)
 
@@ -18,7 +18,7 @@
 (documentation https://url/to/documentation)
 
 (package
- (name coq_verified_extraction)
+ (name rocq_verified_extraction)
  (synopsis "A short synopsis")
  (description "A longer description")
  (depends ocaml dune)

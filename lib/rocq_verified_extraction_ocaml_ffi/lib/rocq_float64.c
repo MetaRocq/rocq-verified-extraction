@@ -43,21 +43,21 @@ static double next_down(double x) {
 }
 
 #define DECLARE_FBINOP(name, e)                                         \
-  double coq_##name(double x, double y) {                               \
+  double rocq_##name(double x, double y) {                               \
     return e;                                                           \
   }                                                                     \
                                                                         \
-  value coq_##name##_byte(value x, value y) {                           \
-    return caml_copy_double(coq_##name(Double_val(x), Double_val(y)));  \
+  value rocq_##name##_byte(value x, value y) {                           \
+    return caml_copy_double(rocq_##name(Double_val(x), Double_val(y)));  \
   }
 
 #define DECLARE_FUNOP(name, e)                                          \
-  double coq_##name(double x) {                                         \
+  double rocq_##name(double x) {                                         \
     return e;                                                           \
   }                                                                     \
                                                                         \
-  value coq_##name##_byte(value x) {                                    \
-    return caml_copy_double(coq_##name(Double_val(x)));                 \
+  value rocq_##name##_byte(value x) {                                    \
+    return caml_copy_double(rocq_##name(Double_val(x)));                 \
   }
 
 DECLARE_FBINOP(fmul, x * y)
@@ -68,6 +68,6 @@ DECLARE_FUNOP(fsqrt, sqrt(x))
 DECLARE_FUNOP(next_up, next_up(x))
 DECLARE_FUNOP(next_down, next_down(x))
 
-value coq_is_double(value x) {
+value rocq_is_double(value x) {
   return Val_long(Is_double(x));
 }

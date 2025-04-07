@@ -1,6 +1,6 @@
 (*i camlp4deps: "grammar/grammar.cma" i*)
 
-DECLARE PLUGIN "coq-verified-extraction-malfunction.plugin"
+DECLARE PLUGIN "rocq-verified-extraction-malfunction.plugin"
 
 {
 
@@ -296,7 +296,7 @@ let extract = extract compile_malfunction
 
 VERNAC COMMAND EXTEND Malfunction_Verified_Extraction CLASSIFIED AS QUERY
 | [ "Verified" "Extraction" "-help" ] -> {
-  let usage = "MetaRocq (Bypass)? Extraction [term] [output_file]?" in
+  let usage = "MetaRocq (Bypass)? Extraction [term] [output_file]? (bootstrapped extraction)" in
   Feedback.msg_notice (str usage)
   }
 | [ "Verified" "Extraction" extract_args_list(l) constr(c) string_opt(dest) ] -> {

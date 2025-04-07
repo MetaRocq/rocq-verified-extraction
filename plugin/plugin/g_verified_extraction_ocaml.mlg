@@ -1,6 +1,6 @@
 (*i camlp4deps: "grammar/grammar.cma" i*)
 
-DECLARE PLUGIN "coq-verified-extraction-ocaml.plugin"
+DECLARE PLUGIN "rocq-verified-extraction-ocaml.plugin"
 
 {
 

@@ -201,7 +201,7 @@ Proof.
   unfold Array_of_list. intros Hs Hl Hi.
   rewrite Array_of_list'_get.
   + assumption.
-  + pose proof wb_max_length; lia.
+  + pose proof wb_max_length. move: Hl H. generalize (int_to_nat max_length). lia.
   + rewrite PArray.length_make.
     fold (int_of_nat (Datatypes.length l)).
     destruct (Int63.lebP (int_of_nat (Datatypes.length l)) max_length) as [ | n ].
@@ -214,10 +214,11 @@ Proof.
       1:eapply Int63.to_Z_bounded.
       unfold int_to_nat in H. rewrite H.
       unfold int_to_nat in Hl. exact Hl.
-      Unshelve. all:try pose proof wb_max_length; lia.
-  + destruct (Nat.ltb_spec i 0); try lia.
+      Unshelve. all:try generalize wb_max_length; move: Hl; generalize (int_to_nat max_length); lia.
+  + destruct (Nat.ltb_spec i 0).
+    move: Hl. generalize (int_to_nat max_length); try lia.
     rewrite Nat.sub_0_r.
-    eapply nth_indep. lia.
+    eapply nth_indep. move: Hl; generalize (int_to_nat max_length); lia.
 Qed.
 
 Lemma Array_of_list_get_again {A : Set} i s (l : list A) a :
@@ -242,6 +243,9 @@ Proof.
       * subst. cbn in Hi. lia.
 Qed.
 
+Ltac abs_max_length :=
+  let e := fresh in set (e := int_to_nat max_length) in *; clearbody e.
+
 Lemma Array_of_list_S A default n a (l:list A) : 
   n < Datatypes.length l ->
   S (Datatypes.length l) <= int_to_nat max_length ->
@@ -249,7 +253,7 @@ Lemma Array_of_list_S A default n a (l:list A) :
   (Array_of_list default l).[int_of_nat n].
 Proof.
   intros. pose proof wb_max_length.
-  repeat rewrite Array_of_list_get; try (cbn in *; lia). 
+  repeat rewrite Array_of_list_get; try (abs_max_length; cbn in *; lia).
   eauto.
 Qed.
 
@@ -270,7 +274,7 @@ Proof.
   pose proof (Hmax := wb_max_length).
   rewrite PArray.length_make. intro H. 
   assert (Hl: (int_of_nat (Datatypes.length l) ≤? max_length)%uint63 = true).
-  { apply leb_spec. repeat rewrite Int63.of_Z_spec. rewrite Z.mod_small; [cbn in *; lia |].
+  { apply leb_spec. repeat rewrite Int63.of_Z_spec. rewrite Z.mod_small; [abs_max_length; cbn in *; lia |].
     clear Hmax. unfold max_length in *; cbn in *. lia. }
   rewrite Hl. apply int_to_of_nat. cbn in *; lia. 
 Qed.
@@ -285,20 +289,20 @@ Proof.
   assert (HwB : (Z.of_nat n < Int63.wB)%Z).
   { clear -Hmax; lia_max_length. }
   rewrite Array_of_list_length. 
-  { rewrite map_length seq_length. epose (int_to_of_nat n). 
+  { rewrite length_map length_seq. epose (int_to_of_nat n). 
     unfold int_to_nat in e. now rewrite e. }
-  repeat rewrite map_length seq_length. split; [symmetry; apply int_to_of_nat|]; eauto.
+  repeat rewrite length_map length_seq. split; [symmetry; apply int_to_of_nat|]; eauto.
   intros i Hi. pose (HR (int_to_nat i) Hi). 
   unfold Array_init. rewrite <- (int_of_to_nat i). 
-  rewrite Array_of_list_get; try lia.
-  1-2: rewrite map_length seq_length; pose (e := int_to_of_nat n HwB);
+  rewrite Array_of_list_get; abs_max_length; try lia.
+  1-2: rewrite length_map length_seq; pose (e := int_to_of_nat n HwB);
        unfold int_to_nat in e; rewrite e; lia.
   rewrite int_of_to_nat. unfold List.init.  
   set (k := int_to_nat i) in *. clearbody k; clear i.
   rewrite map_nth. erewrite nth_indep. erewrite map_nth.
   pose (int_to_of_nat n HwB). 
   unfold int_to_nat in e. rewrite e. apply HR. rewrite seq_nth; lia.
-  rewrite map_length seq_length; lia.
+  rewrite length_map length_seq; lia.
 Qed. 
 
 
@@ -319,7 +323,7 @@ Lemma Forall2Array_cst {A B:Type} (R : A -> B -> Prop) n v v'
    Forall2Array R (List.init n (fun _ => v)) (make (int_of_nat n) v') default.
 Proof. 
   intros Hmax HR. unfold Forall2Array.    
-  repeat rewrite map_length seq_length PArray.length_make.
+  repeat rewrite length_map length_seq PArray.length_make.
   case_eq (int_of_nat n ≤? max_length)%uint63.
   - split; [symmetry; apply int_to_of_nat|]; eauto.
     lia_max_length. 
@@ -327,7 +331,7 @@ Proof.
     set (k := int_to_nat i) in *. unfold List.init.
     clearbody k; clear i. erewrite nth_indep.
     erewrite map_nth. Unshelve. 3: exact 0.   exact HR.
-    now rewrite map_length seq_length.
+    now rewrite length_map length_seq.
   - intro abs. pose (leb_spec (int_of_nat n) (max_length)). destruct i. 
     rewrite H0 in abs.
     rewrite Int63.of_Z_spec. 

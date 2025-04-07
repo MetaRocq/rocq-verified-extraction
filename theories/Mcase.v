@@ -59,7 +59,7 @@ Proof.
       rewrite Mnapply_app. eauto.
 Qed.
 
-Require Import FunctionalExtensionality.
+From Stdlib Require Import FunctionalExtensionality.
 
 Definition add_multiple `{Heap} nms values locals := fold_right (fun '(a,b) l => @Ident.Map.add value a b l) locals (map2 pair nms values).
 
@@ -148,7 +148,7 @@ Proof.
     + econstructor. cbn. lia.
 Qed.
 
-Require Import ZArith.
+From Stdlib Require Import ZArith.
 
 Lemma eval_case_block `{Heap} globals locals discr i args brs nms br v h num_args  :
   eval globals locals h discr h (Block (int_of_nat (blocks_until i num_args), args)) ->
@@ -221,7 +221,7 @@ Proof.
         | 0%nat => false
         | S _ => true
         end)).
-        rewrite firstn_length in H0.
+        rewrite length_firstn in H0.
         lia.
         revert Hln. rewrite length_app. cbn.
         pose proof (filter_length brs0 (fun x : nat => match x with
@@ -238,7 +238,7 @@ Proof.
     + destruct nms; inversion Hlen. cbn. econstructor.
       2: specialize IHargs with (args' := args' ++ [a]).
       2: rewrite !length_app in IHargs. 2: cbn in IHargs.
-      2: replace (S #|args'|) with (#|args'| + 1) by lia.
+      2: replace (S #|args'|) with (#|args'| + 1) by lia_max_length.
       2: eapply IHargs.
       * evar (v' : value).
         enough (a = v') as E. subst v'. rewrite E. econstructor.
@@ -246,12 +246,12 @@ Proof.
         rewrite !length_app in *. lia_max_length.
         rewrite !length_app in *. rewrite int_to_of_nat; lia_max_length.
         subst v'. rewrite int_to_of_nat.     
-        rewrite app_nth2, PeanoNat.Nat.sub_diag; [ reflexivity | lia].
+        rewrite app_nth2, PeanoNat.Nat.sub_diag; [ reflexivity | lia_max_length].
         rewrite length_app in *. lia_max_length. 
       * now inversion Hdup.
       * assumption.
       * rewrite <- app_assoc. eapply Hdiscr.
-      * rewrite !length_app in *. cbn in *. lia.
+      * rewrite !length_app in *. cbn in *. lia_max_length.
 Qed.
 
 Lemma Z_and_int n :

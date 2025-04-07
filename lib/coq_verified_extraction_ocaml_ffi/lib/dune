@@ -1,5 +1,0 @@
-(library
- (public_name coq_verified_extraction_ocaml_ffi)
- (name coq_verified_extraction_ocaml_ffi)
- (foreign_stubs (language c) (names coq_float64))
- (libraries rocq-metarocq-template-ocaml.plugin))

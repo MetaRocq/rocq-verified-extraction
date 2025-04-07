@@ -1,5 +1,5 @@
 From MetaRocq.Utils Require Import utils.
-Require Import List String.
+From Stdlib Require Import List String.
 Import ListNotations.
 Local Open Scope string_scope.
 From Malfunction Require Import Mcase.
@@ -20,7 +20,8 @@ Definition to_primitive `{Heap} (v : EPrimitive.prim_val EWcbvEvalNamed.value) :
     match projT2 v with
     | EPrimitive.primIntModel i => value_Int (Malfunction.Int , Malfunction.Int63.to_Z i)
     | EPrimitive.primFloatModel f => Float f
-    (* error: primitive arrays not supported *)
+    (* error: primitive arrayss and strings not supported *)
+    | EPrimitive.primStringModel f => value_Int (Malfunction.Int, Malfunction.Int63.to_Z (int_of_nat 0))
     | EPrimitive.primArrayModel a =>  value_Int (Malfunction.Int , Malfunction.Int63.to_Z (int_of_nat 0))
     end.
   
@@ -55,7 +56,7 @@ Fixpoint compile_value `{Heap} (Σ : EAst.global_declarations) (s : EWcbvEvalNam
   | vLazy t l => fail "lazy not supported" 
   end.
   
-Require Import FunctionalExtensionality.
+From Stdlib Require Import FunctionalExtensionality.
 
 Lemma to_string_of_string s : 
   String.to_string (String.of_string s) = s.
@@ -91,7 +92,7 @@ Proof.
   destruct (eqb_spec na a); congruence.
 Qed.
 
-Require Import Lia.
+From Stdlib Require Import Lia.
 
 Lemma lookup_multiple nms args Γ na :
   List.length nms = List.length args ->
@@ -373,8 +374,8 @@ Proof.
     assert (idx < #|mfix|). { erewrite <- fix_env_length. eapply nth_error_Some. rewrite H2. congruence. }
     rewrite nth_error_fix_env in H2. 2: eauto.
     inversion H2; subst; clear H2.
-    rewrite nth_error_rev_inv in H1. 2: now rewrite map_length.
-    rewrite map_length in H1.
+    rewrite nth_error_rev_inv in H1. 2: now rewrite length_map.
+    rewrite length_map in H1.
     rewrite nth_error_map in H1. destruct (nth_error) eqn:E; cbn in *; inversion H1; subst; clear H1.
     eapply Forall2_nth_error_Some_r in Hall as Hs. destruct Hs as (? & ? & ?). 2: eauto.
     destruct x. destruct p. destruct H1. subst.
@@ -414,7 +415,7 @@ Proof.
          ++ subst. exfalso. cbn in *. eapply H0. left. reflexivity.
             destruct y; cbn in *. destruct H. congruence.
          ++ eapply IHHall. now inversion Hdup. cbn in *; rtoProp. tauto. intros. eapply H0. cbn. eauto.
-  + now rewrite List.rev_length, map_length, fix_env_length.
+  + now rewrite List.length_rev, length_map, fix_env_length.
 Qed.
 
 Lemma wB_200 : (Z.of_nat 200 < Malfunction.Int63.wB)%Z.
@@ -423,6 +424,10 @@ Proof.
 Qed.
 
 Opaque Malfunction.Int63.wB PArray.max_length.
+
+Axiom unsupported_strings : forall `{Heap} Σ Σ' Γ Γ_ h a p', 
+  EWcbvEval.eval_primitive (EWcbvEvalNamed.eval Σ Γ) (Primitive.primString; EPrimitive.primStringModel a) p' ->
+  eval Σ' Γ_ h (compile Σ (EAst.tPrim (Primitive.primString; EPrimitive.primStringModel a))) h (to_primitive p').
 
 Axiom unsupported_arrays : forall `{Heap} Σ Σ' Γ Γ_ h a p', 
   EWcbvEval.eval_primitive (EWcbvEvalNamed.eval Σ Γ) (Primitive.primArray; EPrimitive.primArrayModel a) p' ->
@@ -453,6 +458,7 @@ Definition extraction_env_flags_mlf :=
     EWellformed.has_tPrim := 
       {| EWellformed.has_primint := true;
          EWellformed.has_primfloat := true;
+         EWellformed.has_primstring := false;
          EWellformed.has_primarray := false |};
     EWellformed.has_tLazy_Force := false
   |}
@@ -601,7 +607,7 @@ Proof.
       destruct nth_error eqn:Econ; try congruence.
       specialize (He2 _ _ Econ).
       eapply eval_case_int.
-      2: { rewrite map_length. cbn. lia. }
+      2: { rewrite length_map. cbn. abs_max_length; lia. }
       4:{ eapply IHHeval2; eauto. }
       2:{ rewrite nth_error_map, Econ. cbn. destruct c0; cbn in *; subst. inversion e0; subst. destruct m; cbn in *; subst. reflexivity. }
       eapply IHHeval1. eauto.
@@ -617,21 +623,21 @@ Proof.
        eapply eval_case_block.
        7: eapply NoDup_rev; eauto. 2:{ cbn.  destruct (@List.rev Malfunction.Ident.t (l')); cbn; try congruence. }
        eapply IHHeval1. eauto.
-       1:{ rewrite map_length. cbn. lia. }
-       1:{ cbn. rewrite map_length. rewrite e2. cbn. invs e0. lia. }
+       1:{ rewrite length_map. cbn. abs_max_length; lia. }
+       1:{ cbn. rewrite length_map. rewrite e2. cbn. invs e0. abs_max_length; lia. }
        rewrite nth_error_map, Econ. cbn. destruct c0; cbn in *; subst. inversion e0; subst. destruct m; cbn in *; subst. repeat f_equal.
-       rewrite length_app. rewrite List.rev_length.
-       setoid_rewrite <- Hll. cbn. lia.
+       rewrite length_app. rewrite List.length_rev.
+       setoid_rewrite <- Hll. cbn. abs_max_length; lia.
        rewrite map_InP_spec. rewrite nth_error_map. 
        rewrite e1. cbn [option_map].
        rewrite rev_map_spec. cbn. repeat f_equal.
        { clear - H3. induction H3; cbn; f_equal; subst; cbn; eauto. }
-       cbn. f_equal. rewrite map_length. rewrite length_app. rewrite List.rev_length.
-       setoid_rewrite <- Hll. cbn. lia. 
+       cbn. f_equal. rewrite length_map. rewrite length_app. rewrite List.length_rev.
+       setoid_rewrite <- Hll. cbn. abs_max_length; lia. 
        eapply IHHeval2. intros.
        cbn [List.rev].
        assert (#|List.rev l' ++ [y]| = List.length ((compile_value Σ v :: map (compile_value Σ) args))).
-       { rewrite length_app, List.rev_length. cbn. rewrite map_length. lia. }
+       { rewrite length_app, List.length_rev. cbn. rewrite length_map. abs_max_length; lia. }
        revert H. unfold Kernames.ident, Malfunction.Ident.t in *. clear - HΓ.
        generalize (List.rev l' ++ [y])%list. intros.
        destruct l; cbn in *; try congruence. 
@@ -779,18 +785,18 @@ Proof.
         | 0%nat => true
         | S _ => false
         end)).
-      rewrite firstn_length in H0.
+      rewrite length_firstn in H0.
       destruct nth_error eqn:E; try congruence.
       specialize (He2 _ _ E).
-      eapply nth_error_Some_length in E. lia. 
+      eapply nth_error_Some_length in E. abs_max_length; lia. 
     + depelim a. cbn.
       rewrite MRList.map_InP_spec.
       depelim IHa.
       cbn. econstructor. econstructor. eapply e1; eauto. clear e1.
-      2:{ cbn. rewrite map_length. clear a0. eapply EPrimitive.All2_Set_All2 in a. eapply All2_length in a. rewrite <- a.
+      2:{ cbn. rewrite length_map. clear a0. eapply EPrimitive.All2_Set_All2 in a. eapply All2_length in a. rewrite <- a.
           assert (EAst.cstr_nargs cdecl < int_to_nat PArray.max_length). {  destruct nth_error eqn:E; try congruence.
-          invs e. specialize (He2 _ _ E). cbn. lia. }
-          cbn in *. lia. }      
+          invs e. specialize (He2 _ _ E). cbn. abs_max_length; lia. }
+          cbn in *. abs_max_length; lia. }      
       induction a.
       * econstructor.
       * cbn. econstructor.
@@ -804,11 +810,11 @@ Proof.
       | 0%nat => true
       | S _ => false
       end)).
-    rewrite firstn_length in H0.
+    rewrite length_firstn in H0.
     destruct nth_error eqn:E; try congruence.
     eapply nth_error_Some_length in E. lia.
   - destruct p as [? []]. 1-2:inversion ev; subst; simp compile; econstructor.
-    cbn. now eapply unsupported_arrays.
+    cbn. now eapply unsupported_strings. now eapply unsupported_arrays.
   - now eapply unsupported_lazy.
   - now eapply unsupported_force.
 Qed.
@@ -954,6 +960,7 @@ Proof.
   - cbn. eapply nth_error_In  in e. destruct in_dec; eauto; tauto.
   - cbn in e. congruence.
   - cbn. rtoProp. repeat split; eauto. 
+  - unfold Mapply_u. destruct (compile Σ b0); cbn; rtoProp; try split; eauto.
   - unfold Mapply_u. destruct (compile Σ s0); cbn; rtoProp; try split; eauto.
     destruct p; cbn. rtoProp; repeat split; eauto.
     + destruct l; cbn; split; eauto.
@@ -1007,7 +1014,7 @@ Proof.
         intros. eapply IH; eauto.
         cbn in IH. eapply IH.
   - rtoProp. destruct brs.
-    + simp compile.
+    + now simp compile.
     + simp compile.
       unfold EGlobalEnv.lookup_constructor_pars_args, lookup_constructor_args, EGlobalEnv.lookup_constructor in *.
       revert H1. unfold EWellformed.wf_brs. destruct EGlobalEnv.lookup_inductive as [ [] | ]; cbn -[forallb mapi mapi_rec rev_map map map_InP In]; eauto. unfold Mcase. cbn [wellformed]. rtoProp.

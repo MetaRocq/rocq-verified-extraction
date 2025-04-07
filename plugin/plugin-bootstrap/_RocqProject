@@ -2,7 +2,7 @@
 -Q ../../theories Malfunction
 -Q . VerifiedExtraction
 
-META.coq-verified-extraction-malfunction
+META.rocq-verified-extraction-malfunction
 
 g_verified_extraction_malfunction.mlg
 verified_extraction_malfunction.mlpack
@@ -10,6 +10,7 @@ verified_extraction_malfunction.mlpack
 Loader.v
 PrimInt63.v
 PrimFloat.v
+PrimString.v
 PrimArray.v
 OCamlFFI.v
 RocqMsgFFI.v

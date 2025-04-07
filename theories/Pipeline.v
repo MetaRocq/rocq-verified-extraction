@@ -168,6 +168,7 @@ Definition extraction_term_flags_mlf :=
     EWellformed.has_tPrim := 
       {| EWellformed.has_primint := true;
          EWellformed.has_primfloat := true;
+         EWellformed.has_primstring := false;
          EWellformed.has_primarray := false |};
     EWellformed.has_tLazy_Force := false
   |}.
@@ -491,7 +492,7 @@ Program Definition switchable_erasure_pipeline econf :=
 Next Obligation.
 Proof.
   unfold optional_unsafe_transforms, optional_self_transform.
-  destruct enable_unsafe as [[] ? ? ? ?] => //.
+  destruct enable_unsafe as [[] ? ? ?] => //.
 Qed.
 
 Program Definition malfunction_pipeline 

@@ -1,6 +1,6 @@
-Require Import ZArith Array.PArray List Floats Lia.
+From Stdlib Require Import ZArith Array.PArray List Floats Lia.
 From Equations Require Import Equations.
-Require Import ssreflect.
+From Stdlib Require Import ssreflect.
 From Malfunction Require Import Malfunction utils_array.
 From MetaRocq.PCUIC Require Import PCUICAst PCUICFirstorder.
 

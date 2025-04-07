@@ -7,4 +7,4 @@ Verified Extract Constants [
   coq_msg_notice => "Rocq_verified_extraction_plugin__Rocq_ffi.msg_notice",
   coq_msg_debug => "Rocq_verified_extraction_plugin__Rocq_ffi.msg_debug",
   coq_user_error => "Rocq_verified_extraction_plugin__Rocq_ffi.user_error" ]
-Packages [ "coq_verified_extraction.plugin" ].
+Packages [ "rocq_verified_extraction.plugin" ].
