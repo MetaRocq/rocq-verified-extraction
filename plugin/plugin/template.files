@@ -99,8 +99,8 @@ extraction/mCCompare.ml
 extraction/mCCompare.mli
 extraction/reflectEq.mli
 extraction/reflectEq.ml
-extraction/mCList.ml
-extraction/mCList.mli
+extraction/mRList.ml
+extraction/mRList.mli
 extraction/mCOption.ml
 extraction/mCOption.mli
 extraction/mCRelations.ml
@@ -109,8 +109,8 @@ extraction/mCReflect.mli
 extraction/mCReflect.ml
 extraction/primFloat.mli
 extraction/primFloat.ml
-extraction/mCString.ml
-extraction/mCString.mli
+extraction/mRString.ml
+extraction/mRString.mli
 extraction/mCUtils.ml
 extraction/mCUtils.mli
 extraction/mSetDecide.ml

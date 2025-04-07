@@ -2,9 +2,9 @@ Require Import ZArith Array.PArray List Floats Lia.
 From Equations Require Import Equations.
 Require Import ssreflect.
 From Malfunction Require Import Malfunction utils_array.
-From MetaCoq.PCUIC Require Import PCUICAst PCUICFirstorder.
+From MetaRocq.PCUIC Require Import PCUICAst PCUICFirstorder.
 
-From MetaCoq.Utils Require Import bytestring.
+From MetaRocq.Utils Require Import bytestring.
 Import ListNotations.
 
 Open Scope bs. 
@@ -50,7 +50,7 @@ Inductive value `{Pointer} :=
 
 Definition heap `{Heap} := heapGen value.
 
- From Coq Require Import Uint63.
+ From Stdlib Require Import Uint63.
 
  Definition list_of_array {A : Type} (a:array A) : list A :=
    (fix go (n : nat) (i : int) (acc : list A) :=
@@ -214,8 +214,8 @@ Definition vector_type_eqb (t1 t2 : vector_type) :=
 
 Fixpoint get (n : nat) (s : string) {struct s} : option Byte.byte :=
   match s with
-  | MetaCoq.Utils.bytestring.String.EmptyString => None
-  | MetaCoq.Utils.bytestring.String.String c s' =>
+  | MetaRocq.Utils.bytestring.String.EmptyString => None
+  | MetaRocq.Utils.bytestring.String.String c s' =>
 	  match n with
       | 0 => Some c
       | S n' => get n' s'

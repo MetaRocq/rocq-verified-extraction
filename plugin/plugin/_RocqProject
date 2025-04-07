@@ -169,7 +169,7 @@ Loader.v
 PrimInt63.v
 PrimFloat.v
 PrimArray.v
-CoqMsgFFI.v
+RocqMsgFFI.v
 OCamlFFI.v
 Extract.v
 

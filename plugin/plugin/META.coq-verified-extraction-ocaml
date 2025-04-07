@@ -1,7 +1,7 @@
 
 package "plugin" (
   directory = "."
-  requires = "coq-core.plugins.ltac coq-metacoq-template-ocaml.plugin coq_verified_extraction.plugin stdlib-shims"
+  requires = "rocq-runtime.plugins.ltac rocq-metarocq-template-ocaml.plugin coq_verified_extraction.plugin stdlib-shims"
   archive(byte) = "verified_extraction_ocaml.cma"
   archive(native) = "verified_extraction_ocaml.cmxa"
   plugin(byte) = "verified_extraction_ocaml.cma"

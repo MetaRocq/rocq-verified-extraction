@@ -1,15 +1,15 @@
 (* Distributed under the terms of the MIT license. *)
-From Coq Require Import Program ssreflect ssrbool.
+From Stdlib Require Import Program ssreflect ssrbool.
 From Equations Require Import Equations.
-From MetaCoq.Common Require Import Transform config.
-From MetaCoq.Utils Require Import bytestring utils.
-From MetaCoq.PCUIC Require Import PCUICAst PCUICTyping PCUICReduction PCUICAstUtils PCUICSN
+From MetaRocq.Common Require Import Transform config.
+From MetaRocq.Utils Require Import bytestring utils.
+From MetaRocq.PCUIC Require Import PCUICAst PCUICTyping PCUICReduction PCUICAstUtils PCUICSN
     PCUICTyping PCUICProgram PCUICFirstorder PCUICEtaExpand.
-From MetaCoq.SafeChecker Require Import PCUICErrors PCUICWfEnvImpl.
-From MetaCoq.Erasure Require EAstUtils ErasureFunction ErasureCorrectness EImplementBox EPretty Extract.
-From MetaCoq Require Import ETransform EConstructorsAsBlocks.
-From MetaCoq.Erasure Require Import EWcbvEvalNamed.
-From MetaCoq.ErasurePlugin Require Import Erasure ErasureCorrectness.
+From MetaRocq.SafeChecker Require Import PCUICErrors PCUICWfEnvImpl.
+From MetaRocq.Erasure Require EAstUtils ErasureFunction ErasureCorrectness EImplementBox EPretty Extract.
+From MetaRocq Require Import ETransform EConstructorsAsBlocks.
+From MetaRocq.Erasure Require Import EWcbvEvalNamed.
+From MetaRocq.ErasurePlugin Require Import Erasure ErasureCorrectness.
 From Malfunction Require Import CeresSerialize CompileCorrect SemanticsSpec FFI.
 Import PCUICProgram.
 (* Import TemplateProgram (template_eta_expand).
@@ -110,7 +110,7 @@ Proof.
   destruct g; cbn in *; congruence.
 Qed.
 
-From MetaCoq.Erasure Require Import EImplementBox EWellformed EProgram.
+From MetaRocq.Erasure Require Import EImplementBox EWellformed EProgram.
 
 Lemma implement_box_firstorder_evalue_block {efl : EEnvFlags} Σ v_t :
   firstorder_evalue_block Σ v_t ->
@@ -231,7 +231,7 @@ Section compile_value_mf.
   intros ? Hlookup; rewrite Hlookup. destruct g; eauto; simpl.
   specialize (noParam (inductive_mind i0)). assert (ind_npars m = 0) by eauto. rewrite H3. 
   rewrite skipn_0. set (map _ _). simpl. rewrite EImplementBox.implement_box_unfold_eq. simpl.
-  f_equal. erewrite MCList.map_InP_spec. clear -H1. unfold l; clear l. induction H1; eauto. simpl. f_equal; eauto.
+  f_equal. erewrite MRList.map_InP_spec. clear -H1. unfold l; clear l. induction H1; eauto. simpl. f_equal; eauto.
   Qed. 
         
   Lemma represent_value_eval_fo p : 

@@ -1,9 +1,9 @@
 *.cmx
 *.cmxs
 *.mlf
-Makefile.coq
-Makefile.coq.conf
-_CoqProject
+Makefile.rocq
+Makefile.rocq.conf
+_RocqProject
 naturals
 ones
 show_lfact

@@ -1,27 +1,27 @@
-(* Require Import CertiCoq. *)
-From MetaCoq Require Import Template.Ast.
+(* Require Import CertiStdlib. *)
+From MetaRocq Require Import Template.Ast.
 Require Import Arith List.
 
 Import ListNotations.
 
-(** * VST specs for compiled Coq programs
+(** * VST specs for compiled Rocq programs
 
     The idea is that we want to derive a proof in Verifiable C (VST's separation
-    logic) for compiled Coq programs. These specifications will relate the
-    original Coq function (rather than L1g abstract syntax) with the compiled C
+    logic) for compiled Rocq programs. These specifications will relate the
+    original Rocq function (rather than L1g abstract syntax) with the compiled C
     code.
 
-    Let [f : A -> B] be a Coq function and [f_in_C : compcert.exp] its
+    Let [f : A -> B] be a Rocq function and [f_in_C : compcert.exp] its
     translation. Then we want:
 
     forall (a: A) (v : compcert.val),
       {{ rep_A a v }} f_in_C(v)  {{ret. rep_B (f a) ret }}
 
     
-    The separation logic predicate rep_A describes how Coq values of type A are
+    The separation logic predicate rep_A describes how Rocq values of type A are
     laid out as a C data structure.
     
-    For instance, if for simplicity we assume that Coq values of type [list A]
+    For instance, if for simplicity we assume that Rocq values of type [list A]
     will be represented as a null terminated linked lists, then rep_list will,
     very roughly, be
 
@@ -53,7 +53,7 @@ Import ListNotations.
    It should be possible to obtain a similar theorem for L1 -> C light just from
    our compiler correctness theorem.
 
-   The following explains how can we obtain such a theorem for Coq -> L1 to
+   The following explains how can we obtain such a theorem for Rocq -> L1 to
    eventually compose the two and derive the desired theorem.
 
   This idea seems to be similar with the one presented in
@@ -68,7 +68,7 @@ Axiom (eval : Ast.term -> Ast.term).
 
 Class Rep (A : Type) :=
   {
-    (* An Ast.term represents a Coq value *)
+    (* An Ast.term represents a Rocq value *)
     rep : A -> Ast.term -> Prop
   }.
 
@@ -79,12 +79,12 @@ Fixpoint nat_rep (n : nat) (v : Ast.term) : Prop :=
   match n with
     | O => 
       match v with
-        | Ast.tConstruct (Ast.mkInd "Coq.Init.Datatypes.nat" 0) 0 => True 
+        | Ast.tConstruct (Ast.mkInd "Stdlib.Init.Datatypes.nat" 0) 0 => True 
         | _ => False
       end
     | S n =>
       match v with
-        | Ast.tApp (Ast.tConstruct (Ast.mkInd "Coq.Init.Datatypes.nat" 0) 1) [x] =>
+        | Ast.tApp (Ast.tConstruct (Ast.mkInd "Stdlib.Init.Datatypes.nat" 0) 1) [x] =>
           nat_rep n x
         | _ => False
       end
@@ -99,12 +99,12 @@ Fixpoint list_rep {A : Type} `{Rep A} (l : list A) (v : Ast.term) : Prop :=
   match l with
     | [] =>
       match v with
-        | Ast.tConstruct (Ast.mkInd "Coq.Init.Datatypes.list" 0) 0 => True 
+        | Ast.tConstruct (Ast.mkInd "Stdlib.Init.Datatypes.list" 0) 0 => True 
         | _ => False
       end
     | hd :: tl =>
       match v with
-        | Ast.tApp (Ast.tConstruct (Ast.mkInd "Coq.Init.Datatypes.list" 0) 1) [typ; vhd; vtl] =>
+        | Ast.tApp (Ast.tConstruct (Ast.mkInd "Stdlib.Init.Datatypes.list" 0) 1) [typ; vhd; vtl] =>
           rep hd vhd /\ list_rep tl vtl
         | _ => False
       end
@@ -148,7 +148,7 @@ Instance ProdRep (B : Type -> Type) `{forall (A : Type) (H : Rep A), Rep (B A)}
 
 (* This resembles a lot the approach we follow in QuickChick to automatically
    generate correctness proofs for automatically generated generators. We do the
-   proof term generation in OCaml, but I think it would be nice to do it in Coq
+   proof term generation in OCaml, but I think it would be nice to do it in Rocq
    and then reflect the terms. *)
 
 Instance ProdRep (B : Type -> Type) `{forall (A : Type) (H : Rep A), Rep (B A)}

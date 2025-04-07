@@ -1,7 +1,7 @@
 Require Import Nat List.
-From Coq Require Import Strings.Ascii.
-From MetaCoq.Template Require Import Loader All Checker.
-From MetaCoq.Utils Require Import bytestring.
+From Stdlib Require Import Strings.Ascii.
+From MetaRocq.Template Require Import Loader All Checker.
+From MetaRocq.Utils Require Import bytestring.
 
 Open Scope bool_scope.
 Open Scope bs.
@@ -115,8 +115,8 @@ Section fix_global.
   Fixpoint print_constructors pars (names : list ident) (l : list constructor_body) :=
     match l with
     | [] => ""
-    | [c] => print_constructor c.(cstr_name) names (skipn pars (MCList.rev (fst (decompose_prod_assum [] c.(cstr_type)))))
-    | c :: l => print_constructor c.(cstr_name) names (skipn pars (MCList.rev (fst (decompose_prod_assum [] c.(cstr_type))))) ++ " | " ++ print_constructors pars names l
+    | [c] => print_constructor c.(cstr_name) names (skipn pars (MRList.rev (fst (decompose_prod_assum [] c.(cstr_type)))))
+    | c :: l => print_constructor c.(cstr_name) names (skipn pars (MRList.rev (fst (decompose_prod_assum [] c.(cstr_type))))) ++ " | " ++ print_constructors pars names l
     end.
 
   Fixpoint print_record nms (ctx : context) :=
@@ -150,10 +150,10 @@ Section fix_global.
     match m.(ind_finite) with
     | Finite =>
         "type " ++
-                print_parens_around ", " (MCList.rev_map (fun d => typevariable_from_aname (d.(decl_name))) m.(ind_params)) ++
-                print_inductive_bodies m.(ind_npars) (map (fun d => typevariable_from_aname (d.(decl_name))) m.(ind_params) ++ MCList.rev_map (fun x=> uncapitalize (ind_name x)) m.(ind_bodies)) m.(ind_bodies)
+                print_parens_around ", " (MRList.rev_map (fun d => typevariable_from_aname (d.(decl_name))) m.(ind_params)) ++
+                print_inductive_bodies m.(ind_npars) (map (fun d => typevariable_from_aname (d.(decl_name))) m.(ind_params) ++ MRList.rev_map (fun x=> uncapitalize (ind_name x)) m.(ind_bodies)) m.(ind_bodies)
     | BiFinite => "type " ++
-                   print_parens_around ", " (MCList.rev_map (fun d => typevariable_from_aname (d.(decl_name))) m.(ind_params)) ++
+                   print_parens_around ", " (MRList.rev_map (fun d => typevariable_from_aname (d.(decl_name))) m.(ind_params)) ++
                    (uncapitalize na) ++ " = " ++ "{ " ++ print_record_bodies m.(ind_npars) m.(ind_bodies) ++ " }"
     | CoFinite => "<co recursive type not supported>"
     end.
@@ -186,7 +186,7 @@ Fixpoint decompose_prod (t : Ast.term) : list Ast.term :=
 Definition print_mli names (p : program) :=
   print_globals (p.1.(declarations)) ++ nl ++ fold_right (fun '(na,t) str => "val " ++ (uncapitalize na) ++ " : " ++ print_type p.1.(declarations) t ++ nl ++ str) ""%bs (combine names (rev (decompose_prod p.2))).
 
-Import MCMonadNotation.
+Import MRMonadNotation.
 
 Fixpoint extract_names (t : Ast.term) : list ident :=
   match t with
@@ -219,10 +219,10 @@ Notation "'Print' 'mli' x" := (PrintMLI x) (at level 0).
 
 (* Definition test (A : Type) (u : testrec) (a : list A) (l : ltree) := a. *)
 
-(* MetaCoq Run Print mli (test, add). *)
+(* MetaRocq Run Print mli (test, add). *)
 
 (* Definition ho (f : bool -> bool) := f true. *)
 
-(* MetaCoq Run Print mli ho. *)
+(* MetaRocq Run Print mli ho. *)
 
-(* MetaCoq Run Print mli Byte.to_nat. *)
+(* MetaRocq Run Print mli Byte.to_nat. *)

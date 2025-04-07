@@ -1,4 +1,4 @@
-Require Import MetaCoq.Utils.bytestring.
+Require Import MetaRocq.Utils.bytestring.
 
 Axiom (coq_msg_info : string -> unit).
 Axiom (coq_msg_notice : string -> unit).

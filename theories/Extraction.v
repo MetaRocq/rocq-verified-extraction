@@ -1,6 +1,6 @@
 (* Distributed under the terms of the MIT license. *)
-From Coq Require Import Ascii FSets ExtrOcamlBasic ExtrOCamlFloats ExtrOCamlInt63.
-From MetaCoq Require Import Utils.utils.
+From Stdlib Require Import Ascii FSets ExtrOcamlBasic ExtrOCamlFloats ExtrOCamlInt63.
+From MetaRocq Require Import Utils.utils.
 From Malfunction Require Import Pipeline.
 
 (** * Extraction setup for the erasure phase of template-coq.
@@ -32,8 +32,8 @@ Extract Constant Equations.Init.pr1 => "fst".
 Extract Constant Equations.Init.pr2 => "snd".
 Extraction Inline Equations.Init.pr1 Equations.Init.pr2.
 
-Extract Constant FFI.coq_msg_info => "Coq_verified_extraction_plugin__Coq_ffi.msg_info".
-Extract Constant FFI.coq_user_error => "Coq_verified_extraction_plugin__Coq_ffi.user_error".
+Extract Constant FFI.coq_msg_info => "Rocq_verified_extraction_plugin__Rocq_ffi.msg_info".
+Extract Constant FFI.coq_user_error => "Rocq_verified_extraction_plugin__Rocq_ffi.user_error".
 Extraction Inline FFI.coq_msg_info.
 Extraction Inline FFI.coq_user_error.
 
@@ -44,4 +44,4 @@ Set Extraction Output Directory "plugin/plugin/extraction".
 
 Separate Extraction compile_malfunction 
          (* The following directives ensure separate extraction does not produce name clashes *)
-         Coq.Strings.String utils Template.UnivSubst ELiftSubst EGlobalEnv.
+         Stdlib.Strings.String utils Template.UnivSubst ELiftSubst EGlobalEnv.

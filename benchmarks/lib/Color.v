@@ -29,7 +29,7 @@
 (*  PRELIMINARIES:  EFFICIENT DATA STRUCTURES FOR REPRESENTING
     SETS OF NODES, and FUNCTIONS THAT MAP NODES TO WHATEVER *)
 
-Require Import List ZArith Coq.micromega.Lia.
+Require Import List ZArith Stdlib.micromega.Lia.
 Require Import FSets.    (* Efficient functional sets *)
 Require Import FMaps.  (* Efficient functional maps *)
 Require Import Compare_dec.  (* to get lt_dec on natural numbers *)
@@ -42,13 +42,13 @@ Require Import Compare_dec.  (* to get lt_dec on natural numbers *)
   of maps) will be E.t;  and type type of sets will be S.t, and maps from E.t to A 
   will be M.t(A) for any type A.
  
-   We choose the "positive" type, because the Coq library has particularly efficient
+   We choose the "positive" type, because the Rocq library has particularly efficient
    implementations of sets and maps on positives.  But our proofs will
   be easier if we hide the particular representation type.  We would like to say,
    Module E <: OrderedType := PositiveOrderedTypeBits.
    Module S <: (FSetInterface.S with Module E := E) := PositiveSet.
    Module M <: (FMapInterface.S with Module E := E) := PositiveMap.
-  but for a stupid Coq technical reason (transparency of definitions interfering 
+  but for a stupid Rocq technical reason (transparency of definitions interfering 
   with rewrite tactics) we use the following clumsy definition instead:
 *)   
 Module E : OrderedType with Definition t := BinPos.positive

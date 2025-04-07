@@ -1,4 +1,4 @@
-From Coq Require Import Streams StreamMemo.
+From Stdlib Require Import Streams StreamMemo.
 Require Import ZArith.
 Open Scope Z_scope.
 

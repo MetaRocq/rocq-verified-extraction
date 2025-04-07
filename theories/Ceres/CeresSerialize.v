@@ -1,7 +1,7 @@
 (** * Serialization to S-expressions *)
 
 (* begin hide *)
-From Coq Require Import
+From Stdlib Require Import
   List
   ZArith
   Ascii
@@ -15,7 +15,7 @@ From Malfunction Require Import
   CeresFormat.
 (* end hide *)
 
-From MetaCoq.Utils Require Import bytestring.
+From MetaRocq.Utils Require Import bytestring.
 
 (** Serialization to S-expressions. *)
 Class Serialize (A : Type) :=

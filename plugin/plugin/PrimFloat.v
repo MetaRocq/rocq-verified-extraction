@@ -1,24 +1,24 @@
 From Malfunction.Plugin Require Loader.
-From Coq.Floats Require Import PrimFloat.
+From Stdlib.Floats Require Import PrimFloat.
 
 Verified Extract Constants [ 
-  Coq.Floats.PrimFloat.float erased,
-  Coq.Floats.PrimFloat.compare => "Coq_verified_extraction_ocaml_ffi__Float64.compare",
-  Coq.Floats.PrimFloat.eqb => "Coq_verified_extraction_ocaml_ffi__Float64.equal",
-  Coq.Floats.PrimFloat.ltb => "Coq_verified_extraction_ocaml_ffi__Float64.lt",
-  Coq.Floats.PrimFloat.leb => "Coq_verified_extraction_ocaml_ffi__Float64.le",
-  Coq.Floats.PrimFloat.frshiftexp => "Coq_verified_extraction_ocaml_ffi__Float64.frshiftexp",
-  Coq.Floats.PrimFloat.ldshiftexp => "Coq_verified_extraction_ocaml_ffi__Float64.ldshiftexp",
-  Coq.Floats.PrimFloat.normfr_mantissa => "Coq_verified_extraction_ocaml_ffi__Float64.normfr_mantissa",
-  Coq.Floats.PrimFloat.classify => "Coq_verified_extraction_ocaml_ffi__Float64.classify",
-  Coq.Floats.PrimFloat.abs => "Coq_verified_extraction_ocaml_ffi__Float64.abs",
-  Coq.Floats.PrimFloat.sqrt => "Coq_verified_extraction_ocaml_ffi__Float64.sqrt",
-  Coq.Floats.PrimFloat.opp => "Coq_verified_extraction_ocaml_ffi__Float64.opp",
-  Coq.Floats.PrimFloat.div => "Coq_verified_extraction_ocaml_ffi__Float64.div",
-  Coq.Floats.PrimFloat.mul => "Coq_verified_extraction_ocaml_ffi__Float64.mul",
-  Coq.Floats.PrimFloat.add => "Coq_verified_extraction_ocaml_ffi__Float64.add",
-  Coq.Floats.PrimFloat.sub => "Coq_verified_extraction_ocaml_ffi__Float64.sub",
-  Coq.Floats.PrimFloat.of_uint63 => "Coq_verified_extraction_ocaml_ffi__Float64.of_uint63",
-  Coq.Floats.PrimFloat.next_up => "Coq_verified_extraction_ocaml_ffi__Float64.next_up",
-  Coq.Floats.PrimFloat.next_down => "Coq_verified_extraction_ocaml_ffi__Float64.next_down" ]
+  Stdlib.Floats.PrimFloat.float erased,
+  Stdlib.Floats.PrimFloat.compare => "Rocq_verified_extraction_ocaml_ffi__Float64.compare",
+  Stdlib.Floats.PrimFloat.eqb => "Rocq_verified_extraction_ocaml_ffi__Float64.equal",
+  Stdlib.Floats.PrimFloat.ltb => "Rocq_verified_extraction_ocaml_ffi__Float64.lt",
+  Stdlib.Floats.PrimFloat.leb => "Rocq_verified_extraction_ocaml_ffi__Float64.le",
+  Stdlib.Floats.PrimFloat.frshiftexp => "Rocq_verified_extraction_ocaml_ffi__Float64.frshiftexp",
+  Stdlib.Floats.PrimFloat.ldshiftexp => "Rocq_verified_extraction_ocaml_ffi__Float64.ldshiftexp",
+  Stdlib.Floats.PrimFloat.normfr_mantissa => "Rocq_verified_extraction_ocaml_ffi__Float64.normfr_mantissa",
+  Stdlib.Floats.PrimFloat.classify => "Rocq_verified_extraction_ocaml_ffi__Float64.classify",
+  Stdlib.Floats.PrimFloat.abs => "Rocq_verified_extraction_ocaml_ffi__Float64.abs",
+  Stdlib.Floats.PrimFloat.sqrt => "Rocq_verified_extraction_ocaml_ffi__Float64.sqrt",
+  Stdlib.Floats.PrimFloat.opp => "Rocq_verified_extraction_ocaml_ffi__Float64.opp",
+  Stdlib.Floats.PrimFloat.div => "Rocq_verified_extraction_ocaml_ffi__Float64.div",
+  Stdlib.Floats.PrimFloat.mul => "Rocq_verified_extraction_ocaml_ffi__Float64.mul",
+  Stdlib.Floats.PrimFloat.add => "Rocq_verified_extraction_ocaml_ffi__Float64.add",
+  Stdlib.Floats.PrimFloat.sub => "Rocq_verified_extraction_ocaml_ffi__Float64.sub",
+  Stdlib.Floats.PrimFloat.of_uint63 => "Rocq_verified_extraction_ocaml_ffi__Float64.of_uint63",
+  Stdlib.Floats.PrimFloat.next_up => "Rocq_verified_extraction_ocaml_ffi__Float64.next_up",
+  Stdlib.Floats.PrimFloat.next_down => "Rocq_verified_extraction_ocaml_ffi__Float64.next_down" ]
 Packages [ "coq_verified_extraction_ocaml_ffi" ].

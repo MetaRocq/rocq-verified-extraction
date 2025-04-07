@@ -3,7 +3,7 @@
 @@ -10,7 +10,6 @@
  open Kernames
  open List0
- open MCString
+ open MRString
 -open Malfunction
  open Nat0
  open PeanoNat
@@ -21,7 +21,7 @@
 @@ -10,7 +10,6 @@
  open Kernames
  open List0
- open MCString
+ open MRString
 -open Malfunction
  open Nat0
  open PeanoNat
@@ -39,7 +39,7 @@
 @@ -8,8 +8,8 @@
  open Kernames
  open List0
- open MCList
+ open MRList
 -open Malfunction
  open Nat0
 +open Malfunction
@@ -51,7 +51,7 @@
 @@ -15,9 +15,9 @@
  open Kernames
  open List0
- open MCString
+ open MRString
 +open PrimInt63
  open Nat0
  open PeanoNat

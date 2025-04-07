@@ -1,15 +1,15 @@
 (* Distributed under the terms of the MIT license. *)
-From Coq Require Import Program ssreflect ssrbool.
+From Stdlib Require Import Program ssreflect ssrbool.
 From Equations Require Import Equations.
-From MetaCoq.Common Require Import Transform config.
-From MetaCoq.Utils Require Import bytestring utils.
-From MetaCoq.PCUIC Require Import PCUICAst PCUICTyping PCUICReduction PCUICAstUtils PCUICSN
+From MetaRocq.Common Require Import Transform config.
+From MetaRocq.Utils Require Import bytestring utils.
+From MetaRocq.PCUIC Require Import PCUICAst PCUICTyping PCUICReduction PCUICAstUtils PCUICSN
     PCUICTyping PCUICProgram PCUICFirstorder PCUICEtaExpand.
-From MetaCoq.SafeChecker Require Import PCUICErrors PCUICWfEnvImpl.
-From MetaCoq.Erasure Require EAstUtils ErasureFunction ErasureCorrectness EImplementBox EPretty Extract.
-From MetaCoq Require Import ETransform EConstructorsAsBlocks.
-From MetaCoq.Erasure Require Import EWcbvEvalNamed.
-From MetaCoq.ErasurePlugin Require Import Erasure ErasureCorrectness.
+From MetaRocq.SafeChecker Require Import PCUICErrors PCUICWfEnvImpl.
+From MetaRocq.Erasure Require EAstUtils ErasureFunction ErasureCorrectness EImplementBox EPretty Extract.
+From MetaRocq Require Import ETransform EConstructorsAsBlocks.
+From MetaRocq.Erasure Require Import EWcbvEvalNamed.
+From MetaRocq.ErasurePlugin Require Import Erasure ErasureCorrectness.
 From Malfunction Require Import CeresSerialize CompileCorrect SemanticsSpec FFI.
 Import PCUICProgram.
 (* Import TemplateProgram (template_eta_expand).
@@ -88,7 +88,7 @@ Notation "a >>> s" := (bool_good_error a s) (at level 65).
 
 Definition array_length_Z := Uint63.to_Z array_length.
 
-From MetaCoq Require EWellformed.
+From MetaRocq Require EWellformed.
 
 Section params.
 
@@ -205,7 +205,7 @@ Next Obligation.
   program_simpl. red. program_simpl.  exists v. auto.
 Qed.
 
-From MetaCoq.Erasure Require Import EImplementBox EWellformed EProgram.
+From MetaRocq.Erasure Require Import EImplementBox EWellformed EProgram.
 
 Lemma implement_box_good_for_extraction
   (efl := extraction_env_flags_mlf : EEnvFlags) :

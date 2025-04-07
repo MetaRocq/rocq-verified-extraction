@@ -1,6 +1,6 @@
 PLUGINPATH = ../../lib/coq_verified_extraction_plugin/_build/install/default/lib:../../lib/coq_verified_extraction_ocaml_ffi/_build/install/default/lib
 
-all: Makefile.bootstrap Makefile.coq plugin
+all: Makefile.bootstrap Makefile.rocq plugin
 	
 compile_malfunction:
 	mkdir -p _build
@@ -8,18 +8,18 @@ compile_malfunction:
 	cp _build/compile_malfunction.mlf compile_malfunction.mlf
 	
 plugin: compile_malfunction
-	OCAMLPATH=$(PLUGINPATH) make -f Makefile.coq
+	OCAMLPATH=$(PLUGINPATH) make -f Makefile.rocq
 
-install: Makefile.coq all
-	make -f Makefile.coq install
+install: Makefile.rocq all
+	make -f Makefile.rocq install
 
 Makefile.bootstrap: _BootstrapProject
 	coq_makefile -f _BootstrapProject -o Makefile.bootstrap
 
-Makefile.coq: _CoqProject
-	coq_makefile -f _CoqProject -o Makefile.coq
+Makefile.rocq: _RocqProject
+	coq_makefile -f _RocqProject -o Makefile.rocq
 
-clean: Makefile.coq Makefile.bootstrap
+clean: Makefile.rocq Makefile.bootstrap
 	make -f Makefile.bootstrap clean
-	make -f Makefile.coq clean
+	make -f Makefile.rocq clean
 	rm -rf _build

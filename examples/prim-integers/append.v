@@ -80,12 +80,12 @@ Definition append1_sorted_option (s : list int) (x : int) : option (list int) :=
 From VerifiedExtraction Require Import Extraction OCamlFFI.
 Set Verified Extraction Build Directory ".".
 
-From MetaCoq.Utils Require Import bytestring.
+From MetaRocq.Utils Require Import bytestring.
 
 Definition test := append1_and_sort [1%uint63] 1.
 Eval compute in test.
-From MetaCoq Require Import Show.
+From MetaRocq Require Import Show.
 Definition append1_and_sort_test := print_string (show test).
 
-MetaCoq Run Print mli append1_and_sort_test.
+MetaRocq Run Print mli append1_and_sort_test.
 Verified Extraction -compile-with-coq -run append1_and_sort_test "append1_and_sort.mlf".

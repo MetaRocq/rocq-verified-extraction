@@ -1,5 +1,5 @@
 (************************************************************************)
-(*         *   The Coq Proof Assistant / The Coq Development Team       *)
+(*         *   The Rocq Proof Assistant / The Rocq Development Team       *)
 (*  v      *         Copyright INRIA, CNRS and contributors             *)
 (* <O___,, * (see version control and CREDITS file for authors & dates) *)
 (*   \VV/  **************************************************************)
@@ -11,7 +11,7 @@
 (** [t] is currently implemented by OCaml's [float] type.
 
 Beware: NaNs have a sign and a payload, while they should be
-indistinguishable from Coq's perspective. *)
+indistinguishable from Rocq's perspective. *)
 type t
 
 (** Test functions for special values to avoid calling [classify] *)

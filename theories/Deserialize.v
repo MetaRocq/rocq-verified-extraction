@@ -42,7 +42,7 @@ Notation con2c f := (Deser.con2 (fun x y => f (x, y))).
     end.
 
 
-Definition int_of_nat n := Int63.of_Z (Coq.ZArith.BinInt.Z.of_nat n).
+Definition int_of_nat n := Int63.of_Z (Stdlib.ZArith.BinInt.Z.of_nat n).
 
 Definition Mif c e1 e2 := Mswitch (c, [ ([ Tag (int_of_nat 0) ], e1 ); ([Deftag ], e2) ]). (* TODO: tag _ is allowed?? *)
 

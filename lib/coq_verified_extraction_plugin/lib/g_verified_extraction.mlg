@@ -20,33 +20,33 @@ open Verified_extraction
 
 }
 
-VERNAC ARGUMENT EXTEND metaCoqRegister_extract_cnst 
+VERNAC ARGUMENT EXTEND metaRocqRegister_extract_cnst 
 | [ reference(gr) "erased" ] -> { (constant_of_qualid ~loc gr, Erased) }
 | [ reference(gr) "=>" string(str) natural(arity) ] ->
   { extract_primitive (constant_of_qualid ~loc gr) str arity }
 | [ reference(gr) "=>" string(str) ] -> { extract_constant (constant_of_qualid ~loc gr) str }
 END
 
-VERNAC ARGUMENT EXTEND metaCoqRegister_extract_inline
+VERNAC ARGUMENT EXTEND metaRocqRegister_extract_inline
 | [ reference(gr) ] -> { (constant_of_qualid ~loc gr) }
 END
 
-VERNAC ARGUMENT EXTEND metaCoqRegister_extract_inductive 
+VERNAC ARGUMENT EXTEND metaRocqRegister_extract_inductive 
 | [ reference(gr) "=>" string(ty) "[" natural_list(cstrs) "]" ] ->
   { extract_inductive (inductive_of_qualid ~loc gr) (ty, cstrs) }
 END
 
-VERNAC COMMAND EXTEND MetaCoqExtract_Register CLASSIFIED AS SIDEFF
-| [ "Verified" "Extract" "Constants" "[" metaCoqRegister_extract_cnst_list_sep(prims, ",") "]" "Packages" "[" string_list_sep(packages, ",") "]" ] -> {
+VERNAC COMMAND EXTEND MetaRocqExtract_Register CLASSIFIED AS SIDEFF
+| [ "Verified" "Extract" "Constants" "[" metaRocqRegister_extract_cnst_list_sep(prims, ",") "]" "Packages" "[" string_list_sep(packages, ",") "]" ] -> {
     register prims packages
   }
-| [ "Verified" "Extract" "Constants" "[" metaCoqRegister_extract_cnst_list_sep(prims, ",") "]" ] -> {
+| [ "Verified" "Extract" "Constants" "[" metaRocqRegister_extract_cnst_list_sep(prims, ",") "]" ] -> {
     register prims []
   }
-| [ "Verified" "Extract" "Inductives" "[" metaCoqRegister_extract_inductive_list_sep(inds, ",") "]" ] -> {
+| [ "Verified" "Extract" "Inductives" "[" metaRocqRegister_extract_inductive_list_sep(inds, ",") "]" ] -> {
     register_inductives inds
 }
-| [ "Verified" "Extract" "Inline" "[" metaCoqRegister_extract_inline_list_sep(csts, ",") "]" ] -> {
+| [ "Verified" "Extract" "Inline" "[" metaRocqRegister_extract_inline_list_sep(csts, ",") "]" ] -> {
     register_inlines csts
 }
 END

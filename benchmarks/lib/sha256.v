@@ -3,10 +3,10 @@
 (* Certicoq: Inspired by OEUF's modified version to remove dependencies on other VST files. *)
 Require Recdef.
 Require Import compcert.lib.Integers.
-Require Import compcert.lib.Coqlib.
-Require Import Coq.Strings.String.
-Require Import Coq.Strings.Ascii.
-Require Import Coq.micromega.Lia.
+Require Import compcert.lib.Rocqlib.
+Require Import Stdlib.Strings.String.
+Require Import Stdlib.Strings.Ascii.
+Require Import Stdlib.micromega.Lia.
 Require Import List.
 
 

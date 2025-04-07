@@ -1,10 +1,11 @@
-From Coq Require Import List String Arith Lia.
+From Stdlib Require Import List String Arith Lia Cyclic.Int63.Uint63.
 Import ListNotations.
 From Equations Require Import Equations.
+Import Logic.
 
-From MetaCoq.PCUIC Require Import PCUICAstUtils.
-From MetaCoq.Utils Require Import MCList bytestring.
-From MetaCoq.Erasure Require Import EAst ESpineView EEtaExpanded EInduction ERemoveParams Erasure EGlobalEnv.
+From MetaRocq.PCUIC Require Import PCUICAstUtils.
+From MetaRocq.Utils Require Import MRList bytestring.
+From MetaRocq.Erasure Require Import EAst ESpineView EEtaExpanded EInduction ERemoveParams Erasure EGlobalEnv.
 
 From Malfunction Require Import utils_array Malfunction.
 Open Scope bs.
@@ -54,7 +55,7 @@ Definition Mcase : list nat * t * list (list Ident.t * t) -> t :=
       end,
       Mapply_ (Mlambda_ (nms, b), mapi (fun i _ => Mfield (int_of_nat i, discr)) (nms)))) brs).
 
-From MetaCoq Require Import EAst.
+From MetaRocq Require Import EAst.
 
 Section Compile.
   Context (Σ : global_declarations).
@@ -96,6 +97,31 @@ Section Compile.
   Definition force_lambda (t : Malfunction.t) :=
     if is_wf_rec_body t then t
     else Mlambda (["__expanded"], Mapply_u t (Mvar "__expanded")).
+  
+  (* Import Sigma_Notations.
+  Import ZArith.
+  Equations? char63_valid_to_byte (s : PrimString.char63) (v : PrimStringAxioms.char63_valid s): Byte.byte :=
+    | s | v with inspect (Byte.of_nat (Uint63.to_nat s)) :=
+      { | exist (Some x) _ => x
+        | exist None hnone => False_rect _ _ }.
+  Proof.
+    red in v. 
+    apply Byte.of_nat_None_iff in hnone.
+    rewrite <- v in hnone; clear v.
+    rewrite <- (Nat2Z.id 255) in hnone.
+    eapply Z2Nat.inj_lt in hnone; auto with zarith.
+    rewrite Int63.land_spec' in hnone.
+    rewrite (Z.land_ones _ 8) in hnone; lia.
+  Qed. *)
+
+  Definition char63_to_byte (s : PrimString.char63) : Byte.byte :=
+    match Byte.of_nat (Uint63.to_nat s) with
+    | None => Byte.x00
+    | Some x => x
+    end.
+
+  Definition string_of_primstring (s : PrimString.string) : string :=
+    String.parse (List.map char63_to_byte (PrimStringAxioms.to_list s)).
 
   Equations? compile (t: term) : Malfunction.t
     by wf t (fun x y : EAst.term => size x < size y) :=
@@ -132,6 +158,7 @@ Section Compile.
           | None => Mstring "inductive not found" }
       | tPrim (existT (EPrimitive.primIntModel i)) => Mnum (numconst_Int i)
       | tPrim (existT (EPrimitive.primFloatModel f)) => Mnum (numconst_Float64 f)
+      | tPrim (existT (EPrimitive.primStringModel s)) => Mstring (string_of_primstring s)
       | tPrim (existT (EPrimitive.primArrayModel a)) => 
           let default := compile (EPrimitive.array_default a) in
           let values := map_InP (EPrimitive.array_value a) (fun v H => compile v) in

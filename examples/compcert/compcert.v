@@ -4,6 +4,6 @@ From compcert Require Import Compiler.
 
 Verified Extraction transf_c_program "compcert.mlf".
 
-(* From MetaCoq Require Import bytestring. *)
+(* From MetaRocq Require Import bytestring. *)
 (* Open Scope bs. *)
-(* MetaCoq Run Print mli transf_c_program. *)
+(* MetaRocq Run Print mli transf_c_program. *)

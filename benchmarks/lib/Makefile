@@ -1,8 +1,8 @@
 
 .PHONY: all
 
-all: Makefile.coq
-	@make -f Makefile.coq 
+all: Makefile.rocq
+	@make -f Makefile.rocq 
 
-Makefile.coq: _CoqProject
-	@coq_makefile -f _CoqProject -o Makefile.coq
+Makefile.rocq: _RocqProject
+	@coq_makefile -f _RocqProject -o Makefile.rocq

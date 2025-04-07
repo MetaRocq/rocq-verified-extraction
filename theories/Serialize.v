@@ -1,5 +1,5 @@
-From MetaCoq.Utils Require Import bytestring ReflectEq utils.
-From MetaCoq.Common Require Kernames.
+From MetaRocq.Utils Require Import bytestring ReflectEq utils.
+From MetaRocq.Common Require Kernames.
 
 Require Import String Ascii Bool Arith.
 Require Import Malfunction.Malfunction.
@@ -49,7 +49,7 @@ Definition sint_to_Z := Sint63.to_Z.
    fun i => to_sexp (sint_to_Z i).
 
 Import SpecFloat.
-From Coq Require Numbers.HexadecimalString. 
+From Stdlib Require Numbers.HexadecimalString. 
 Definition string_of_specfloat (f : SpecFloat.spec_float) : string :=
   match f with
   | S754_zero sign => if sign then "-0.0" else "0.0"
@@ -256,7 +256,7 @@ Fixpoint find_prim (id : Ident.t) (prims : primitives) : option (prim_def string
 Section binders.
   Context (x : bytestring.string).
   
-  Definition add_suffix n := (x ++ MCString.string_of_nat n)%bs.
+  Definition add_suffix n := (x ++ MRString.string_of_nat n)%bs.
 
   Fixpoint binders n acc := 
     match n with

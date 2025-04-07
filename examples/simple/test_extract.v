@@ -1,16 +1,16 @@
 From Equations Require Import Equations.
 From Malfunction Require Import FFI.
 From VerifiedExtraction Require Import Extraction OCamlFFI.
-From MetaCoq.Template Require Import All.
-From Coq Require ZArith Lists.StreamMemo.
+From MetaRocq.Template Require Import All.
+From Stdlib Require ZArith Lists.StreamMemo.
 
-From Coq Require Import String.
-From Coq Require Vector.
+From Stdlib Require Import String.
+From Stdlib Require Vector.
 
 (* Set Verified Extraction Build Directory "_build". *)
 (* Set Verified Extraction Opam Path "/usr/local/bin/opam". *)
 
-From Coq Require Import PrimInt63 Sint63.
+From Stdlib Require Import PrimInt63 Sint63.
 Definition test_primint := 
   let _ := print_int Sint63.min_int in
   let _ := print_newline tt in
@@ -21,7 +21,7 @@ Verified Extraction (plus, mult).
 
 Verified Extraction -fmt -compile-with-coq -run test_primint "test_primint.mlf".
 
-From Coq Require Import PrimFloat.
+From Stdlib Require Import PrimFloat.
 Definition test_floats := print_float (100.5)%float.
 Eval compute in test_floats.
 Verified Extraction -fmt -compile-with-coq -run test_floats "test_floats.mlf".
@@ -132,7 +132,7 @@ Equations idnat (n : nat) : nat by wf n lt :=
 
 Extraction idnat.
 
-Verified Extract Inline [ Equations.Prop.Subterm.FixWf, Coq.Init.Wf.Fix, Coq.Init.Wf.Fix_F, idnat_functional ].
+Verified Extract Inline [ Equations.Prop.Subterm.FixWf, Stdlib.Init.Wf.Fix, Stdlib.Init.Wf.Fix_F, idnat_functional ].
 
 Verified Extraction -fmt -unsafe -typed idnat "idnat.mlf".
 
@@ -140,7 +140,7 @@ Inductive three := ZERO | ONE | TWO | THREE.
 
 Definition two := TWO.
 
-From MetaCoq.Utils Require Import bytestring.
+From MetaRocq.Utils Require Import bytestring.
 
 Definition test_bytestring (u : unit) := bytestring.String.compare "" "bug".
 
@@ -154,7 +154,7 @@ Verified Extraction axiom "axiom.mlf".
 
 From Malfunction Require Import Compile Pipeline.
 
-From Coq Require Import List.
+From Stdlib Require Import List.
 Import ListNotations.
 
 Polymorphic Record myprod@{i j} (A : Type@{i}) (B : Type@{j}) := mypair { fst : A; snd : B }.

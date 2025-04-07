@@ -1,4 +1,4 @@
-open Metacoq_template_plugin
+open Metarocq_template_plugin
 
 val msg_info : Bytestring.String.t -> unit
 val msg_notice : Bytestring.String.t -> unit

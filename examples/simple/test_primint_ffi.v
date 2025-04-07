@@ -1,13 +1,13 @@
 From VerifiedExtraction Require Import Extraction OCamlFFI.
-From MetaCoq.Template Require Import All.
-From MetaCoq.Utils Require Import bytestring.
-From MetaCoq.Common Require Import Primitive.
+From MetaRocq.Template Require Import All.
+From MetaRocq.Utils Require Import bytestring.
+From MetaRocq.Common Require Import Primitive.
 
 Set Verified Extraction Build Directory "_build".
 
 (* Primitives *)
 
-From Coq Require Import PrimInt63 Uint63.
+From Stdlib Require Import PrimInt63 Uint63.
 
 Definition foo : int := (300 / 80)%uint63. 
 
@@ -17,7 +17,7 @@ Definition prog := (print_int foo).
 
 Verified Extraction -fmt -compile-with-coq -run prog "prim.mlf".
 
-From Coq Require Import ZArith PrimInt63 Sint63 Uint63.
+From Stdlib Require Import ZArith PrimInt63 Sint63 Uint63.
 
 Verified Extraction -verbose Sint63.min_int.
 Verified Extraction -verbose Sint63.max_int.

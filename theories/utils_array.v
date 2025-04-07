@@ -1,19 +1,19 @@
-Require Import ssreflect.
+From Stdlib Require Import ssreflect.
 
-From MetaCoq.Utils Require Import MCList.
+From MetaRocq.Utils Require Import MRList.
 
-Require Import ZArith Array.PArray List Floats Lia.
+From Stdlib Require Import ZArith Array.PArray List Floats Lia.
 Import ListNotations.
 
 Require Import Malfunction.Malfunction.
-From Coq Require Import Uint63.
+From Stdlib Require Import Uint63.
 
-From MetaCoq.PCUIC Require Import PCUICFirstorder.
+From MetaRocq.PCUIC Require Import PCUICFirstorder.
 
 Definition int_to_nat (i : int) : nat :=
   Z.to_nat (Int63.to_Z i).
 
-Definition int_of_nat n := Uint63.of_Z (Coq.ZArith.BinInt.Z.of_nat n).
+Definition int_of_nat n := Uint63.of_Z (Stdlib.ZArith.BinInt.Z.of_nat n).
 
 Lemma int_of_to_nat i :
   int_of_nat (int_to_nat i) = i.
@@ -352,7 +352,7 @@ Fixpoint to_list {A} (f : nat -> A) (size : nat) : list A :=
 Lemma to_list_length {A} (f : nat -> A) (size : nat) : 
   List.length (to_list f size) = size.
 Proof.
-  induction size; cbn; eauto. rewrite app_length. cbn; lia.
+  induction size; cbn; eauto. rewrite length_app. cbn; lia.
 Qed. 
 
 Lemma to_list_nth {A} (f : nat -> A) (size : nat) n d : 
@@ -383,8 +383,8 @@ Proof.
   intros H.
   induction l using rev_ind.
   - cbn in *. lia.
-  - rewrite filter_app in H. cbn in *. rewrite app_length in H.
-    rewrite app_length.
+  - rewrite filter_app in H. cbn in *. rewrite length_app in H.
+    rewrite length_app.
     destruct (f x) eqn:E; cbn in *.
     + assert (k = #|filter f l| \/ k < #|filter f l|) as [Hl | Hl] by lia.
       * subst. exists (List.length l).

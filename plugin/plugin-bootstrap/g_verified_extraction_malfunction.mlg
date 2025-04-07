@@ -11,8 +11,8 @@ open Datatypes
 open Vernacextend
 open Tm_util
 
-open Coq_verified_extraction_plugin.Verified_extraction
-open Coq_verified_extraction_plugin.G_verified_extraction
+open Rocq_verified_extraction_plugin.Verified_extraction
+open Rocq_verified_extraction_plugin.G_verified_extraction
 
 let pr_char c = str (Char.escaped c)
 
@@ -296,7 +296,7 @@ let extract = extract compile_malfunction
 
 VERNAC COMMAND EXTEND Malfunction_Verified_Extraction CLASSIFIED AS QUERY
 | [ "Verified" "Extraction" "-help" ] -> {
-  let usage = "MetaCoq (Bypass)? Extraction [term] [output_file]?" in
+  let usage = "MetaRocq (Bypass)? Extraction [term] [output_file]?" in
   Feedback.msg_notice (str usage)
   }
 | [ "Verified" "Extraction" extract_args_list(l) constr(c) string_opt(dest) ] -> {

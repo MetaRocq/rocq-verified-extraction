@@ -1,4 +1,4 @@
-Building benchmark files in Coq
+Building benchmark files in Rocq
 make[1]: Entering directory '/home/yannick/research/coq-malfunction/benchmarks/ocaml'
 OCaml with extraction optimisations on. Bytecode:
 ./main 50

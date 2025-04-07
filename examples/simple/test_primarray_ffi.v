@@ -1,14 +1,14 @@
 From Malfunction Require Import utils_array.
-From MetaCoq.Template Require Import All.
-From MetaCoq.Utils Require Import bytestring.
-From MetaCoq.Common Require Import Primitive.
+From MetaRocq.Template Require Import All.
+From MetaRocq.Utils Require Import bytestring.
+From MetaRocq.Common Require Import Primitive.
 From VerifiedExtraction Require Import Extraction OCamlFFI.
 
 Set Verified Extraction Build Directory "_build".
 
 (* Primitives *)
 
-From Coq Require Import PrimInt63 Uint63 PArray.
+From Stdlib Require Import PrimInt63 Uint63 PArray.
 
 Definition val : array nat := PArray.make 3 2.
 

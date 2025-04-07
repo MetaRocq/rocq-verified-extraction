@@ -2,27 +2,27 @@ PLUGINPATH = ../../lib/coq_verified_extraction_plugin/_build/install/default/lib
 
 all: plugin
 
-Makefile.coq: _CoqProject
-	coq_makefile -f _CoqProject -o Makefile.coq
+Makefile.rocq: _RocqProject
+	coq_makefile -f _RocqProject -o Makefile.rocq
 
-plugin: Makefile.coq
+plugin: Makefile.rocq
 	mkdir -p -m 0755 _build
-	OCAMLPATH=$(PLUGINPATH) $(MAKE) -f Makefile.coq
+	OCAMLPATH=$(PLUGINPATH) $(MAKE) -f Makefile.rocq
 
 install: plugin
-	$(MAKE) -f Makefile.coq install
+	$(MAKE) -f Makefile.rocq install
 	
-uninstall: Makefile.coq
-	$(MAKE) -f Makefile.coq uninstall
+uninstall: Makefile.rocq
+	$(MAKE) -f Makefile.rocq uninstall
 	
-clean: Makefile.coq
-	make -f Makefile.coq clean
+clean: Makefile.rocq
+	make -f Makefile.rocq clean
 
 mrproper:
-	rm -f Makefile.coq
+	rm -f Makefile.rocq
 
-.merlin: Makefile.coq
+.merlin: Makefile.rocq
 	make -f $< $@
 
-cleanplugin: Makefile.coq
-	make -f Makefile.coq clean
+cleanplugin: Makefile.rocq
+	make -f Makefile.rocq clean

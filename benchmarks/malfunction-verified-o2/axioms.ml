@@ -23,7 +23,7 @@
 
 (* let coq_Numbers_Cyclic_Int63_PrimInt63_eqb f1 f2 = not (Uint63.equal f1 f2) *)
 
-(* let print_kername = fun x -> print_string (Metacoq_template_plugin.Caml_bytestring.caml_string_of_bytestring (snd x)) ; Printf.printf ("\n%!") *)
+(* let print_kername = fun x -> print_string (Metarocq_template_plugin.Caml_bytestring.caml_string_of_bytestring (snd x)) ; Printf.printf ("\n%!") *)
 
 
 let rec print_obj x =
@@ -41,4 +41,4 @@ let print_int = fun x -> Printf.printf ("%i\n%!") x
 
 let print_hello = fun (x : unit) -> Printf.printf ("Hello\n%!")
 
-(* let print = fun x -> print_string (Metacoq_template_plugin.Caml_bytestring.caml_string_of_bytestring x) ; Printf.printf ("\n%!") *)
+(* let print = fun x -> print_string (Metarocq_template_plugin.Caml_bytestring.caml_string_of_bytestring x) ; Printf.printf ("\n%!") *)

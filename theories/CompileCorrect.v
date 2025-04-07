@@ -1,10 +1,10 @@
-From MetaCoq.Utils Require Import utils.
+From MetaRocq.Utils Require Import utils.
 Require Import List String.
 Import ListNotations.
 Local Open Scope string_scope.
 From Malfunction Require Import Mcase.
-From MetaCoq.Utils Require Import ReflectEq bytestring MCList.
-From MetaCoq Require Import EWcbvEvalNamed.
+From MetaRocq.Utils Require Import ReflectEq bytestring MRList.
+From MetaRocq Require Import EWcbvEvalNamed.
 
 From Malfunction Require Import Compile SemanticsSpec utils_array.
 
@@ -401,7 +401,7 @@ Proof.
       destruct (eqb_spec x x); try congruence. clear - H0.
       unfold fix_env. generalize mfix at 2. induction mfix using rev_ind; cbn in *; eauto; intros.
       rewrite map_app, in_app_iff in H0. cbn in H0.
-      rewrite app_length. cbn. rewrite Nat.add_comm. cbn. rewrite map_app. cbn.
+      rewrite length_app. cbn. rewrite Nat.add_comm. cbn. rewrite map_app. cbn.
       rewrite rev_app_distr. cbn.
       destruct H0 as [ | [ | []]].
       - edestruct IHmfix; eauto.
@@ -620,18 +620,18 @@ Proof.
        1:{ rewrite map_length. cbn. lia. }
        1:{ cbn. rewrite map_length. rewrite e2. cbn. invs e0. lia. }
        rewrite nth_error_map, Econ. cbn. destruct c0; cbn in *; subst. inversion e0; subst. destruct m; cbn in *; subst. repeat f_equal.
-       rewrite app_length. rewrite List.rev_length.
+       rewrite length_app. rewrite List.rev_length.
        setoid_rewrite <- Hll. cbn. lia.
        rewrite map_InP_spec. rewrite nth_error_map. 
        rewrite e1. cbn [option_map].
        rewrite rev_map_spec. cbn. repeat f_equal.
        { clear - H3. induction H3; cbn; f_equal; subst; cbn; eauto. }
-       cbn. f_equal. rewrite map_length. rewrite app_length. rewrite List.rev_length.
+       cbn. f_equal. rewrite map_length. rewrite length_app. rewrite List.rev_length.
        setoid_rewrite <- Hll. cbn. lia. 
        eapply IHHeval2. intros.
        cbn [List.rev].
        assert (#|List.rev l' ++ [y]| = List.length ((compile_value Σ v :: map (compile_value Σ) args))).
-       { rewrite app_length, List.rev_length. cbn. rewrite map_length. lia. }
+       { rewrite length_app, List.rev_length. cbn. rewrite map_length. lia. }
        revert H. unfold Kernames.ident, Malfunction.Ident.t in *. clear - HΓ.
        generalize (List.rev l' ++ [y])%list. intros.
        destruct l; cbn in *; try congruence. 
@@ -710,7 +710,7 @@ Proof.
                  induction mfix; cbn in *; inversion n; econstructor; eauto.
               ** eauto.
   - (* fix *)
-    destruct ((MCList.nth_error_Some' mfix (idx))) as [_ Hnth].
+    destruct ((MRList.nth_error_Some' mfix (idx))) as [_ Hnth].
     forward Hnth.
     assert (Datatypes.length mfix > 0) by lia.  1: lia.
     assert ({ l | Forall2 (fun d '(x, y, b) => d.(EAst.dname) = BasicAst.nNamed x /\ d.(EAst.dbody) = EAst.tLambda y b) mfix l /\
@@ -784,7 +784,7 @@ Proof.
       specialize (He2 _ _ E).
       eapply nth_error_Some_length in E. lia. 
     + depelim a. cbn.
-      rewrite MCList.map_InP_spec.
+      rewrite MRList.map_InP_spec.
       depelim IHa.
       cbn. econstructor. econstructor. eapply e1; eauto. clear e1.
       2:{ cbn. rewrite map_length. clear a0. eapply EPrimitive.All2_Set_All2 in a. eapply All2_length in a. rewrite <- a.

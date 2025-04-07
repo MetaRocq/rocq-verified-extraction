@@ -1,16 +1,16 @@
 Require Import ssreflect ssrbool Eqdep_dec.
 From Equations Require Import Equations. 
-From MetaCoq.Utils Require Import All_Forall MCSquash MCList.
-From MetaCoq.Common Require Import Transform config Kernames.
-From MetaCoq.PCUIC Require Import PCUICAst PCUICTyping PCUICFirstorder PCUICCasesHelper BDStrengthening PCUICCumulativity.
-From MetaCoq.Erasure Require Import EWcbvEval EWcbvEvalNamed.
-From MetaCoq.SafeChecker Require Import PCUICErrors PCUICWfEnv PCUICWfEnvImpl.
+From MetaRocq.Utils Require Import All_Forall MRSquash MRList.
+From MetaRocq.Common Require Import Transform config Kernames.
+From MetaRocq.PCUIC Require Import PCUICAst PCUICTyping PCUICFirstorder PCUICCasesHelper BDStrengthening PCUICCumulativity.
+From MetaRocq.Erasure Require Import EWcbvEval EWcbvEvalNamed.
+From MetaRocq.SafeChecker Require Import PCUICErrors PCUICWfEnv PCUICWfEnvImpl.
 
 From Malfunction Require Import Malfunction Interpreter SemanticsSpec utils_array Compile.
 
 Require Import ZArith Array.PArray List String Floats Lia Bool.
 Import ListNotations.
-From MetaCoq.Utils Require Import bytestring.
+From MetaRocq.Utils Require Import bytestring.
 
 Unset Elimination Schemes. 
 
@@ -125,7 +125,7 @@ Section Realizability.
       to_realize_value (realize_term A).
 
   End Values. 
-  MetaCoq Quote Recursively Definition tnat := nat.
+  MetaRocq Quote Recursively Definition tnat := nat.
 
   Fixpoint realize_ADT_gen_fix (global_adt : global_adt_decl) 
     (adt : list (list (list camlType))) (step : nat) : realize_adt_type.

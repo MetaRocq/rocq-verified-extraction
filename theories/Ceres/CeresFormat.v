@@ -1,6 +1,6 @@
 
 (* begin hide *)
-From Coq Require Import
+From Stdlib Require Import
   List ZArith Ascii String.
 
 From Ceres Require Import
@@ -8,7 +8,7 @@ From Ceres Require Import
   CeresS.
 (* end hide *)
 
-From MetaCoq.Utils Require Import bytestring.
+From MetaRocq.Utils Require Import bytestring.
 
 Coercion Tree.string : string >-> Tree.t.
 Coercion byte_to_string (b : Byte.byte) := String.String b String.EmptyString.

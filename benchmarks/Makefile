@@ -10,7 +10,7 @@ all: tests
 .SILENT: lib
 
 lib:
-	@echo "Building benchmark files in Coq"
+	@echo "Building benchmark files in Rocq"
 	make -C lib > /dev/null 2>&1
 
 cleanlib:

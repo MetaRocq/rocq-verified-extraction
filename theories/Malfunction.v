@@ -1,7 +1,7 @@
-From Coq Require Import ssreflect.
-From Coq Require Import ZArith Floats.
-From MetaCoq.Utils Require Import bytestring ReflectEq.
-From MetaCoq.Common Require Import Kernames. 
+From Stdlib Require Import ssreflect.
+From Stdlib Require Import ZArith Floats.
+From MetaRocq.Utils Require Import bytestring ReflectEq.
+From MetaRocq.Common Require Import Kernames. 
 
 Module Int63 := Numbers.Cyclic.Int63.Uint63.
 Notation int := Int63.int.

@@ -27,7 +27,7 @@ type malfunction_pipeline_config = {
   prims : primitives }
 
 type program_type =
-  | Standalone of bool (* Link statically with Coq's libraries *)
+  | Standalone of bool (* Link statically with Rocq's libraries *)
   | Plugin
   
 type unsafe_pass = 

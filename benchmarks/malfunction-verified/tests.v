@@ -1,6 +1,6 @@
 Require Import VerifiedExtraction.Benchmarks.lib.tests.
 From VerifiedExtraction Require Import Extraction.
-From MetaCoq.Utils Require Import bytestring.
+From MetaRocq.Utils Require Import bytestring.
 
 Open Scope bs.
 
@@ -38,11 +38,11 @@ Verified Extraction binom "binom.mlf".
 
 (* Eval compute in "Compiling lazy factorial". *)
 
-(* (* CertiCoq Compile -O 1 lazy_factorial. *)
-(* CertiCoq Compile -ext "_opt" lazy_factorial. *)
-(* CertiCoq Compile -args 1000 -config 9 -O 1 -ext "_opt_ll" lazy_factorial. *) *)
-(* (* CertiCoq Compile -O 0 -cps -ext "_cps" demo1. *) *)
-(* (* CertiCoq Compile -cps -ext "_cps_opt" demo1. *) *)
+(* (* CertiRocq Compile -O 1 lazy_factorial. *)
+(* CertiRocq Compile -ext "_opt" lazy_factorial. *)
+(* CertiRocq Compile -args 1000 -config 9 -O 1 -ext "_opt_ll" lazy_factorial. *) *)
+(* (* CertiRocq Compile -O 0 -cps -ext "_cps" demo1. *) *)
+(* (* CertiRocq Compile -cps -ext "_cps_opt" demo1. *) *)
 
 Eval compute in "Compiling color".
 
@@ -51,10 +51,10 @@ Verified Extraction color "color.mlf".
 (* (* Don't compile slow sha *) *)
 (* (* Eval compute in "Compiling sha". *) *)
 
-(* (* CertiCoq Compile -cps -ext "_cps" sha. *) *)
-(* (* CertiCoq Compile sha. *) *)
-(* (* CertiCoq Compile -O 1 -cps -ext "_cps_opt" sha. *) *)
-(* (* CertiCoq Compile -O 1 -ext "_opt" sha. *) *)
+(* (* CertiRocq Compile -cps -ext "_cps" sha. *) *)
+(* (* CertiRocq Compile sha. *) *)
+(* (* CertiRocq Compile -O 1 -cps -ext "_cps_opt" sha. *) *)
+(* (* CertiRocq Compile -O 1 -ext "_opt" sha. *) *)
 
 Eval compute in "Compiling sha_fast".
 

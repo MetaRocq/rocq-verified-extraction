@@ -1,8 +1,8 @@
-From Coq Require ZArith Lists.StreamMemo Vector.
-From Coq Require Import String.
+From Stdlib Require ZArith Lists.StreamMemo Vector.
+From Stdlib Require Import String.
 From Malfunction Require Import PrintMli.
 From VerifiedExtraction Require Import Extraction OCamlFFI.
-From MetaCoq.Template Require Import All.
+From MetaRocq.Template Require Import All.
 
 Definition coq_true := true.
 
@@ -15,7 +15,7 @@ Verified Extraction coq_true.
 
 Verified Extraction coq_true "coq_true.mlf".
 
-(* The default output directory is the working directory of your Coq process, but it can also be set: *)
+(* The default output directory is the working directory of your Rocq process, but it can also be set: *)
 
 Set Verified Extraction Build Directory "_build".
 
@@ -32,11 +32,11 @@ Verified Extraction -fmt coq_true "coq_true.mlf".
 (* [.mlf] files can be compiled using the [malfunction] program, which is a thin wrapper
   around [ocamlopt]. The [.mlf] files needs to be accompanied by a [.mli] file giving the
   expected OCaml types of the exported definitions.
-  A MetaCoq metaprogram defined in the [Malfunction.PrintMli] library imported above
+  A MetaRocq metaprogram defined in the [Malfunction.PrintMli] library imported above
   provides a default interface: *)
 
-MetaCoq Run Print mli coq_true.
-(* In Coq's info channel: 
+MetaRocq Run Print mli coq_true.
+(* In Rocq's info channel: 
     
   val coq_true : bool *)
 
@@ -55,11 +55,11 @@ MetaCoq Run Print mli coq_true.
 
 (** Besides producing standalone `.mlf` files, the plugin is also capable of compiling and running the 
   extracted programs itself. To do so, it relies on an `opam` installation to be available in the running 
-  environment of the Coq process, which should include the `malfunction` package. *)
+  environment of the Rocq process, which should include the `malfunction` package. *)
 
 (** For quick testing of extracted code, one can build the code as a plugin, which can be dynamically loaded 
-    with Coq and run directly. The value of the program should be firstorder so that it can be read back as a 
-    Coq value. This is the case of booleans. *)  
+    with Rocq and run directly. The value of the program should be firstorder so that it can be read back as a 
+    Rocq value. This is the case of booleans. *)  
 
 Verified Extraction -compile-plugin -run coq_true "coq_true.mlf".
 (* = true *)
@@ -70,11 +70,11 @@ Verified Extraction -compile-plugin -run coq_true "coq_true.mlf".
    The `-optimize` flag uses OCaml's -O2 option to compile the malfunction code.  *)
 Verified Extraction -time -verbose -optimize -compile-plugin -run coq_true "coq_true.mlf".
 
-(** The Coq programs can make use of axioms that are realised by ocaml libraries and linked to the resulting program.
-    By default, there is an `FFI` library allowing to access Coq's info, notice and debug channels as well as raising 
-    Coq errors (coq_user_error) that is realized by linking back with Coq's code, as described in the CoqMsgFFI library. *)
+(** The Rocq programs can make use of axioms that are realised by ocaml libraries and linked to the resulting program.
+    By default, there is an `FFI` library allowing to access Rocq's info, notice and debug channels as well as raising 
+    Rocq errors (coq_user_error) that is realized by linking back with Rocq's code, as described in the RocqMsgFFI library. *)
 From Malfunction Require Import FFI. 
-From VerifiedExtraction Require Import CoqMsgFFI.
+From VerifiedExtraction Require Import RocqMsgFFI.
 
 (** The following definition prints out the string representation of true (`show` is a typeclass method for serializing to a string) *)
 Definition msg_true := coq_msg_info (show true).
@@ -83,7 +83,7 @@ Definition msg_true := coq_msg_info (show true).
 Verified Extraction -compile-plugin -run msg_true "coq_true.mlf".
 (* = tt 
  
-  In Coq's Info channel:
+  In Rocq's Info channel:
 
   true
 
@@ -92,13 +92,13 @@ Verified Extraction -compile-plugin -run msg_true "coq_true.mlf".
 (** The FFI support is used to bind primitive type operations to implementations in OCaml as well. For example 
     one can compute with primitive integers. *)
 
-From Coq Require Import PrimInt63 Sint63.
+From Stdlib Require Import PrimInt63 Sint63.
 Definition test_primint := 
   let _ := coq_msg_info ("Min int is " ++ show (wrap_int Sint63.min_int)) in (* Otherwise is interpreted as unsigned *)
   let _ := coq_msg_info ("Max int is " ++ show (wrap_int Sint63.max_int)) in
   tt.
 
-(** We disable this warning of MetaCoq as all primitive axioms are properly bound to OCaml code during compilation *)  
+(** We disable this warning of MetaRocq as all primitive axioms are properly bound to OCaml code during compilation *)  
 Set Warnings "-primitive-turned-into-axiom".
 
 Verified Extraction -fmt -compile-plugin -run test_primint "test_primint.mlf".
@@ -130,7 +130,7 @@ Definition test_ones := print_string (show (take 10 ones)).
 (** Here instead of building a plugin, we build a standalone ocaml program using `-compile-with-coq` 
     and rely on a small OCaml FFI for printing strings/integers or floats defined in the `OCamlFFI` library.
     The `-run` flag runs the program and relays the stdout and stderr channels of the standalone process to 
-    Coq's notices channels. *)
+    Rocq's notices channels. *)
 
 Verified Extraction -fmt -unsafe -compile-with-coq -run test_ones "ones.mlf".
 

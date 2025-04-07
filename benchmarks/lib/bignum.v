@@ -1,5 +1,5 @@
-Require Coq.Numbers.Cyclic.Int31.Int31.
-Require Coq.Numbers.Natural.BigN.BigN.
+Require Stdlib.Numbers.Cyclic.Int31.Int31.
+Require Stdlib.Numbers.Natural.BigN.BigN.
 Require Import ZArith.
 
 
@@ -27,7 +27,7 @@ Definition sub31c' (n m: Int31.int31) : bool * Int31.int31 :=
   where they occur otherwise, use eta-expanded Eprim operators.
 
   We'll define the evaluation semantics of the Eprim operators
-  w.r.t. the respective Coq functions.
+  w.r.t. the respective Rocq functions.
 
 ****)
 

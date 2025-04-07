@@ -1,10 +1,10 @@
-From MetaCoq.Utils Require Import Show.
-From MetaCoq.Template Require Import Loader.
-From MetaCoq.ErasurePlugin Require Import Loader.
+From MetaRocq.Utils Require Import Show.
+From MetaRocq.Template Require Import Loader.
+From MetaRocq.ErasurePlugin Require Import Loader.
 From VerifiedExtraction Require Import Extraction OCamlFFI.
-From MetaCoq.Template Require Import All.
+From MetaRocq.Template Require Import All.
 
-From Coq Require Import ZArith PrimInt63 Sint63.
+From Stdlib Require Import ZArith PrimInt63 Sint63.
 Eval compute in PrimInt63.ltb Sint63.min_int Sint63.min_int.
 
 Set Warnings "-primitive-turned-into-axiom".
@@ -20,12 +20,12 @@ Verified Extraction -verbose -compile-with-coq -run max_to_Z "max_to_Z.mlf".
 Definition check_lt := print_string (show (PrimInt63.ltb 1 0)).
 Verified Extraction -compile-with-coq -run check_lt "check_lt.mlf".
 
-From Coq Require Import PrimFloat.
+From Stdlib Require Import PrimFloat.
 Definition test_float := print_float (7500.50)%float.
 Eval compute in FloatOps.Prim2SF 75000.5%float.
 Verified Extraction -fmt -compile-with-coq -run test_float "test_float.mlf".
 
-From Coq Require Import PArray.
+From Stdlib Require Import PArray.
 From Malfunction Require Import utils_array.
 
 Definition val : array nat := PArray.make 3 2.
@@ -48,10 +48,10 @@ Verified Extraction -fmt -typed -compile-with-coq -run prim_array_get_set "prim_
 (*
 Open Scope bs.
 
-From MetaCoq.Common Require Import Kernames.
+From MetaRocq.Common Require Import Kernames.
 
-From Coq Require Import String.
-From Coq Require Vector.
+From Stdlib Require Import String.
+From Stdlib Require Vector.
 
 Inductive three := ZERO | ONE | TWO | THREE.
 
@@ -59,7 +59,7 @@ Definition two := TWO.
 
 Open Scope bs.
 
-From Coq Require Import Uint63.xfg+
+From Stdlib Require Import Uint63.xfg+
 
 Verified Extraction max_int.
 
@@ -120,7 +120,7 @@ match v with
   |_ => fun devil => False_ind (@IDProp) devil (* subterm !!! *)
 end.
 
-From Coq Require Import VectorDef.
+From Stdlib Require Import VectorDef.
 
 
 Verified Extraction @t_rec.

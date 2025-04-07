@@ -32,7 +32,7 @@ Arguments compose [A B C].
 (*for backwards compatibility*)
 Infix "oo" := compose (at level 54, right associativity).
 
-Require Import Coq.Lists.List.
+Require Import Stdlib.Lists.List.
 Import ListNotations.
 
 Fixpoint zip_with_acc {A B : Type} acc (l1 : list A) (l2 : list B) :=
@@ -251,9 +251,9 @@ Definition subst_assertion (i: var) (e: expr) (a: assertion) :=
 
 (* compare.v *)
 Require Import ZArith.
-Require Import Coq.Lists.List.
+Require Import Stdlib.Lists.List.
 Require Import Sorted.
-Require Import Coq.Sorting.Mergesort.
+Require Import Stdlib.Sorting.Mergesort.
 Require Import Permutation.
 
 Definition StrictCompSpec {A} (eq lt: A -> A -> Prop) 
@@ -415,8 +415,8 @@ Qed.
 (* clauses.v *)
 Unset Arguments.
 
-Require Import ZArith List Recdef Coq.MSets.MSetInterface Coq.Sorting.Mergesort
-               Permutation Coq.MSets.MSetAVL Coq.MSets.MSetRBT.
+Require Import ZArith List Recdef Stdlib.MSets.MSetInterface Stdlib.Sorting.Mergesort
+               Permutation Stdlib.MSets.MSetAVL Stdlib.MSets.MSetRBT.
 
 (** The clause datatype and related definitions and lemmas *)
 
@@ -760,7 +760,7 @@ Proof. destruct clause_cspec'; auto. Qed.
 End OrderedClause.
 
 (* The clause database.  There are two alternate implementations.
-  The first uses MSetAVL from the Coq library, the second uses red-black trees.
+  The first uses MSetAVL from the Rocq library, the second uses red-black trees.
   Since red-black trees match an enhanced interface MSetPlus,
   in the first implementation we define the additional operator(s) in terms
   of what's available in MSetAVL.
@@ -978,7 +978,7 @@ Require Import Finite_sets_facts.
   the axioms used by MSL and by the CompCert project.
  *)
 
-Require Coq.Logic.ClassicalFacts.
+Require Stdlib.Logic.ClassicalFacts.
 
 (** * Extensionality axioms *)
 
@@ -994,7 +994,7 @@ Lemma functional_extensionality {A B} (f g : A -> B) :
   (forall x, f x = g x) -> f = g.
 >>
 *)
-Require Export Coq.Logic.FunctionalExtensionality.
+Require Export Stdlib.Logic.FunctionalExtensionality.
 
 (** For compatibility with earlier developments, [extensionality]
   is an alias for [functional_extensionality]. *)
@@ -1138,7 +1138,7 @@ Definition compare_clause2 (cl1 cl2 : clause) :=
 
 Inductive ce_type := CexpL | CexpR | CexpEf.
 
-(** Patch until Coq extraction of sharing constraints is fixed *)
+(** Patch until Rocq extraction of sharing constraints is fixed *)
 
 Module DebuggingHooks.
 
@@ -2192,7 +2192,7 @@ Defined.
  *******************)
 
 (* end show *)
-(* Required to work around Coq bug #2613 *)
+(* Required to work around Rocq bug #2613 *)
 Arguments eq_sym. 
 
 Definition check_entailment (ent: entailment) : veristar_result :=

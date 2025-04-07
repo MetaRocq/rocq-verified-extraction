@@ -1,9 +1,9 @@
-Require Import List Lia.
+From Stdlib Require Import List Lia.
 Export ListNotations.
 
-From MetaCoq.Utils Require Import bytestring All_Forall MCList ReflectEq.
-From MetaCoq.Common Require Import BasicAst.
-From MetaCoq Require Import EWcbvEvalNamed.
+From MetaRocq.Utils Require Import bytestring All_Forall MRList ReflectEq.
+From MetaRocq.Common Require Import BasicAst.
+From MetaRocq Require Import EWcbvEvalNamed.
 From Malfunction Require Import utils_array SemanticsSpec.
 
 From Malfunction Require Import Malfunction Compile.
@@ -113,22 +113,22 @@ Proof.
     + destruct nms; cbn in Hlen; try lia. inversion H4; subst. clear H4.
       cbn. econstructor; eauto.
       rewrite add_to_add_multiple; eauto.
-      eapply NoDup_incl_NoDup; eauto. rewrite app_length; cbn; lia. intros ? ?; rewrite in_app_iff in *; firstorder.
+      eapply NoDup_incl_NoDup; eauto. rewrite length_app; cbn; lia. intros ? ?; rewrite in_app_iff in *; firstorder.
     + destruct nms as [ | nm' nms]. cbn in *; lia.
       cbn. eapply IHargs with (nms' := nms' ++ [nm]) (values' := values' ++ [y]).
       5:{ rewrite <- !app_assoc. cbn. eapply Heval. }
-      1: cbn; eauto. 1:{ rewrite !app_length; cbn; lia. } 1:{ rewrite <- !app_assoc. cbn. eauto. } eauto.
+      1: cbn; eauto. 1:{ rewrite !length_app; cbn; lia. } 1:{ rewrite <- !app_assoc. cbn. eauto. } eauto.
       econstructor; [ eauto.. | ].
       cbn. destruct nms; rewrite add_to_add_multiple.
       * econstructor.
       * assert (nms' ++ [nm; nm'] = (nms' ++ [nm]) ++ [nm']) as Eq by now rewrite <- !app_assoc.
         rewrite Eq in Hdup. eapply NoDup_app in Hdup as [Hdup _].
-        eapply NoDup_incl_NoDup; eauto. rewrite !app_length; cbn; lia. intros ? ?; rewrite !in_app_iff in *; firstorder subst.
+        eapply NoDup_incl_NoDup; eauto. rewrite !length_app; cbn; lia. intros ? ?; rewrite !in_app_iff in *; firstorder subst.
       * lia.
       * econstructor. cbn. lia.
       * assert (nms' ++ nm :: nm' :: t0 :: nms = (nms' ++ [nm]) ++ (nm' :: t0 :: nms)) as Eq by now rewrite <- !app_assoc.
         rewrite Eq in Hdup. eapply NoDup_app in Hdup as [Hdup _].
-        eapply NoDup_incl_NoDup; eauto. rewrite !app_length; cbn; lia. intros ? ?; rewrite !in_app_iff in *; firstorder subst.
+        eapply NoDup_incl_NoDup; eauto. rewrite !length_app; cbn; lia. intros ? ?; rewrite !in_app_iff in *; firstorder subst.
       * lia.
 Qed.
 
@@ -191,7 +191,7 @@ Proof.
             replace (n + S i) with (S n + i) by lia.
             replace ((brs0 ++ n0 :: num_args)) with ((brs0 ++ [n0]) ++ num_args).
             etransitivity. eapply IH. 
-            -- rewrite app_length. cbn. lia.
+            -- rewrite length_app. cbn. lia.
             -- eauto.
             -- eauto.
             -- eauto.
@@ -207,12 +207,12 @@ Proof.
         rewrite firstn_app. cbn.
         rewrite firstn_ge. 2: lia. 
         replace (#|brs0| + S i - #|brs0|) with (S i) by lia.
-        cbn. rewrite !filter_app. cbn. rewrite app_length. 
+        cbn. rewrite !filter_app. cbn. rewrite length_app. 
         intros E. eapply Uint63.eqb_correct in E.
         eapply (f_equal int_to_nat) in E.
         rewrite !int_to_of_nat in E. cbn in *. lia.
         cbn.
-        revert Hln. rewrite app_length. cbn.
+        revert Hln. rewrite length_app. cbn.
         pose proof (filter_length brs0 (fun x : nat => match x with
         | 0%nat => false
         | S _ => true
@@ -223,7 +223,7 @@ Proof.
         end)).
         rewrite firstn_length in H0.
         lia.
-        revert Hln. rewrite app_length. cbn.
+        revert Hln. rewrite length_app. cbn.
         pose proof (filter_length brs0 (fun x : nat => match x with
         | 0%nat => false
         | S _ => true
@@ -237,21 +237,21 @@ Proof.
     + destruct nms; inversion Hlen. cbn. econstructor.
     + destruct nms; inversion Hlen. cbn. econstructor.
       2: specialize IHargs with (args' := args' ++ [a]).
-      2: rewrite !app_length in IHargs. 2: cbn in IHargs.
+      2: rewrite !length_app in IHargs. 2: cbn in IHargs.
       2: replace (S #|args'|) with (#|args'| + 1) by lia.
       2: eapply IHargs.
       * evar (v' : value).
         enough (a = v') as E. subst v'. rewrite E. econstructor.
         eapply Hdiscr.
-        rewrite !app_length in *. lia_max_length.
-        rewrite !app_length in *. rewrite int_to_of_nat; lia_max_length.
+        rewrite !length_app in *. lia_max_length.
+        rewrite !length_app in *. rewrite int_to_of_nat; lia_max_length.
         subst v'. rewrite int_to_of_nat.     
         rewrite app_nth2, PeanoNat.Nat.sub_diag; [ reflexivity | lia].
-        rewrite app_length in *. lia_max_length. 
+        rewrite length_app in *. lia_max_length. 
       * now inversion Hdup.
       * assumption.
       * rewrite <- app_assoc. eapply Hdiscr.
-      * rewrite !app_length in *. cbn in *. lia.
+      * rewrite !length_app in *. cbn in *. lia.
 Qed.
 
 Lemma Z_and_int n :
@@ -302,14 +302,14 @@ Proof.
         pose proof (filter_length brs0 (fun x : nat => match x with
         | 0%nat => true
         | S _ => false
-        end)); rewrite app_length in Hln; cbn in Hln; lia.
+        end)); rewrite length_app in Hln; cbn in Hln; lia.
       * cbn [mapi_rec]. unfold find_match. cbn. fold find_match.
         destruct existsb eqn:E.
         2:{ fold find_match. specialize IH with (i := i) (n := S n) (brs0 := brs0 ++ [n0]).
             replace (n + S i) with (S n + i) by lia.
             replace ((brs0 ++ n0 :: num_args)) with ((brs0 ++ [n0]) ++ num_args).
             etransitivity. eapply IH. 
-            -- rewrite app_length. cbn. lia.
+            -- rewrite length_app. cbn. lia.
             -- eauto.
             -- eauto.
             -- now rewrite <- !app_assoc.
@@ -326,13 +326,13 @@ Proof.
         rewrite firstn_app. cbn [app firstn].
         rewrite firstn_ge. 2: lia. 
         replace (#|brs0| + S i - #|brs0|) with (S i) by lia.
-        cbn [app filter firstn]. rewrite !filter_app. cbn [firstn app]. rewrite app_length.
+        cbn [app filter firstn]. rewrite !filter_app. cbn [firstn app]. rewrite length_app.
         cbn [filter length].
         rewrite Z_and_int. lia.
         pose proof (filter_length brs0 (fun x : nat => match x with
         | 0%nat => true
         | S _ => false
         end)).
-        rewrite app_length in Hln. cbn in Hln. lia.
+        rewrite length_app in Hln. cbn in Hln. lia.
   - eauto.
 Qed.

@@ -33,7 +33,7 @@ jobs:
               sudo chown -R coq:coq .
             endGroup
             # startGroup "opam pin"
-              # opam pin -n -y "https://github.com/MetaCoq/metacoq.git#coq-8.19"
+              # opam pin -n -y "https://github.com/MetaRocq/metarocq.git#coq-8.19"
               # opam pin -n -y "https://github.com/stedolan/malfunction.git#master"
             # endGroup
             startGroup "install dependencies for benchmarks"

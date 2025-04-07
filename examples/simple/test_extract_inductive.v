@@ -1,6 +1,6 @@
 From VerifiedExtraction Require Import Extraction.
-From MetaCoq.Template Require Import All.
-From Coq Require Import String.
+From MetaRocq.Template Require Import All.
+From Stdlib Require Import String.
 
 Set Verified Extraction Build Directory "_build".
 

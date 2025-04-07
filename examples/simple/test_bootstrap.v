@@ -6,5 +6,5 @@ Set Verified Extraction Build Directory "_build".
 (* Extraction binds all primitives to OCaml externals *)
 Set Warnings "-primitive-turned-into-axiom".
 
-(* MetaCoq Run Print mli compile_malfunction_gen. *)
+(* MetaRocq Run Print mli compile_malfunction_gen. *)
 Verified Extraction -fmt compile_malfunction_gen "compile_malfunction_bootstrap.mlf".

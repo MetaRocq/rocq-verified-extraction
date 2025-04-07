@@ -1,4 +1,4 @@
-Building benchmark files in Coq
+Building benchmark files in Rocq
 make -C ocaml all
 OCaml with extraction optimisations on. Native:
 Estimated testing time 1m20s (8 benchmarks x 10s). Change using '-quota'.

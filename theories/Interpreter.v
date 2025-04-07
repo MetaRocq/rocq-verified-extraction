@@ -1,15 +1,13 @@
-Require Import ssreflect.
-
-Require Import ZArith Array.PArray List Floats Lia.
+From Stdlib Require Import ssreflect ZArith Array.PArray List Floats Lia.
 Import ListNotations.
 
 (*Require Import Malfunction.Malfunction Malfunction.Deserialize Malfunction.SemanticsSpec Malfunction.Serialize Ceres.Ceres.*)
 
 Require Import Malfunction.Malfunction Malfunction.SemanticsSpec Malfunction.utils_array.
-From MetaCoq.Utils Require Import bytestring.
+From MetaRocq.Utils Require Import bytestring.
 Open Scope bs.
 
-From Coq Require Import Uint63.
+From Stdlib Require Import Uint63.
 
 Class Heap `{Pointer} := {
   heapGen : forall (value : Type), Type;
@@ -616,7 +614,7 @@ Proof.
       rewrite <- (int_of_to_nat (PArray.length _)). rewrite <- H6. 
       rewrite H1. cbn; lia.
     + subst; intros _. rewrite get_set_other; [now apply eqb_false_spec|]. cbn.
-      fold y. rewrite <- H11. econstructor; eauto.
+      rewrite -/y. rewrite <- H11. econstructor; eauto.
     + lia. 
   (* eval_force_fail *)  
   - fail_case IHeval Hloc Hheap H0.
@@ -756,7 +754,7 @@ Proof.
     intro Htyty'. 
     case_eq (Z.leb 0 i && (Z.ltb i (Int63.to_Z (PArray.length (deref ih ptr')))))%bool;
       [| repeat econstructor; eauto].
-    rename i into z. intro Harr. apply MCProd.andb_and in Harr.
+    rename i into z. intro Harr. apply MRProd.andb_and in Harr.
     destruct Harr as [Hz0 Harr]. apply Z.leb_le in Hz0. 
     apply Z.ltb_lt in Harr.   
     pose proof (Hmax := leb_length _ (deref ih ptr')).

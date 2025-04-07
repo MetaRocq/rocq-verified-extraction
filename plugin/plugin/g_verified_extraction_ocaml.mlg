@@ -15,8 +15,8 @@ open Stdarg
 open Tacarg
 open Genredexpr
 
-open Coq_verified_extraction_plugin.Verified_extraction
-open Coq_verified_extraction_plugin.G_verified_extraction
+open Rocq_verified_extraction_plugin.Verified_extraction
+open Rocq_verified_extraction_plugin.G_verified_extraction
 
 type pipeline_config = Pipeline.malfunction_pipeline_config
 

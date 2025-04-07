@@ -1,6 +1,6 @@
 From VerifiedExtraction Require Import Extraction.
-From MetaCoq.Template Require Import All.
-From MetaCoq.Utils Require Import bytestring.
+From MetaRocq.Template Require Import All.
+From MetaRocq.Utils Require Import bytestring.
 From VerifiedExtraction Require Import OCamlFFI.
 
 Set Verified Extraction Build Directory "_build".

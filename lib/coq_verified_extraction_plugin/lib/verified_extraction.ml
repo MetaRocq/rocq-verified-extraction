@@ -27,7 +27,7 @@ type malfunction_pipeline_config = {
   prims : primitives }
 
 type program_type =
-  | Standalone of bool (* Link statically with Coq's libraries *)
+  | Standalone of bool (* Link statically with Rocq's libraries *)
   | Plugin
 
 type unsafe_pass = 
@@ -80,29 +80,29 @@ let get_build_dir_opt =
 let get_opam_path_opt =
   get_stringopt_option ["Verified"; "Extraction"; "Opam"; "Path"]
   
-(* When building standalone programs still relying on Coq's/MetaCoq's FFIs, use these packages for linking *)
+(* When building standalone programs still relying on Rocq's/MetaRocq's FFIs, use these packages for linking *)
 let statically_linked_pkgs =
-  ["coq-core.boot";
-    "coq-core.clib";
-    "coq-core.config";
-    "coq-core";
-    "coq-core.engine";
-    "coq-core.gramlib";
-    "coq-core.interp";
-    "coq-core.kernel";
-    "coq-core.lib";
-    "coq-core.library";
-    "coq-core.parsing";
-    "coq-core.pretyping";
-    "coq-core.printing";
-    "coq-core.proofs";
-    "coq-core.stm";
-    "coq-core.sysinit";
-    "coq-core.tactics";
-    "coq-core.toplevel";
-    "coq-core.vernac";
-    "coq-core.vm";
-    "coq-metacoq-template-ocaml.plugin";
+  ["rocq-runtime.boot";
+    "rocq-runtime.clib";
+    "rocq-runtime.config";
+    "rocq-runtime";
+    "rocq-runtime.engine";
+    "rocq-runtime.gramlib";
+    "rocq-runtime.interp";
+    "rocq-runtime.kernel";
+    "rocq-runtime.lib";
+    "rocq-runtime.library";
+    "rocq-runtime.parsing";
+    "rocq-runtime.pretyping";
+    "rocq-runtime.printing";
+    "rocq-runtime.proofs";
+    "rocq-runtime.stm";
+    "rocq-runtime.sysinit";
+    "rocq-runtime.tactics";
+    "rocq-runtime.toplevel";
+    "rocq-runtime.vernac";
+    "rocq-runtime.vm";
+    "rocq-metarocq-template-ocaml.plugin";
     "dynlink";
     "findlib";
     "findlib.dynload";
@@ -140,7 +140,7 @@ let globref_of_qualid ?loc (gr : Libnames.qualid) : Names.GlobRef.t  =
   | Some g -> g
     
 let quoted_globref_of_qualid ~loc (gr : Libnames.qualid) : Kernames.global_reference =
-  Metacoq_template_plugin.Ast_quoter.quote_global_reference (globref_of_qualid ~loc gr)
+  Metarocq_template_plugin.Ast_quoter.quote_global_reference (globref_of_qualid ~loc gr)
 
 let constant_of_qualid ~loc (gr : Libnames.qualid) : Kernames.kername =
   match quoted_globref_of_qualid ~loc gr with
@@ -484,7 +484,7 @@ struct
   let check_reifyable_value_type ?loc env sigma ty =
     (* We might have bound universes though. It's fine! *)
     try let (hd, u), args = Inductiveops.find_inductive env sigma ty in
-      IsInductive (hd, EConstr.EInstance.kind sigma u, args)
+      IsInductive (hd, EConstr.EInstance.kind sigma u, List.map (EConstr.to_constr sigma) args)
     with Not_found -> 
       let hnf = Reductionops.whd_all env sigma ty in
       let hd, args = EConstr.decompose_app sigma hnf in
@@ -503,8 +503,8 @@ struct
       (match Inductiveops.find_inductive env sigma dom with
       | exception Not_found -> invalid_type ?loc env sigma dom
       | (hd, u), args -> 
-        if Environ.QGlobRef.equal env (Coqlib.lib_ref "core.unit.type") (IndRef hd) then
-          let tt = Coqlib.lib_ref "core.unit.tt" in
+        if Environ.QGlobRef.equal env (Rocqlib.lib_ref "core.unit.type") (IndRef hd) then
+          let tt = Rocqlib.lib_ref "core.unit.tt" in
           let sigma, ttc = Evd.fresh_global env sigma tt in
           IsThunk (check_reifyable_value_type ?loc env sigma (EConstr.Vars.subst1 ttc codom))
         else invalid_type ?loc env sigma dom)
@@ -517,11 +517,11 @@ struct
     match ty with
     | IsInductive _ -> 
       CErrors.anomaly ~label:"verified-extraction-reify-ill-formed"
-      Pp.(str "Ill-formed inductive value representation in MetaCoq's Extraction reification for type " ++
+      Pp.(str "Ill-formed inductive value representation in MetaRocq's Extraction reification for type " ++
         pr_reifyable_value_type env sigma ty)
     | IsPrimitive _ ->
       CErrors.anomaly ~label:"verified-extraction-reify-ill-formed"
-      Pp.(str "Ill-formed primitive value representation in MetaCoq's Extraction reification for type " ++
+      Pp.(str "Ill-formed primitive value representation in MetaRocq's Extraction reification for type " ++
         pr_reifyable_value_type env sigma ty)
 
   (* let ocaml_get_boxed_ordinal v = 
@@ -565,11 +565,11 @@ struct
     | IsInductive (hd, u, args) -> 
       let open Inductive in
       let open Inductiveops in
-      let qhd = match Metacoq_template_plugin.Ast_quoter.quote_global_reference (IndRef hd) with Kernames.IndRef i -> i | _ -> assert false in
+      let qhd = match Metarocq_template_plugin.Ast_quoter.quote_global_reference (IndRef hd) with Kernames.IndRef i -> i | _ -> assert false in
       let spec = lookup_mind_specif env hd in
       let npars = inductive_params spec in
       let params, _indices = CList.chop npars args in
-      let indfam = make_ind_family ((hd, u), params) in
+      let indfam = make_ind_family ((hd, EConstr.EInstance.make u), List.map EConstr.of_constr params) in
       let cstrs = get_constructors env indfam in
       let cstrs = apply_reordering qhd m cstrs in
       if Obj.is_block v then
@@ -581,11 +581,11 @@ struct
         in
         let cstr = cstrs.(coqidx) in
         let coqidx = find_reverse_mapping qhd m coqidx in
-        let ctx = Vars.smash_rel_context cstr.cs_args in
+        let ctx = EConstr.Vars.smash_rel_context cstr.cs_args in
         let vargs = List.init (List.length ctx) (Obj.field v) in
         let args' = List.map2 (fun decl v -> 
           let argty = check_reifyable_value env sigma 
-          (EConstr.of_constr (Context.Rel.Declaration.get_type decl)) in
+          (Context.Rel.Declaration.get_type decl) in
           aux argty v) (List.rev ctx) vargs in
         Term.applistc (Constr.mkConstructU ((hd, coqidx + 1), u)) (params @ args')
       else (* Constant constructor *)
@@ -596,16 +596,16 @@ struct
           with Not_found -> ill_formed env sigma ty 
         in
         let coqidx = find_reverse_mapping qhd m coqidx in
-        let () = debug Pp.(fun () -> str @@ Printf.sprintf "Reifying constant constructor: %i is %i in Coq" ord coqidx) in
+        let () = debug Pp.(fun () -> str @@ Printf.sprintf "Reifying constant constructor: %i is %i in Rocq" ord coqidx) in
         Term.applistc (Constr.mkConstructU ((hd, coqidx + 1), u)) params
     | IsPrimitive (c, u, _args) -> 
       if Environ.is_array_type env c then 
-        CErrors.user_err Pp.(str "Primitive arrays are not supported yet in MetaCoq r Extractioneification")
+        CErrors.user_err Pp.(str "Primitive arrays are not supported yet in MetaRocq r Extractioneification")
       else if Environ.is_float64_type env c then
         Constr.mkFloat (Obj.magic v)
       else if Environ.is_int63_type env c then
         Constr.mkInt (Obj.magic v)
-      else CErrors.user_err Pp.(str "Unsupported primitive type in MetaCoq r Extractioneification")
+      else CErrors.user_err Pp.(str "Unsupported primitive type in MetaRocq r Extractioneification")
     in aux ty v
 
   let reify opts env sigma tyinfo result =
@@ -712,7 +712,7 @@ let decompose_argument env sigma c =
   let rec aux c =
     let fn, args = EConstr.decompose_app sigma c in
     match EConstr.kind sigma fn with
-    | Construct (cstr, u) when Environ.QGlobRef.equal env (ConstructRef cstr) (Coqlib.lib_ref "core.prod.intro") ->
+    | Construct (cstr, u) when Environ.QGlobRef.equal env (ConstructRef cstr) (Rocqlib.lib_ref "core.prod.intro") ->
       (match CArray.to_list args with
        | [ _; _; fst; snd ]
           -> aux fst @ [Reify.check_reifyable_thunk_or_value env sigma snd]
@@ -743,7 +743,7 @@ let extract_and_run
   let prog = time opts Pp.(str"Quoting") (Ast_quoter.quote_term_rec ~bypass:opts.bypass_qeds env) sigma (EConstr.to_constr sigma c) in
   let pt = match opts.program_type with 
     | Some (Standalone _) | None -> Standalone_binary 
-    | Some Plugin -> Shared_library ("Coq_verified_extraction_plugin__Verified_extraction", "register_plugin")
+    | Some Plugin -> Shared_library ("Rocq_verified_extraction_plugin__Verified_extraction", "register_plugin")
   in
   let tyinfos =
     try decompose_argument env sigma c
