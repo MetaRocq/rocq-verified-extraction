@@ -1,1 +1,0 @@
-(module ($def_tutorial_coq_true 1) ($def_main $def_tutorial_coq_true) ($coq_true $def_tutorial_coq_true) ($main $def_main) (export $coq_true $main))

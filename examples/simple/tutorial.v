@@ -4,16 +4,16 @@ From Malfunction Require Import PrintMli.
 From VerifiedExtraction Require Import Loader Extraction OCamlFFI.
 From MetaRocq.Template Require Import All.
 
-Definition coq_true := true.
+Definition rocq_true := true.
 
 (** By default, the [Verified Extraction] command prints out the extracted malfunction code (to the notices channel). *)
-Verified Extraction coq_true. 
+Verified Extraction rocq_true. 
 
 (** The generated code is 
-   (module ($def_tutorial_coq_true 1) ($def_main $def_tutorial_coq_true) ($coq_true $def_tutorial_coq_true) ($main $def_main) (export $coq_true $main)) *)
+   (module ($def_tutorial_rocq_true 1) ($def_main $def_tutorial_rocq_true) ($rocq_true $def_tutorial_rocq_true) ($main $def_main) (export $rocq_true $main)) *)
 (* It can be written down to a file using: *)
 
-Verified Extraction coq_true "coq_true.mlf".
+Verified Extraction rocq_true "rocq_true.mlf".
 
 (* The default output directory is the working directory of your Rocq process, but it can also be set: *)
 
@@ -21,13 +21,13 @@ Set Verified Extraction Build Directory "_build".
 
 (** The [-fmt] option provides a somewhat clearer output: *)
 
-Verified Extraction -fmt coq_true "coq_true.mlf".
+Verified Extraction -fmt rocq_true "rocq_true.mlf".
 
-(* _build/coq_true.mlf: 
+(* _build/rocq_true.mlf: 
 
-(module ($def_tutorial_coq_true 1) ($def_main $def_tutorial_coq_true)
-  ($coq_true $def_tutorial_coq_true) ($main $def_main)
-  (export $coq_true $main)) *)
+(module ($def_tutorial_rocq_true 1) ($def_main $def_tutorial_rocq_true)
+  ($rocq_true $def_tutorial_rocq_true) ($main $def_main)
+  (export $rocq_true $main)) *)
 
 (* [.mlf] files can be compiled using the [malfunction] program, which is a thin wrapper
   around [ocamlopt]. The [.mlf] files needs to be accompanied by a [.mli] file giving the
@@ -35,17 +35,17 @@ Verified Extraction -fmt coq_true "coq_true.mlf".
   A MetaRocq metaprogram defined in the [Malfunction.PrintMli] library imported above
   provides a default interface: *)
 
-MetaRocq Run Print mli coq_true.
+MetaRocq Run Print mli rocq_true.
 (* In Rocq's info channel: 
     
-  val coq_true : bool *)
+  val rocq_true : bool *)
 
-(** Copying this declaration in `coq_true.mli`, one can then compile the files as follow:
+(** Copying this declaration in `rocq_true.mli`, one can then compile the files as follow:
 
-    # ocamlc coq_true.mli
+    # ocamlc rocq_true.mli
     (* produces a .cmi file to be read by malfunction *)
-    # malfunction coq_true.mlf
-    (* produces coq_true.cmx which exposes the `coq_true` definition *)
+    # malfunction rocq_true.mlf
+    (* produces rocq_true.cmx which exposes the `rocq_true` definition *)
 *)
 
 (** In general, [Print Mli] can produce interfaces that contain types that are marked as unsupported 
@@ -63,14 +63,14 @@ Set Verified Extraction Opam Path "/usr/local/bin/opam".
     with Rocq and run directly. The value of the program should be firstorder so that it can be read back as a 
     Rocq value. This is the case of booleans. *)  
 
-Verified Extraction -compile-plugin -run coq_true "coq_true.mlf".
+Verified Extraction -compile-plugin -run rocq_true "rocq_true.mlf".
 (* = true *)
 
 (** The plugin has a few diagnostics and customization flags:
    The `-verbose` flag produces debug output (useful for tracking compilation issues),  
    The `-time` flag reports the compilation and running times of the command.
    The `-optimize` flag uses OCaml's -O2 option to compile the malfunction code.  *)
-Verified Extraction -time -verbose -optimize -compile-plugin -run coq_true "coq_true.mlf".
+Verified Extraction -time -verbose -optimize -compile-plugin -run rocq_true "rocq_true.mlf".
 
 (** The Rocq programs can make use of axioms that are realised by ocaml libraries and linked to the resulting program.
     By default, there is an `FFI` library allowing to access Rocq's info, notice and debug channels as well as raising 
@@ -82,7 +82,7 @@ From VerifiedExtraction Require Import RocqMsgFFI.
 Definition msg_true := coq_msg_info (show true).
 
 (** Running the plugin produces as side effect a call to [coq_msg_info], printing to the [info] pannel of your IDE. *)
-Verified Extraction -compile-plugin -run msg_true "coq_true.mlf".
+Verified Extraction -compile-plugin -run msg_true "rocq_true.mlf".
 (* = tt 
  
   In Rocq's Info channel:
