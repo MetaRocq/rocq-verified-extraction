@@ -802,7 +802,7 @@ let eval_name (fn : string) =
   | None -> CErrors.anomaly Pp.(str"Couldn't find funtion " ++ str fn ++ str" in registered plugins")
   | Some code -> code
 
-let eval_plugin ?loc opts (gr : Libnames.qualid) =
+let eval_plugin_gen ?loc opts (gr : Libnames.qualid) =
   let opts = make_options loc opts in
   let env = Global.env () in
   let sigma = Evd.from_env env in
@@ -814,7 +814,15 @@ let eval_plugin ?loc opts (gr : Libnames.qualid) =
   let tyinfo = Reify.check_reifyable_thunk_or_value env sigma grc in
   let code = eval_name fn in
   let c = run_code opts env sigma tyinfo code in
+  env, sigma, c
+
+let eval_plugin ?loc opts (gr : Libnames.qualid) = 
+  let env, sigma, c = eval_plugin_gen ?loc opts gr in
   print_results env sigma (Some [c])
+
+let eval ?loc opts gr = 
+  let env, sigma, c = eval_plugin_gen ?loc opts gr in
+  c
 
 let extract compile_malfunction ?loc opts env sigma c dest = 
   let res = extract_and_run compile_malfunction ?loc opts env sigma c dest in

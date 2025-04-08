@@ -9,9 +9,6 @@ extraction_plugin:
 rocq: Makefile.rocq
 	+make -f Makefile.rocq all
 
-html: Makefile.rocq
-	+make -f Makefile.rocq html
-
 install: install-rocq plugin
 
 install-rocq: Makefile.rocq rocq
@@ -50,3 +47,15 @@ bootstrap: rocq plugin extraction_plugin extraction_ocaml_ffi
 	+make -C plugin/plugin-bootstrap -j 1
 
 .PHONY: extraction_plugin extraction_ocaml_ffi
+
+html:
+	rocq doc --multi-index -toc -utf8 -html \
+    --with-header ./html/resources/header.html --with-footer ./html/resources/footer.html \
+		--external https://metarocq.github.io/v1.4-9.0/ MetaRocq \
+		-Q theories Malfunction \
+		-Q plugin/plugin-bootstrap VerifiedExtraction.Plugin \
+		-Q benchmarks/lib VerifiedExtraction.Benchmarks \
+		-Q examples Malfunction.Examples \
+		-d html theories/*.v examples/*.v plugin/plugin-bootstrap/*.v benchmarks/lib/*.v
+	# Overwritten by rocq doc
+	git checkout html/coqdoc.css

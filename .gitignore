@@ -31,7 +31,7 @@
 /doc/intro.tex
 /theories/.coq-native/
 /test-suite/.coq-native/
-/html/
+/html/*.html
 /examples/nlia.cache
 /examples/.nia.cache
 docs/.sass-cache/

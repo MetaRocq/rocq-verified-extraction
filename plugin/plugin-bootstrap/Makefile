@@ -1,4 +1,4 @@
-PLUGINPATH = ../../lib/rocq_verified_extraction_plugin/_build/install/default/lib:../../lib/rocq_verified_extraction_ocaml_ffi/_build/install/default/lib:../../_opam/lib
+PLUGINPATH = ../../lib/rocq_verified_extraction_plugin/_build/install/default/lib:../../lib/rocq_verified_extraction_ocaml_ffi/_build/install/default/lib
 
 all: Makefile.bootstrap Makefile.rocq plugin
 	
