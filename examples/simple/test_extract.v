@@ -2,7 +2,7 @@ From Equations Require Import Equations.
 From Malfunction Require Import FFI.
 From VerifiedExtraction Require Import Extraction OCamlFFI.
 From MetaRocq.Template Require Import All.
-From Stdlib Require ZArith Lists.StreamMemo.
+From Stdlib Require ZArith Streams.StreamMemo.
 
 From Stdlib Require Import String.
 From Stdlib Require Vector.
@@ -54,7 +54,7 @@ Definition test_take := print_string (show (take 10 (naturals 0))).
 
 Verified Extraction -fmt -unsafe -compile-with-coq -run test_take "naturals.mlf".
 
-Import ZArith Lists.StreamMemo.
+Import ZArith Streams.StreamMemo.
 Local Open Scope Z_scope.
 Fixpoint tfact (n: nat) :=
   match n with
@@ -132,7 +132,7 @@ Equations idnat (n : nat) : nat by wf n lt :=
 
 Extraction idnat.
 
-Verified Extract Inline [ Equations.Prop.Subterm.FixWf, Stdlib.Init.Wf.Fix, Stdlib.Init.Wf.Fix_F, idnat_functional ].
+Verified Extract Inline [ Equations.Prop.Subterm.FixWf, Corelib.Init.Wf.Fix, Corelib.Init.Wf.Fix_F, idnat_functional ].
 
 Verified Extraction -fmt -unsafe -typed idnat "idnat.mlf".
 

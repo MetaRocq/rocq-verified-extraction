@@ -20,13 +20,13 @@ Local Existing Instance SemanticsSpec.CanonicalHeap.
 
 Definition eval_malfunction (cf := config.extraction_checker_flags) (p : Ast.Env.program)
   : string :=
-  let p' := run (malfunction_pipeline Pipeline.default_malfunction_config) (nil, p) (MCUtils.todo "wf_env and welltyped term"%bs) in
+  let p' := run (malfunction_pipeline Pipeline.default_malfunction_config) (nil, p) (MRUtils.todo "wf_env and welltyped term"%bs) in
   let t := Mlet_ (MRList.rev_map Malfunction.Named (List.flat_map (fun '(x, d) => match d with Some b => cons (x,b) nil | None => nil end) (fst p')), snd p') in
   time "Pretty printing"%bs (@to_string _ Serialize_t) t.
 
 Definition eval_malfunction_sexp (cf := config.extraction_checker_flags) (p : Ast.Env.program)
   : Malfunction.t :=
-  let p' := run (malfunction_pipeline default_malfunction_config) (nil,p) (MCUtils.todo "wf_env and welltyped term"%bs) in
+  let p' := run (malfunction_pipeline default_malfunction_config) (nil,p) (MRUtils.todo "wf_env and welltyped term"%bs) in
   let t := Mlet_ (MRList.rev_map Malfunction.Named (List.flat_map (fun '(x, d) => match d with Some b => cons (x,b) nil | None => nil end) (fst p')), snd p') in
   time "Pretty printing"%bs id t.
 

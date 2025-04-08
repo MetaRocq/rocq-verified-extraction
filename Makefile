@@ -48,14 +48,18 @@ bootstrap: rocq plugin extraction_plugin extraction_ocaml_ffi
 
 .PHONY: extraction_plugin extraction_ocaml_ffi
 
+# FIXME rocq doc corelib links failing --external https://rocq-prover.org/doc/V9.0.0/corelib/ Corelib
+
 html:
 	rocq doc --multi-index -toc -utf8 -html \
     --with-header ./html/resources/header.html --with-footer ./html/resources/footer.html \
 		--external https://metarocq.github.io/v1.4-9.0/ MetaRocq \
 		-Q theories Malfunction \
-		-Q plugin/plugin-bootstrap VerifiedExtraction.Plugin \
+		-Q plugin/plugin-bootstrap VerifiedExtraction \
 		-Q benchmarks/lib VerifiedExtraction.Benchmarks \
 		-Q examples Malfunction.Examples \
-		-d html theories/*.v examples/*.v plugin/plugin-bootstrap/*.v benchmarks/lib/*.v
+		-d html theories/*.v examples/**/*.v plugin/plugin-bootstrap/*.v benchmarks/lib/*.v
 	# Overwritten by rocq doc
 	git checkout html/coqdoc.css
+
+.PHONY: html

@@ -1,5 +1,7 @@
 -Q theories Malfunction
--Q plugin VerifiedExtraction.Plugin
+-Q examples Malfunction.Examples
+-Q plugin/plugin Malfunction.Plugin
+-Q plugin/plugin-bootstrap VerifiedExtraction
 -I plugin
 -Q benchmarks VerifiedExtraction.Benchmarks
 
