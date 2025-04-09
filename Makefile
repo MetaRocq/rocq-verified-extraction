@@ -48,11 +48,11 @@ bootstrap: rocq plugin extraction_plugin extraction_ocaml_ffi
 
 .PHONY: extraction_plugin extraction_ocaml_ffi
 
-# FIXME rocq doc corelib links failing --external https://rocq-prover.org/doc/V9.0.0/corelib/ Corelib
-
 html:
 	rocq doc --multi-index -toc -utf8 -html \
     --with-header ./html/resources/header.html --with-footer ./html/resources/footer.html \
+		--coqlib_url https://rocq-prover.org/doc/V9.0.0/corelib \
+		--external https://rocq-prover.org/doc/V9.0.0/stdlib Stdlib \
 		--external https://metarocq.github.io/v1.4-9.0/ MetaRocq \
 		-Q theories Malfunction \
 		-Q plugin/plugin-bootstrap VerifiedExtraction \
