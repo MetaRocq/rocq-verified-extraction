@@ -1,7 +1,7 @@
 all: multiple.vo multiple main
 
 multiple.vo:
-	coqc multiple.v
+	rocq compile multiple.v
 
 multiple: multiple.vo
 	ocamlopt -c multiple.mli

@@ -3,4 +3,4 @@ CAMLPKGS = rocq-runtime.kernel,rocq_verified_extraction.plugin,rocq_verified_ext
 test: append.vo
 
 append.vo: append.v
-	coqc append.v
+	rocq compile append.v
