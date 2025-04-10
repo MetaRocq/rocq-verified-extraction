@@ -808,5 +808,5 @@ Proof.
     unfold int_to_nat. rewrite Z2Nat.id. 
     pose (to_Z_bounded (PArray.length (deref ih ptr'))); lia.        
     econstructor. 
-  Qed.
+  Admitted. (* FIXME assert false in kernel/conversion.ml # 790 *)
 Set Guard Checking.

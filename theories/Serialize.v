@@ -1,7 +1,7 @@
 From MetaRocq.Utils Require Import bytestring ReflectEq utils.
 From MetaRocq.Common Require Kernames.
 
-Require Import String Ascii Bool Arith.
+From Stdlib Require Import String Ascii Bool Arith.
 Require Import Malfunction.Malfunction.
 
 Set Warnings "-masking-absolute-name".
@@ -41,7 +41,7 @@ Fixpoint _escape_ident (_end s : String.t) : String.t :=
 #[export] Instance Serialize_Ident : Serialize Ident.t :=
   fun a => Atom (append "$" (bytestring.String.to_string (_escape_ident ""%bs a))).
 
-Require Sint63.
+From Stdlib Require Sint63.
 
 Definition sint_to_Z := Sint63.to_Z.
 
