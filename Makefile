@@ -38,7 +38,7 @@ test:
 	cd plugin/tests && make 
 
 Makefile.rocq: _RocqProject
-	rocq_makefile -f _RocqProject -o Makefile.rocq
+	rocq makefile -f _RocqProject -o Makefile.rocq
 
 plugin/plugin-bootstrap/Makefile.rocq: plugin/plugin-bootstrap/_RocqProject
 	cd plugin/plugin-bootstrap && make Makefile.rocq
