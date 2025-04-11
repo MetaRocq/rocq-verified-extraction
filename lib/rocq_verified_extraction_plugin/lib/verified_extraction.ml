@@ -64,6 +64,17 @@ type malfunction_plugin_config =
 let debug_extract = CDebug.create ~name:"verified-extraction" ()
 let debug = debug_extract
 
+let get_bool_option key =
+  let open Goptions in
+  match get_option_value key with
+  | Some get -> fun () ->
+      begin match get () with
+      | BoolValue b -> b
+      | _ -> assert false
+      end
+  | None ->
+    (declare_bool_option_and_ref ~key ~value:false ()).get
+
 let get_stringopt_option key =
   let open Goptions in
   match get_option_value key with
@@ -94,8 +105,23 @@ let get_opam_path_opt =
 
 let get_use_opam_opt =
   get_bool_option ~default:true ["Verified"; "Extraction"; "Use"; "Opam"]
+  
+let get_timing_opt =
+  get_bool_option ["Verified"; "Extraction"; "Timing"]
 
-(* When building standalone programs still relying on Rocq's/MetaRocq's FFIs, use these packages for linking *)
+let get_typed_opt =
+  get_bool_option ["Verified"; "Extraction"; "Typed"]
+
+let get_verbose_opt =
+  get_bool_option ["Verified"; "Extraction"; "Verbose"]
+
+let get_optimize_opt =
+  get_bool_option ["Verified"; "Extraction"; "Optimize"]
+
+let get_format_opt =
+  get_bool_option ["Verified"; "Extraction"; "Format"]
+
+  (* When building standalone programs still relying on Rocq's/MetaRocq's FFIs, use these packages for linking *)
 let statically_linked_pkgs =
   ["rocq-runtime.boot";
     "rocq-runtime.clib";
@@ -295,8 +321,10 @@ let make_options loc l =
   let prims = get_global_prims () in
   let default = {
     malfunction_pipeline_config = default_malfunction_config inductives_mapping inlining prims;
-    bypass_qeds = false; time = false; program_type = None; load = false; run = false;
-    verbose = false; loc; format = false; optimize = false;
+    bypass_qeds = false; time = get_timing_opt (); 
+    program_type = None; load = false; run = false;
+    verbose = get_verbose_opt (); loc; format = get_format_opt (); 
+    optimize = get_optimize_opt ();
     use_opam_env = get_use_opam_opt () }  
   in
   let parse_unsafe_flags unsafe l = 
@@ -437,7 +465,7 @@ type malfunction_program_type =
 
 type plugin_function = Obj.t
 
-let register_plugins = Summary.ref ~name:"verified-extraction-plugins" (CString.Map.empty : plugin_function CString.Map.t)
+let register_plugins = Summary.ref ~local:true ~name:"verified-extraction-plugins" (CString.Map.empty : plugin_function CString.Map.t)
 
 let cache_plugin (name, fn) = 
   register_plugins := CString.Map.add name fn !register_plugins
@@ -445,9 +473,8 @@ let cache_plugin (name, fn) =
 let plugin_input =
   let open Libobject in 
   declare_object 
-    (global_object_nodischarge "verified-extraction-plugins"
-    ~cache:(fun r -> cache_plugin r)
-    ~subst:None)
+    (local_object_nodischarge "verified-extraction-plugins"
+    ~cache:(fun r -> cache_plugin r))
   
 let register_plugin name fn : unit =
   Lib.add_leaf (plugin_input (name, fn))
@@ -628,8 +655,7 @@ struct
 
   let reify opts env sigma tyinfo result =
     let mapping = opts.malfunction_pipeline_config.reorder_constructors in
-    if opts.time then time opts (Pp.str "Reification") (reify env sigma mapping tyinfo) result
-    else reify env sigma mapping tyinfo result
+    time opts (Pp.str "Reification") (reify env sigma mapping tyinfo) result
 
 end
 
@@ -693,12 +719,15 @@ let compile opts names tyinfos fname =
       notice opts Pp.(fun () -> str "Compiled to " ++ str output);
       Some (StandaloneProgram output)
 
-let run_code opts env sigma tyinfo code : Constr.t =
+let run_code opts env sigma fn tyinfo code : Constr.t =
   let open Reify in
   let value, tyinfo =
-    match tyinfo with
-    | IsThunk vty -> ((Obj.magic code : unit -> Obj.t) (), vty)
-    | IsValue vty -> code, vty
+    try 
+      match tyinfo with
+      | IsThunk vty -> (time opts Pp.(str fn) (Obj.magic code : unit -> Obj.t) (), vty)
+      | IsValue vty -> time opts Pp.(str fn) (fun _ -> code) (), vty
+    with Stack_overflow -> 
+      CErrors.user_err Pp.(str"Compiled program has overflown the stack.")
   in
   Reify.reify opts env sigma tyinfo value
 
@@ -712,7 +741,7 @@ let run opts env sigma result : Constr.t list option =
         let run fn tyinfo = 
           match CString.Map.find_opt fn !register_plugins with
           | None -> CErrors.anomaly Pp.(str"Couldn't find funtion " ++ str fn ++ str" which should have been registered by " ++ str shared_lib)
-          | Some code -> time opts Pp.(str fn) (run_code opts env sigma tyinfo) code
+          | Some code -> run_code opts env sigma fn tyinfo code
         in
         Some (List.map2 run fns tyinfos)
       end else None
@@ -821,7 +850,7 @@ let eval_plugin_gen ?loc opts (gr : Libnames.qualid) =
   let sigma, grc = Evd.fresh_global env sigma gr in
   let tyinfo = Reify.check_reifyable_thunk_or_value env sigma grc in
   let code = eval_name fn in
-  let c = run_code opts env sigma tyinfo code in
+  let c = run_code opts env sigma fn tyinfo code in
   env, sigma, c
 
 let eval_plugin ?loc opts (gr : Libnames.qualid) = 
@@ -834,15 +863,23 @@ let eval ?loc opts gr =
 
 let prc = Printer.pr_constr_env
 
+let make_thunk term ty = 
+  let unit = EConstr.mkIndU (Globnames.destIndRef (Rocqlib.lib_ref "core.unit.type"), EConstr.EInstance.empty) in
+  let binder = EConstr.anonR in
+  let term = EConstr.mkLambda (binder, unit, term) in
+  let ty = EConstr.mkProd (binder, unit, ty) in
+  term, ty
+
 let erase_eval_function compile_malfunction : Eraseconv.erase_evaluation_function =
+  let opts = [ProgramType Plugin; Load; Run] in 
   fun env term ty -> 
+    let opts = make_options None opts in
     let sigma = Evd.from_env env in
     debug Pp.(fun () -> str"Erasure evaluation called on term: " ++ prc env sigma term ++ str" of type " ++ 
       prc env sigma ty);
-    let opts = [ProgramType Plugin; Time; Load; Run] in 
-    let opts = make_options None opts in
-    let tyinfo = time opts Pp.(str"Checking reifyability") (Reify.check_reifyable_thunk_or_value_type env sigma) (EConstr.of_constr ty) in
-    let res = time opts Pp.(str"Extracting, running and reifying") (extract_and_run compile_malfunction opts env sigma (EConstr.of_constr term) [tyinfo]) None in
+    let term, ty = make_thunk (EConstr.of_constr term) (EConstr.of_constr ty) in      
+    let tyinfo = time opts Pp.(str"Checking reifyability") (Reify.check_reifyable_thunk_or_value_type env sigma) ty in
+    let res = time opts Pp.(str"Extracting, running and reifying") (extract_and_run compile_malfunction opts env sigma term [tyinfo]) None in
     match res with
     | None ->
       debug Pp.(fun () -> str"Didn't reify to a value");
