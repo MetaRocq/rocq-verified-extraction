@@ -1,4 +1,5 @@
 undefine COQPATH
+PREFIX=
 
 all: rocq extraction_plugin extraction_ocaml_ffi plugin bootstrap
 
@@ -15,8 +16,8 @@ install: install-rocq plugin
 
 install-rocq: Makefile.rocq rocq
 	+make -f Makefile.rocq install
-	cd lib/rocq_verified_extraction_ocaml_ffi && dune install
-	cd lib/rocq_verified_extraction_plugin && dune install
+	cd lib/rocq_verified_extraction_ocaml_ffi && dune install --prefix ${PREFIX} --libdir ${OCAMLFIND_DESTDIR}
+	cd lib/rocq_verified_extraction_plugin && dune install --prefix ${PREFIX} --libdir ${OCAMLFIND_DESTDIR}
 	cd plugin/plugin && make -f Makefile.rocq install
 	cd plugin/plugin-bootstrap && make -f Makefile.rocq install
 
