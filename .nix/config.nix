@@ -112,7 +112,7 @@ with (import <nixpkgs> {}).lib;
   ## variable on GitHub. Then, you should give the variable
   ## name here. For instance, coq-community projects can use
   ## the following line instead of the one above:
-  # cachix.coq-community.authToken = "CACHIX_AUTH_TOKEN";
+  cachix.metarocq.authToken = "CACHIX_AUTH_TOKEN";
   
   ## Or if you have a signing key for a given Cachix cache:
   # cachix.my-cache.signingKey = "CACHIX_SIGNING_KEY"
