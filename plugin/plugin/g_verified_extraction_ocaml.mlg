@@ -8,7 +8,7 @@ open Names
 open Pp
 open Ltac_plugin
 open Stdarg
-open Pcoq.Prim
+open Procq.Prim
 open Tacexpr
 open Tacinterp
 open Stdarg
