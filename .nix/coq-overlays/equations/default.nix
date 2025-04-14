@@ -2,6 +2,7 @@
   lib,
   mkCoqDerivation,
   coq,
+  stdlib,
   version ? null,
 }:
 
@@ -22,7 +23,7 @@
   mlPlugin = true;
   useDune = true;
 
-  propagatedBuildInputs = [ coq.ocamlPackages.ppx_optcomp coq.ocamlPackages.findlib ];
+  propagatedBuildInputs = [ stdlib coq.ocamlPackages.ppx_optcomp coq.ocamlPackages.findlib ];
 
   meta = with lib; {
     homepage = "https://mattam82.github.io/Coq-Equations/";
