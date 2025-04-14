@@ -7,6 +7,7 @@
   ceres,
   equations,
   metarocq,
+  malfunction,
   version ? null,
 }:
 
@@ -21,8 +22,8 @@
   mlPlugin = true;
   useDune = false;
   
-  buildInputs = [ dune_3 coq stdlib equations metarocq ceres ];
-  propagatedBuildInputs = [ coq stdlib coq.ocamlPackages.ppx_optcomp coq.ocamlPackages.findlib ];
+  buildInputs = [ dune_3 malfunction coq stdlib equations metarocq ceres ];
+  propagatedBuildInputs = [ coq stdlib coq.ocamlPackages.ppx_optcomp coq.ocamlPackages.findlib malfunction ];
 
   meta = with lib; {
     homepage = "https://metarocq.github.io/";
