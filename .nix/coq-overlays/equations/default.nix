@@ -1,9 +1,7 @@
 {
   lib,
   mkCoqDerivation,
-  rocq-core,
   coq,
-  stdlib,
   version ? null,
 }:
 
@@ -13,7 +11,7 @@
   repo = "Coq-Equations";
   opam-name = "rocq-equations";
   inherit version;
-  defaultVersion = lib.switch rocq-core.rocq-version [
+  defaultVersion = lib.switch coq.version [
     { case = "9.0"; out = "1.3.1-9.0"; }
   ] null;
   release = {
@@ -24,7 +22,7 @@
   mlPlugin = true;
   useDune = true;
 
-  propagatedBuildInputs = [ coq stdlib coq.ocamlPackages.ppx_optcomp coq.ocamlPackages.findlib ];
+  propagatedBuildInputs = [ coq.ocamlPackages.ppx_optcomp coq.ocamlPackages.findlib ];
 
   meta = with lib; {
     homepage = "https://mattam82.github.io/Coq-Equations/";
