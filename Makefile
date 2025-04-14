@@ -1,3 +1,5 @@
+undefine COQPATH
+
 all: rocq extraction_plugin extraction_ocaml_ffi plugin bootstrap
 
 extraction_ocaml_ffi:
