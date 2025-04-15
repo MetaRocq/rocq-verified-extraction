@@ -327,3 +327,4 @@ on:
   push:
     branches:
     - master
+    - rocq-9.0
