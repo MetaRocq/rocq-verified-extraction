@@ -49,17 +49,14 @@ with (import <nixpkgs> {}).lib;
   bundles.default = {
     ## You can override Rocq and other Rocq rocqPackages
     ## through the following attribute
-    rocqPackages.rocq-core.override.version = "master";
-    rocqPackages.coq-core.override.version = "master";
-    
+    rocqPackages.rocq-core.override.version = "7bedc37a9fb4c7bd340349324104e672d29203be";
+    rocqPackages.coq-core.override.version = "7bedc37a9fb4c7bd340349324104e672d29203be";
+    coqPackages.coq.override.version = "7bedc37a9fb4c7bd340349324104e672d29203be";
     ## You can override Coq and other Coq coqPackages
     ## through the following attribute
     coqPackages.equations.override.version = "main";
-    coqPackages.coq.override.version = "master";
-
-    coqPackages.metarocq.override.version = "main";
-
-    coqPackages.ceres.override.version = "0.4.1";
+    coqPackages.metarocq.override.version = "#1173";
+    coqPackages.ceres.override.version = "master";
 
     ## In some cases, light overrides are not available/enough
     ## in which case you can use either
