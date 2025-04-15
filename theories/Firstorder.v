@@ -1175,7 +1175,7 @@ Proof.
         destruct a => //. destruct decl_body => //.
         destruct univs => //. destruct on_cargs as [onca hty].
         rewrite (IHc univs) //=; cbn.
-        hnf in hty. destruct hty as [onb [s [onty eq]]]. cbn in *. destruct eq. subst s.
+        hnf in hty. destruct hty as [onb [s [onty eq]]]. cbn in *. destruct eq; try subst s.
         eapply typing_wf_universes in onty => //. 2:apply wfΣ.
         move/andP: onty => [hdecl _]. eapply wf_universes_closedu in hdecl => //.
         red. cbn. intro. csets. }
@@ -2094,7 +2094,7 @@ Proof.
     destruct a => //. destruct decl_body => //.
     destruct univs => //. destruct on_cargs as [onca hty].
     rewrite (IHc univs) //=; cbn.
-    hnf in hty. destruct hty as [onb [s [onty eq]]]. cbn in *. destruct eq as [eqs _]; subst s.
+    hnf in hty. destruct hty as [onb [s [onty eq]]]. cbn in *. destruct eq as [eqs _]; try subst s.
     eapply typing_wf_universes in onty => //. 2:apply wfΣ.
     move/andP: onty => [hdecl _]. unshelve eapply wf_universes_closedu in hdecl => //; tea. eapply wfΣ.
     red. cbn. intro. csets. }
@@ -2694,18 +2694,12 @@ Proof.
   { eapply (PCUICWeakeningTyp.weakening  _ _ ([vass na (tInd {| inductive_mind := kn; inductive_ind := ind |} [])])) in Htype_ind'; cbn in Htype_ind'; eauto.
     constructor. constructor. cbn. pose proof t0 as t1. eapply PCUICValidity.validity in t1 as [? [s [t1 _]]]. cbn in o0, t1.
     eapply PCUICInversion.inversion_Prod in t1 as [s1 [s2 []]].
-    hnf in l0. hnf. cbn. cbn in l0. destruct l0 as [_ [s' [? [-> ]]]]. split => //. now exists s'. eauto.
+    hnf in l0. hnf. cbn. cbn in l0. (destruct l0 as [_ [s' [? [-> ]]]] || destruct l0 as [_ [s' [? ->]]]). split => //. now exists s'. eauto.
     }
   assert (Herase: ∥ Extract.nisErasable (Σ, univ_decl) [] f ∥).
   { sq.  unfold Extract.nisErasable. eexists; eexists. split; eauto.
     - clear Heval. sq. eapply PCUICNormal.nf_tProd; eapply PCUICNormal.nf_tind.
-    - eapply type_Prod; eauto. unfold lift_typing0, lift_sorting; cbn. split; eauto. eexists; eauto. split; eauto.
-      split; eauto.
-      eapply typing_wf_local in Htype_ind''. depelim Htype_ind''. hnf in l0. cbn in l0.
-      destruct l0 as [_ [s [hty [_ iss]]]].
-      eapply lookup_inductive_declared in Hlookup''.
-      eapply invert_ind_sort in hty; tea. 2:{ eapply declared_inductive_from_gen; tea. }
-      eapply geq_relevance; tea.
+    - eapply type_Prod; eauto. unfold lift_typing0, lift_sorting; cbn. split; eauto.
     - now rewrite Hind_sort Hind_sort'. 
   }
   assert (Hax: PCUICClassification.axiom_free Σ).
@@ -2768,4 +2762,4 @@ Proof.
   Unshelve. all: eauto.
 Qed.
 
-Print Assumptions interoperability_firstorder_function.
+(* Print Assumptions interoperability_firstorder_function. *)
