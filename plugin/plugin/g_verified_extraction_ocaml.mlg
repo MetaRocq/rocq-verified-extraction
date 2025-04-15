@@ -79,6 +79,8 @@ let compile_malfunction conf pt p =
 
 let extract = extract compile_malfunction
 
+let () = install_erase_conv compile_malfunction
+
 }
 
 VERNAC COMMAND EXTEND Verified_Extraction CLASSIFIED AS QUERY

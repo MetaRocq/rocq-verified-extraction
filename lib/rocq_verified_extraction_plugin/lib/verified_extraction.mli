@@ -88,3 +88,5 @@ val extract :
 val eval_plugin : ?loc:Loc.t -> malfunction_command_args list -> Libnames.qualid -> unit
 
 val eval : ?loc:Loc.t -> malfunction_command_args list -> Libnames.qualid -> Constr.t
+
+val install_erase_conv : malfunction_compilation_function -> unit
