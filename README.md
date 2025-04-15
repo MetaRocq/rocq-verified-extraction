@@ -12,6 +12,7 @@ describes this development.
 
 ## Installation
 
+The plugin is available as an `opam` package. To install the version corresponding to this branch, use:
 ```
 opam switch create coq-malfunction --packages="ocaml-variants.4.14.1+options,ocaml-option-flambda"
 eval $(opam env --switch=coq-malfunction)
@@ -20,7 +21,37 @@ opam pin -n -y "https://github.com/MetaRocq/metarocq.git#v1.3.2-8.19"
 opam pin -n -y "https://github.com/stedolan/malfunction.git#master"
 opam install . --deps-only
 make -j 4
+make install
 ```
+
+## Development
+
+One can use `nix` to develop. After a successful [installation](https://nixos.org/download/) of `nix` and `cachix` 
+(see [instructions](https://metarocq.cachix.org)) use:
+
+```bash
+nix-shell
+```
+
+This enters a shell environment with all the dependencies to build the plugin available.
+To check which libraries and versions are installed in the nix environment, use:
+```bash
+nixEnv
+```
+
+See `nixHelp` for the available commands in the `nix-shell`.
+To open the VSCode IDE to work on the Rocq files, call, under the `nix-shell`:
+
+```bash
+code .vscode/rocq-verified-extraction.code-workspace
+```
+
+This workspace contains the necessary include flags to process the `.v` files.
+Note, when starting terminals from `VSCode` or elsewhere, you need to re-enter `nix-shell` to 
+use the right environment for calling e.g. `make`.
+
+To test the build as is done in the CI, you can (without even going under the `nix-shell`), run `nix-build` at the root.
+To test with specific versions of dependencies, customize `.nix/config.nix`.
 
 ## Usage
 
