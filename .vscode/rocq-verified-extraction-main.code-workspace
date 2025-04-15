@@ -4,5 +4,14 @@
 			"path": ".."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"coqtop.args": [
+			"-Q", "theories", "Malfunction",
+			"-Q", "examples", "Malfunction.Examples",
+			"-Q", "plugin/plugin", "Malfunction.Plugin",
+			"-Q", "plugin/plugin-bootstrap", "VerifiedExtraction",
+			"-I", "plugin",
+			"-Q", "benchmarks", "VerifiedExtraction.Benchmarks"
+		]
+	}
 }
