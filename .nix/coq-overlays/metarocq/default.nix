@@ -75,6 +75,7 @@ let
     "1.3.3-8.19".sha256 = "sha256-SBTv49zQXZ+oGvIqWM53hjBKru9prFgZRv8gVgls40k=";
     "1.3.4-8.20".sha256 = "sha256-ofRP0Uo48G2LBuIy/5ZLyK+iVZXleKiwfMEBD0rX9fQ=";
     "1.3.4-9.0".sha256 = "sha256-BiAeuwL6WvDNs+ZGzPWj59kTS69J4kjrS3XIZyzpLOQ=";
+    "1.4-9.0".sha256 = "sha256-5QecDAMkvgfDPZ7/jDfnOgcE+Eb1LTAozP7nz6nkuxg=";
   };
   releaseRev = v: "v${v}";
 
