@@ -4,11 +4,11 @@ all: Makefile.bootstrap Makefile.rocq plugin
 	
 compile_malfunction:
 	mkdir -p _build
-	OCAMLPATH=$(PLUGINPATH) make -f Makefile.bootstrap
+	OCAMLPATH=${PLUGINPATH}:${OCAMLPATH} make -f Makefile.bootstrap
 	cp _build/compile_malfunction.mlf compile_malfunction.mlf
 	
 plugin: compile_malfunction
-	OCAMLPATH=$(PLUGINPATH) make -f Makefile.rocq
+	OCAMLPATH=${PLUGINPATH}:${OCAMLPATH} make -f Makefile.rocq
 
 install: Makefile.rocq all
 	make -f Makefile.rocq install

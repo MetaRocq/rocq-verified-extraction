@@ -1,8 +1,6 @@
-Require Import Malfunction.Malfunction.
-
-Require Import Ceres.Ceres.
-Require Import String List.
-
+From Malfunction Require Import Malfunction.
+From Ceres Require Import Ceres.
+From Stdlib Require Import String List.
 Import ListNotations.
 
 Local Open Scope list.

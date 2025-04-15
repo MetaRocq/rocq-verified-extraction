@@ -7,7 +7,7 @@ Makefile.rocq: _RocqProject
 
 plugin: Makefile.rocq
 	mkdir -p -m 0755 _build
-	OCAMLPATH=$(PLUGINPATH) $(MAKE) -f Makefile.rocq
+	OCAMLPATH=${PLUGINPATH}:${OCAMLPATH} $(MAKE) -f Makefile.rocq
 
 install: plugin
 	$(MAKE) -f Makefile.rocq install

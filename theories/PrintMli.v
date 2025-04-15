@@ -1,5 +1,4 @@
-Require Import Nat List.
-From Stdlib Require Import Strings.Ascii.
+From Stdlib Require Import Nat List Strings.Ascii.
 From MetaRocq.Template Require Import Loader All Checker.
 From MetaRocq.Utils Require Import bytestring.
 

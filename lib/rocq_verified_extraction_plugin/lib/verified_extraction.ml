@@ -58,7 +58,8 @@ type malfunction_plugin_config =
     run : bool;
     loc : Loc.t option;
     format : bool;
-    optimize : bool }
+    optimize : bool;
+    use_opam_env : bool }
 
 let debug_extract = CDebug.create ~name:"verified-extraction" ()
 let debug = debug_extract
@@ -74,12 +75,26 @@ let get_stringopt_option key =
   | None ->
     (declare_stringopt_option_and_ref ~key ~value:None ()).get
 
+let get_bool_option ?(default=false) key =
+  let open Goptions in
+  match get_option_value key with
+  | Some get -> fun () ->
+      begin match get () with
+      | BoolValue b -> b
+      | _ -> assert false
+      end
+  | None ->
+    (declare_bool_option_and_ref ~key ~value:default ()).get
+
 let get_build_dir_opt =
   get_stringopt_option ["Verified"; "Extraction"; "Build"; "Directory"]
 
 let get_opam_path_opt =
   get_stringopt_option ["Verified"; "Extraction"; "Opam"; "Path"]
-  
+
+let get_use_opam_opt =
+  get_bool_option ~default:true ["Verified"; "Extraction"; "Use"; "Opam"]
+
 (* When building standalone programs still relying on Rocq's/MetaRocq's FFIs, use these packages for linking *)
 let statically_linked_pkgs =
   ["rocq-runtime.boot";
@@ -281,7 +296,8 @@ let make_options loc l =
   let default = {
     malfunction_pipeline_config = default_malfunction_config inductives_mapping inlining prims;
     bypass_qeds = false; time = false; program_type = None; load = false; run = false;
-    verbose = false; loc; format = false; optimize = false }  
+    verbose = false; loc; format = false; optimize = false;
+    use_opam_env = get_use_opam_opt () }  
   in
   let parse_unsafe_flags unsafe l = 
     match l with
@@ -735,6 +751,8 @@ let set_opam_env opts =
     | pref -> pref ^ "/bin"
   in
   Unix.putenv "PATH" (opam_binpath ^ ":" ^ path)
+
+let set_opam_env opts = if opts.use_opam_env then set_opam_env opts else ()
 
 let extract_and_run
   (compile_malfunction : malfunction_compilation_function)
