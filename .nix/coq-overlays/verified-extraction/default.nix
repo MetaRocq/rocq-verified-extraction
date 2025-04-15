@@ -24,6 +24,10 @@
   buildInputs = [ dune_3 malfunction equations metarocq ceres ];
   propagatedBuildInputs = [ coq.ocamlPackages.ppx_optcomp coq.ocamlPackages.findlib malfunction ];
 
+  patchPhase = ''
+    patchShebangs plugin/plugin/clean_extraction.sh
+  '';
+
   meta = with lib; {
     homepage = "https://metarocq.github.io/";
     description = "Verified Extraction from Rocq to OCaml. Including a bootstrapped extraction plugin";
