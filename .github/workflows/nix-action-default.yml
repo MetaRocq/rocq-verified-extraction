@@ -1,5 +1,5 @@
 jobs:
-  ceres:
+  ceres-bs:
     needs:
     - coq
     - metarocq
@@ -39,7 +39,7 @@ jobs:
         extraPullNames: coq, coq-community, math-comp
         name: metarocq
     - id: stepGetDerivation
-      name: Getting derivation for current job (ceres)
+      name: Getting derivation for current job (ceres-bs)
       run: "NIXPKGS_ALLOW_UNFREE=1 nix-build --no-out-link \\\n   --argstr bundle
         \"default\" --argstr job \"ceres\" \\\n   --dry-run 2> err > out || (touch
         fail; true)\ncat out err\nif [ -e fail ]; then echo \"Error: getting derivation
@@ -324,7 +324,7 @@ jobs:
     - coq
     - equations
     - metarocq
-    - ceres
+    - ceres-bs
     runs-on: ubuntu-latest
     steps:
     - name: Determine which commit to initially checkout

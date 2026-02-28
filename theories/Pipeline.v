@@ -11,7 +11,7 @@ From MetaRocq Require Import ETransform EConstructorsAsBlocks.
 From MetaRocq.Erasure Require Import EWcbvEvalNamed.
 From MetaRocq.ErasurePlugin Require Import Erasure ErasureCorrectness.
 From Malfunction Require Import CompileCorrect SemanticsSpec FFI.
-From Ceres Require Import CeresSerialize.
+From CeresBS Require Import CeresSerialize.
 Import PCUICProgram.
 (* Import TemplateProgram (template_eta_expand).
  *)

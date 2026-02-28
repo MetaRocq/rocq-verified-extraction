@@ -31,8 +31,6 @@ with (import <nixpkgs> {}).lib;
   ## /!\ Remove this field as soon as the package is available on nixpkgs.
   ## /!\ Manual overlays in `.nix/rocq-overlays` or `.nix/coq-overlays`
   ##     should be preferred then.
-  #buildInputs = [ "equations" "metarocq" ];
-  #nativeBuildInputs = [ "equations" ];
 
   ## Indicate the relative location of your _CoqProject
   ## If not specified, it defaults to "_CoqProject"
@@ -57,7 +55,7 @@ with (import <nixpkgs> {}).lib;
     coqPackages.equations.override.version = "v1.3.1-9.1";
 
     coqPackages.metarocq.override.version = "v1.4.1-9.1";
-    coqPackages.ceres.override.version = "0.4.1";
+    coqPackages.ceres-bs.override.version = "master";
 
     ## In some cases, light overrides are not available/enough
     ## in which case you can use either

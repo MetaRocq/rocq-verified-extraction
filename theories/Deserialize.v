@@ -1,5 +1,5 @@
 From Malfunction Require Import Malfunction.
-From Ceres Require Import Ceres.
+From CeresBS Require Import Ceres.
 From Stdlib Require Import List.
 From MetaRocq.Utils Require Import bytestring.
 Import ListNotations.
