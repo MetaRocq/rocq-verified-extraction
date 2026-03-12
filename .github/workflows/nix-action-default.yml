@@ -2,6 +2,7 @@ jobs:
   ceres:
     needs:
     - coq
+    - metarocq
     runs-on: ubuntu-latest
     steps:
     - name: Determine which commit to initially checkout

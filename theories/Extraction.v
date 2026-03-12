@@ -42,6 +42,6 @@ Extract Constant PCUICTyping.guard_checking => "(fun _ _ _ _ -> true)". *)
 
 Set Extraction Output Directory "plugin/plugin/extraction".
 
-Separate Extraction compile_malfunction 
+Separate Extraction compile_malfunction
          (* The following directives ensure separate extraction does not produce name clashes *)
-         Stdlib.Strings.String utils Template.UnivSubst ELiftSubst EGlobalEnv.
+         utils Template.UnivSubst ELiftSubst EGlobalEnv.

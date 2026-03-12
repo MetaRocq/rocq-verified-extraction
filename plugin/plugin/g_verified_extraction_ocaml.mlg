@@ -42,21 +42,33 @@ let interp_unsafe uns =
   { Erasure0.cofix_to_lazy = uns.cofix_to_lazy;
     Erasure0.inlining = uns.inlining;
     Erasure0.unboxing = uns.unboxing;
-    Erasure0.betared = uns.betared }
+    Erasure0.betared = uns.betared;
+    Erasure0.inductives_extraction = uns.inductives_extraction }
+
+let interp_extracted_inductive x =
+  { EProgram.cstrs = x.cstrs; EProgram.elim = x.elim }
+
+let interp_extracted_inductives (i, x) =
+  (i, List.map interp_extracted_inductive x)
+
+let interp_extracted_inductives =
+  List.map interp_extracted_inductives
 
 let interp_pipeline_config c = 
   let { 
     erasure_config = 
       { enable_unsafe = enable_unsafe; 
         enable_typed_erasure = enable_typed_erasure; 
-        inlined_constants };
+        inlined_constants;
+        extracted_inductives };
     reorder_constructors = inductives_mapping;
     prims = prims } = c in
   let erasure_config = 
     Erasure0.({ 
       enable_unsafe = interp_unsafe enable_unsafe; enable_typed_erasure; 
       dearging_config = default_dearging_config;
-      inlined_constants
+      inlined_constants;
+      extracted_inductives = interp_extracted_inductives extracted_inductives
       })
   in
   Pipeline.{ 

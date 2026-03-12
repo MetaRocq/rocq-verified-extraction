@@ -249,13 +249,21 @@ let interp_unsafe uns =
     reorder_constructors = true;
     inlining = uns.inlining;
     unboxing = uns.unboxing;
-    betared = uns.betared }
+    betared = uns.betared;
+    inductives_extraction = uns.inductives_extraction }
+
+let interp_extracted_inductive (i, x) =
+  (interp_inductive i, Obj.magic x)
+
+let interp_extracted_inductives extr : (Compile_malfunction.inductive * Compile_malfunction.extracted_inductive) list =
+  List.map interp_extracted_inductive extr
 
 let interp_pipeline_config c : Compile_malfunction.malfunction_pipeline_config = 
   let { erasure_config = erasure_config; reorder_constructors = inductives_mapping; prims = prims } = c in
-  let { enable_unsafe = enable_unsafe; 
-        enable_typed_erasure = enable_typed_erasure; 
-        inlined_constants = inlined_constants } = erasure_config in
+  let { enable_unsafe;
+        enable_typed_erasure;
+        inlined_constants;
+        extracted_inductives } = erasure_config in
  
  (*       dearging_config = dearging_config  = erasure_config in
   let { do_trim_ind_masks = do_trim_ind_masks; 
@@ -269,7 +277,8 @@ let interp_pipeline_config c : Compile_malfunction.malfunction_pipeline_config =
         { do_trim_ctor_masks = false;
           do_trim_const_masks = true;
           overridden_masks = (fun _ -> None) };
-      inlined_constants = interp_inlining inlined_constants } )
+      inlined_constants = interp_inlining inlined_constants;
+      extracted_inductives = interp_extracted_inductives extracted_inductives } )
   in
   Compile_malfunction.({ erasure_config; prims = interp_prims prims; 
     reorder_cstrs = interp_inductives_mapping inductives_mapping;

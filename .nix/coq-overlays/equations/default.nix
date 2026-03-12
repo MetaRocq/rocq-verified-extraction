@@ -22,8 +22,9 @@
 
   mlPlugin = true;
   useDune = true;
-
-  propagatedBuildInputs = [ stdlib coq.ocamlPackages.ppx_optcomp coq.ocamlPackages.findlib ];
+  duneVersion = "3";
+  propagatedBuildInputs = [ coq.ocamlPackages.dune_3 stdlib coq.ocamlPackages.ppx_optcomp coq.ocamlPackages.findlib ];
+  ocamlNativeBuildInputs = [ coq.ocamlPackages.dune_3 ];
 
   meta = with lib; {
     homepage = "https://mattam82.github.io/Coq-Equations/";

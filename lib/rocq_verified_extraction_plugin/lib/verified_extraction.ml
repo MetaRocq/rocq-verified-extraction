@@ -5,12 +5,24 @@ type unsafe_passes =
   { cofix_to_lazy : bool;
     inlining : bool;
     unboxing : bool;
-    betared : bool }
+    inductives_extraction : bool;
+    betared : bool;  }
+
+type extract_inductive = { cstrs : Kernames.kername list; elim : Kernames.kername }
+
+type extract_inductives = (Kernames.kername * extract_inductive list) list
+
+type dearging_config =
+  { overridden_masks : Kernames.kername -> bool list option;
+    do_trim_const_masks : bool;
+    do_trim_ctor_masks : bool; }
 
 type erasure_configuration = { 
   enable_unsafe : unsafe_passes;
   enable_typed_erasure : bool;
-  inlined_constants : Kernames.KernameSet.t }
+  dearging_config : dearging_config;
+  inlined_constants : Kernames.KernameSet.t;
+  extracted_inductives : extract_inductives }
 
 type prim_def =
 | Global of string * string
@@ -35,6 +47,7 @@ type unsafe_pass =
   | Inlining
   | Unboxing
   | BetaRed
+  | InductivesExtraction
 
 type malfunction_command_args =
   | Unsafe of unsafe_pass list
@@ -209,6 +222,29 @@ let register_inductives (inds : inductives_mapping) : unit =
 
 let get_global_inductives_mapping () = !global_inductive_registers
 
+(* Extract Inductive *)
+
+let global_inductive_constant_registers =
+  Summary.ref ([] : extract_inductives) ~name:"Verified Extraction Inductive to Constants Registration"
+
+let global_inductive_constant_registers_name = "verified-extraction-inductive-constants-registration"
+
+let cache_inductive_constant_registers inds =
+  let inds' = !global_inductive_constant_registers in
+  global_inductive_constant_registers := inds @ inds'
+
+let global_inductive_constant_registers_input =
+  let open Libobject in
+  declare_object
+    (global_object_nodischarge global_inductive_constant_registers_name
+    ~cache:(fun r -> cache_inductive_constant_registers r)
+    ~subst:None)
+
+let register_constant_inductives (extr : extract_inductives) : unit =
+  Lib.add_leaf (global_inductive_constant_registers_input extr)
+
+let get_global_inductives_constant_mapping () = !global_inductive_constant_registers
+
 (* Extract Inline *)
 
 let global_inlining_registers = 
@@ -271,30 +307,37 @@ let make_unsafe_flags b =
   { cofix_to_lazy = b; 
     inlining = b;
     unboxing = b;
-    betared = b }
+    betared = b;
+    inductives_extraction = b}
 
 let default_unsafe_flags = make_unsafe_flags false
 let all_unsafe_flags = make_unsafe_flags true
+let default_dearging_config =
+  { overridden_masks = (fun _ -> None);
+    do_trim_const_masks = true;
+    do_trim_ctor_masks = false; }
 
-let default_erasure_config inlined_constants = 
+let default_erasure_config inlined_constants extracted_inductives =
   { enable_unsafe = default_unsafe_flags; enable_typed_erasure = false;
-    inlined_constants }
+    inlined_constants; extracted_inductives; dearging_config = default_dearging_config }
 
-let default_malfunction_config inductives_mapping inlined_constants prims = 
-  { erasure_config = default_erasure_config inlined_constants; reorder_constructors = inductives_mapping; prims }
+let default_malfunction_config inductives_mapping inlined_constants extracted_inductives prims =
+  { erasure_config = default_erasure_config inlined_constants extracted_inductives; reorder_constructors = inductives_mapping; prims }
 
 let set_unsafe_flag fl = function
 | CoFixToLazy -> { fl with cofix_to_lazy = true }
 | Inlining -> { fl with inlining = true }
 | Unboxing -> { fl with unboxing = true }
 | BetaRed -> { fl with betared = true }
+| InductivesExtraction -> { fl with inductives_extraction = true }
 
 let make_options loc l =
   let inductives_mapping = get_global_inductives_mapping () in
+  let extracted_inductives = get_global_inductives_constant_mapping () in
   let inlining = get_global_inlinings_mapping () in
   let prims = get_global_prims () in
   let default = {
-    malfunction_pipeline_config = default_malfunction_config inductives_mapping inlining prims;
+    malfunction_pipeline_config = default_malfunction_config inductives_mapping inlining extracted_inductives prims;
     bypass_qeds = false; time = false; program_type = None; load = false; run = false;
     verbose = false; loc; format = false; optimize = false;
     use_opam_env = get_use_opam_opt () }  

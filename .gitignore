@@ -110,3 +110,4 @@ examples/simple/test
 examples/simple/test_float
 examples/simple/val
 examples/compcert/compcert.mlf
+plugin/plugin/META

@@ -3,14 +3,15 @@ From MetaRocq.Common Require Kernames.
 
 From Stdlib Require Import String Ascii Bool Arith.
 Require Import Malfunction.Malfunction.
+Require Import Malfunction.Serialize_util.
 
 Set Warnings "-masking-absolute-name".
 Require Import Ceres.Ceres.
 Require Import Ceres.CeresString.
-Require Import Malfunction.Ceres.CeresFormat Malfunction.Ceres.CeresSerialize.
+Require Import Ceres.CeresFormat Ceres.CeresSerialize.
 
 Local Open Scope sexp.
-Local Open Scope string.
+Local Open Scope bs_scope.
 
 (* Compute match "'"%bs with bytestring.String.String b _ => b | _ => Byte.x00 end. *)
 
@@ -18,7 +19,7 @@ Fixpoint _escape_ident (_end s : String.t) : String.t :=
   match s with
   | ""%bs => _end
   |  String.String c s' =>
-       if (c == "'"%byte) || (c == " "%byte) || (c == "."%byte) then String.String "_" (_escape_ident _end s') 
+       if (c == "'"%byte) || (c == " "%byte) || (c == "."%byte) then String.String "_" (_escape_ident _end s')
        else match s' with
             | String.String c2 s'' =>
                 if (String.String c (String.String c2 String.EmptyString)) == "Γ"%bs
@@ -39,7 +40,7 @@ Fixpoint _escape_ident (_end s : String.t) : String.t :=
   end.
 
 #[export] Instance Serialize_Ident : Serialize Ident.t :=
-  fun a => Atom (append "$" (bytestring.String.to_string (_escape_ident ""%bs a))).
+  fun a => Atom ("$" ++ (_escape_ident ""%bs a)).
 
 From Stdlib Require Sint63.
 
@@ -49,25 +50,25 @@ Definition sint_to_Z := Sint63.to_Z.
    fun i => to_sexp (sint_to_Z i).
 
 Import SpecFloat.
-From Stdlib Require Numbers.HexadecimalString. 
-Definition string_of_specfloat (f : SpecFloat.spec_float) : string :=
+From Stdlib Require Numbers.HexadecimalString.
+Definition string_of_specfloat (f : SpecFloat.spec_float) : String.t :=
   match f with
   | S754_zero sign => if sign then "-0.0" else "0.0"
   | S754_infinity sign => if sign then "neg_infinity" else "infinity"
   | S754_nan => "nan"
-  | S754_finite sign p z => 
-    let abs := 
-    "0x" ++ HexadecimalString.NilZero.string_of_uint (Pos.to_hex_uint p) ++ "p" ++
-      DecimalString.NilZero.string_of_int (Z.to_int z)
+  | S754_finite sign p z =>
+    let abs :=
+    "0x" ++ String.of_string (HexadecimalString.NilZero.string_of_uint (Pos.to_hex_uint p)) ++ "p" ++
+      String.of_string (DecimalString.NilZero.string_of_int (Z.to_int z))
     in
     if sign then "-" ++ abs else abs
-  end.
+  end%bs.
 
 #[export] Instance Serialize_numconst : Serialize numconst :=
   fun a => match a with
         | numconst_Int i => to_sexp (sint_to_Z i)
-        | numconst_Bigint x => Atom (append (CeresString.string_of_Z x) ".ibig")
-        | numconst_Float64 x => Atom (append (string_of_specfloat (FloatOps.Prim2SF x)) ".f64")
+        | numconst_Bigint x => Atom ((CeresString.string_of_Z x) ++ ".ibig")
+        | numconst_Float64 x => Atom ((string_of_specfloat (FloatOps.Prim2SF x)) ++ ".f64")
         end.
 
 Definition Cons x (l : sexp) :=
@@ -82,9 +83,9 @@ Definition App (l1 : sexp) (l2 : sexp) :=
   | _x, y => y
   end.
 
-Definition rawapp (s : sexp) (a : string) :=
+Definition rawapp (s : sexp) (a : String.t) :=
   match s with
-  | Atom_ (Raw s) => Atom (Raw (append s a))
+  | Atom_ (Raw s) => Atom (Raw (s ++ a))
   | x => x
   end.
 
@@ -92,7 +93,7 @@ Definition rawapp (s : sexp) (a : string) :=
   fun a => match a with
         | Tag tag => [Atom "tag"; Atom (sint_to_Z tag)]
         | Deftag => [Atom "tag"; Atom "_"]
-        | Intrange (i1, i2) => if Uint63.leb i1 i2 then [ to_sexp i1 ; to_sexp i2  ] else Atom "_"
+        | Intrange (i1, i2) => if uint_leb i1 i2 then [ to_sexp i1 ; to_sexp i2  ] else Atom "_"
         end.
 
 #[export] Instance Serialize_unary_num_op : Serialize unary_num_op :=
@@ -153,20 +154,20 @@ Definition vector_type_to_string (n : vector_type) :=
 Definition Serialize_singleton_list {A} `{Serialize A} : Serialize (list A)
   := fun xs => match xs with cons x nil => to_sexp x | xs =>List (List.map to_sexp xs) end.
 
-Fixpoint split_dot accl accw (s : string) :=
+Fixpoint split_dot accl accw (s : String.t) :=
   match s with
-  | EmptyString => (string_reverse accl, string_reverse accw)
-  | String c s =>
+  | String.EmptyString => (string_reverse accl, string_reverse accw)
+  | String.String c s =>
       if (c =? ".")%char2 then
-        let accl' := match accl with EmptyString => accw
+        let accl' := match accl with String.EmptyString => accw
                                 | accl => (accw ++ "." ++ accl)
                      end in
-        split_dot accl' EmptyString s
+        split_dot accl' String.EmptyString s
       else
-        split_dot accl (String c accw) s
+        split_dot accl (String.String c accw) s
   end.
-Definition before_dot s := fst (split_dot EmptyString EmptyString s).
-Definition after_dot s := snd (split_dot EmptyString EmptyString s).
+Definition before_dot s := fst (split_dot String.EmptyString String.EmptyString s).
+Definition after_dot s := snd (split_dot String.EmptyString String.EmptyString s).
 
 Fixpoint to_sexp_t (a : t) : sexp :=
   match a with
@@ -175,7 +176,7 @@ Fixpoint to_sexp_t (a : t) : sexp :=
   | Mapply (x, args) => List (Atom "apply" :: to_sexp_t x :: List.map to_sexp_t args)
   | Mlet (binds, x) => List (Atom "let" :: List.map to_sexp_binding binds ++ (to_sexp_t x :: nil))
   | Mnum x => to_sexp x
-  | Mstring x => Atom (Str (bytestring.String.to_string x))
+  | Mstring x => Atom (Str x)
   | Mglobal x => (* [Atom "global" ; Atom ("$Top") ; *) to_sexp ("def_" ++ x)%bs  (* ] *)
   | Mswitch (x, sels) =>
       (* let sels := match List.rev sels with *)
@@ -186,10 +187,10 @@ Fixpoint to_sexp_t (a : t) : sexp :=
   | Mnumop1 (op, num, x) => [ rawapp (to_sexp op) (numtype_to_string num) ; to_sexp_t x ]
   | Mnumop2 (op, num, x1, x2) => [ rawapp (to_sexp op) (numtype_to_string num) ; to_sexp_t x1 ; to_sexp_t x2 ]
   | Mconvert (from, to, x) => [rawapp (rawapp (Atom "convert") (numtype_to_string from)) (numtype_to_string to) ; to_sexp_t x]
-  | Mvecnew (ty, x1, x2) => [ Atom (append "makevec" (vector_type_to_string ty)) ; to_sexp_t x1 ; to_sexp_t x2 ]
-  | Mvecget (ty, x1, x2) => [ Atom (append "load" (vector_type_to_string ty)) ; to_sexp_t x1 ; to_sexp_t x2 ]
-  | Mvecset (ty, x1, x2, x3) => [ Atom (append "store" (vector_type_to_string ty)) ; to_sexp_t x1 ; to_sexp_t x2; to_sexp_t x3 ]
-  | Mveclen (ty, x) => [ Atom (append "load" (vector_type_to_string ty)) ; to_sexp_t x ]
+  | Mvecnew (ty, x1, x2) => [ Atom ("makevec" ++ (vector_type_to_string ty)) ; to_sexp_t x1 ; to_sexp_t x2 ]
+  | Mvecget (ty, x1, x2) => [ Atom ("load" ++ (vector_type_to_string ty)) ; to_sexp_t x1 ; to_sexp_t x2 ]
+  | Mvecset (ty, x1, x2, x3) => [ Atom ("store" ++ (vector_type_to_string ty)) ; to_sexp_t x1 ; to_sexp_t x2; to_sexp_t x3 ]
+  | Mveclen (ty, x) => [ Atom ("load" ++ (vector_type_to_string ty)) ; to_sexp_t x ]
   | Mlazy x => [Atom "lazy"; to_sexp_t x]
   | Mforce x => [Atom "force"; to_sexp_t x]
   | Mblock (tag, xs) => List (Atom "block" :: [Atom "tag"; Atom (sint_to_Z tag)] :: List.map to_sexp_t xs)
@@ -225,7 +226,7 @@ Definition uncapitalize_char (c : Byte.byte) : Byte.byte :=
   else c.
 
 Definition uncapitalize (s : bytestring.string) : bytestring.string :=
-  match s with 
+  match s with
   | bytestring.String.EmptyString => bytestring.String.EmptyString
   | bytestring.String.String c s => bytestring.String.String (uncapitalize_char c) s
   end.
@@ -237,17 +238,17 @@ Definition exports (m : list (Ident.t * option t)) : list (Ident.t * option t) :
   List.map (fun '(x, v) => (("def_" ++ encode_name x)%bs, Some (Mglobal x))) m.
 
 
-Definition bytestring_atom s := 
-  ("$" :: bytestring.String.to_string s).
+Definition bytestring_atom s :=
+  ("$" :: s).
 
-Fixpoint find_prim (id : Ident.t) (prims : primitives) : option (prim_def string) :=
+Fixpoint find_prim (id : Ident.t) (prims : primitives) : option (prim_def String.t) :=
   match prims with
   | nil%list => None
   | ((kn, primdef) :: prims)%list =>
     if ReflectEq.eqb id kn then
       match primdef with
       | Global modname label => Some (Global (bytestring_atom modname) (bytestring_atom label))
-      | Primitive symbol arity => Some (Primitive symbol arity) 
+      | Primitive symbol arity => Some (Primitive symbol arity)
       | Erased => Some Erased
       end
     else find_prim id prims
@@ -255,51 +256,56 @@ Fixpoint find_prim (id : Ident.t) (prims : primitives) : option (prim_def string
 
 Section binders.
   Context (x : bytestring.string).
-  
+
   Definition add_suffix n := (x ++ MRString.string_of_nat n)%bs.
 
-  Fixpoint binders n acc := 
+  Fixpoint binders n acc :=
     match n with
     | 0 => acc
     | S n => binders n (add_suffix n :: acc)%list
     end.
 End binders.
 
-Definition mk_eta_exp n s := 
+Definition mk_eta_exp n s :=
   let binders := binders "x"%bs n nil in
   [ Atom "lambda" ; to_sexp binders ; List (Atom s :: List.map to_sexp binders) ].
 
 Definition global_serializer (prims : primitives) : Serialize (Ident.t * option t) :=
-  fun '(i, b) => 
+  fun '(i, b) =>
   match b with
   | Some x => to_sexp ("def_" ++ i, x)%bs
-  | None => 
+  | None =>
     match find_prim i prims with
-    | Some (Global modname label) => 
-      let na := bytestring.String.to_string (uncapitalize ("def_" ++ encode_name i)%bs) in
+    | Some (Global modname label) =>
+      let na := (uncapitalize ("def_" ++ encode_name i)%bs) in
       List ( Atom (Raw ("$" :: na)) :: [Atom "global" ; Atom (Raw modname) ; Atom (Raw label)] :: nil)
-    | Some (Primitive symbol arity) => 
-      let na := bytestring.String.to_string (uncapitalize ("def_" ++ encode_name i)%bs) in
-      List ( Atom (Raw ("$" :: na)) :: 
-      mk_eta_exp arity (Raw (bytestring.String.to_string symbol)) :: nil)
+    | Some (Primitive symbol arity) =>
+      let na := (uncapitalize ("def_" ++ encode_name i)%bs) in
+      List ( Atom (Raw ("$" :: na)) ::
+      mk_eta_exp arity (Raw (symbol)) :: nil)
     | Some Erased
     | None =>
-    let na := bytestring.String.to_string (uncapitalize ("def_" ++ encode_name i)%bs) in
+    let na := (uncapitalize ("def_" ++ encode_name i)%bs) in
       List ( Atom (Raw ("$" :: na)) :: [Atom "global" ; Atom (Raw ("$Axioms")) ; Atom (Raw ("$" :: na)) ]
              :: nil)
     end
   end.
 
+(** Remove erased primitives from the environment and override existing erasures if
+  a primitive of the same name is introduced. *)
 Fixpoint filter_erased_prims prims (l : list (Ident.t * option t)) : list (Ident.t * option t) :=
   match l with
   | nil => nil
-  | cons ((id, Some _) as x) xs => x :: filter_erased_prims prims xs
-  | cons ((id, None) as x) xs => 
-    match find_prim id prims with 
+  | cons ((id, Some _) as x) xs =>
+      let tl := filter_erased_prims prims xs in
+      if find_prim id prims then (id, None) :: tl
+      else x :: tl
+  | cons ((id, None) as x) xs =>
+    match find_prim id prims with
     | Some Erased => filter_erased_prims prims xs
     | _ => x :: filter_erased_prims prims xs
     end
-  end.  
+  end.
 
 Fixpoint thename a (s : bytestring.String.t) :=
   match s with
@@ -317,30 +323,30 @@ Variant program_type : Set :=
 (* Eval compute in to_sexp (Mapply (Mglobal "foo"%bs, [Mglobal "bar"%bs]%list)). *)
 
 Definition shared_lib_register modname label '(name, export) :=
-  let code := (List [Atom "apply"; List [Atom "global" ; 
-  Atom ("$" ++ String.to_string modname)%string ; Atom ("$" ++ String.to_string label)%string]%list;
-  Atom (Str (bytestring.String.to_string name));
-  Atom ("$" ++ bytestring.String.to_string export)]) in
+  let code := (List [Atom "apply"; List [Atom "global" ;
+  Atom ("$" ++ modname)%bs ; Atom ("$" ++ label)%bs]%list;
+  Atom (Str (name));
+  Atom ("$" ++ export)]) in
   Cons (Atom "_") (List (code :: nil)).
 
 (* Eval compute in
   to_string (shared_lib_register "malfunction"%bs "register"%bs ("foo.test", "test")%bs). *)
 
 Definition Serialize_module prims (pt : program_type) (names : list bytestring.string): Serialize program :=
-  fun '(m, x) =>    
+  fun '(m, x) =>
     let name : Ident.t  := match m with
                            | (x :: l)%list => fst x
                            | nil => ""%bs
                            end in
-    let main := "main"%bs in 
+    let main := "main"%bs in
     let names := (names ++ ["main"%bs])%list in
     let shortnames : list Ident.t := List.map (fun name => uncapitalize (thename nil name)) names in
     let longnames : list sexp := List.map (fun name => (to_sexp ("def_" ++ name)%bs)) names in
     let allnames := List.combine shortnames longnames in
-    let exports : list sexp := List.map (fun shortname => Atom ("$" ++ String.to_string shortname)%string) 
+    let exports : list sexp := List.map (fun shortname => Atom ("$" ++ shortname)%bs)
       shortnames in
     let m := filter_erased_prims prims m in
-    let linkopt := 
+    let linkopt :=
       match pt return list sexp with
       | Standalone => nil
       | Shared_lib modname label =>
@@ -348,15 +354,14 @@ Definition Serialize_module prims (pt : program_type) (names : list bytestring.s
       end
     in
     match
-      Cons (Atom "module") (@Serialize_list _ (global_serializer prims) 
+      Cons (Atom "module") (@Serialize_list _ (global_serializer prims)
         (List.rev ((main, Some x) :: m)%list))
     with
       List l =>
         List (l                 (* the extracted functions *)
-              ++ List.map (fun '(shortname,longname) => Cons (Atom ("$" ++ String.to_string shortname)%string)
+              ++ List.map (fun '(shortname,longname) => Cons (Atom ("$" ++ shortname)%bs)
                              (List (longname :: nil))) allnames
               ++ linkopt
               ++ (Cons (Atom "export") (List exports) :: nil))%list (* export *)
     | x => x
     end.
-

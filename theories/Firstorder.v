@@ -2618,6 +2618,7 @@ Lemma interoperability_firstorder_function {funext:Funext} {P:Pointer} {H:Heap} 
   (Hgood : pcuic_good_for_extraction Σ0)
   (Hfo : is_true (forallb (@firstorder_oneind [] mind) (ind_bodies mind)))
   (Hfo_ext : is_true (forallb (@firstorder_oneind [(kn, @firstorder_mutind [] mind)] mind) (ind_bodies mind))) ind ind' Eind Eind' f na l:
+  let na := {| binder_name := na; binder_relevance := Relevant |} in
   let adt := RocqType_to_camlType mind Hparam Hfo in
   let Σ : global_env_ext_map := (build_global_env_map Σ0, univ_decl) in
   let global_adt := add_ADT _ _ [] [] kn adt in
@@ -2639,7 +2640,7 @@ Lemma interoperability_firstorder_function {funext:Funext} {P:Pointer} {H:Heap} 
         global_adt (Arrow (Adt kn ind []) (Adt kn ind' []))
         (compile_pipeline Σ f wfΣ expΣ expf (_;wf)).
 Proof.
-  intros ? ? ? ? Hextract Hind_sort Hind_sort' ? ? ? ? ? ? ? Hlookup Hlookup'. intros. simpl.
+  intros na0 ? ? ? ? Hextract Hind_sort Hind_sort' ? ? ? ? ? ? ? Hlookup Hlookup'. intros. simpl.
   rewrite ReflectEq.eqb_refl. unfold to_realize_term. cbn.
   pose (wfΣ_ext := wfΣ). destruct wfΣ as [wfΣ ?].
   intros t Ht. unfold to_realize_term in *. intros h h' v Heval.
@@ -2686,18 +2687,19 @@ Proof.
       now rewrite ind_arity_eq in X. }
   assert (Htype_ind'' : (Σ, univ_decl);;;
   [],,
-  vass na
+  vass na0
     (tInd {| inductive_mind := kn; inductive_ind := ind |}
        [])
   |- tInd {| inductive_mind := kn; inductive_ind := ind' |}
        [] : tSort (subst_instance_sort [] (ind_sort Eind'))).
-  { eapply (PCUICWeakeningTyp.weakening  _ _ ([vass na (tInd {| inductive_mind := kn; inductive_ind := ind |} [])])) in Htype_ind'; cbn in Htype_ind'; eauto.
+  { eapply (PCUICWeakeningTyp.weakening  _ _ ([vass na0 (tInd {| inductive_mind := kn; inductive_ind := ind |} [])])) in Htype_ind'; cbn in Htype_ind'; eauto.
     constructor. constructor. cbn. pose proof t0 as t1. eapply PCUICValidity.validity in t1 as [? [s [t1 _]]]. cbn in o0, t1.
     eapply PCUICInversion.inversion_Prod in t1 as [s1 [s2 []]].
     hnf in l0. hnf. cbn. cbn in l0. (destruct l0 as [_ [s' [? [-> ]]]] || destruct l0 as [_ [s' [? ->]]]). split => //. now exists s'. eauto.
     }
   assert (Herase: ∥ Extract.nisErasable (Σ, univ_decl) [] f ∥).
-  { sq.  unfold Extract.nisErasable. eexists; eexists. split; eauto.
+  { sq.  unfold Extract.nisErasable.
+      eexists; eexists. split; eauto.
     - clear Heval. sq. eapply PCUICNormal.nf_tProd; eapply PCUICNormal.nf_tind.
     - eapply type_Prod; eauto. unfold lift_typing0, lift_sorting; cbn. split; eauto.
       eexists; eauto. split; eauto.

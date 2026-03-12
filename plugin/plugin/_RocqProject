@@ -58,6 +58,8 @@ extraction/eRemoveParams.ml
 extraction/eRemoveParams.mli
 extraction/eReorderCstrs.ml
 extraction/eReorderCstrs.mli
+extraction/eRemapInductives.mli
+extraction/eRemapInductives.ml
 extraction/eSpineView.ml
 extraction/eSpineView.mli
 extraction/eTransform.ml
@@ -158,6 +160,8 @@ extraction/resultMonad.ml
 extraction/resultMonad.mli
 extraction/semanticsSpec.ml
 extraction/semanticsSpec.mli
+extraction/serialize_util.ml
+extraction/serialize_util.mli
 extraction/serialize.ml
 extraction/serialize.mli
 extraction/show.ml
@@ -193,6 +197,8 @@ PrimString.v
 PrimArray.v
 RocqMsgFFI.v
 OCamlFFI.v
+ZArith.v
+Nat2ZArith.v
 Extract.v
 
 # tests/test_extract.v
