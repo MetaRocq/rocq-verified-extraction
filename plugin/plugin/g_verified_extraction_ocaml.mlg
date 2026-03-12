@@ -31,35 +31,47 @@ let interp_prim = function
     let arity = Caml_nat.nat_of_caml_int arity in
     Malfunction.Primitive (symbol, arity)
 
-let interp_prims prims = 
+let interp_prims prims =
   List.map (fun (kn, p) -> (Kernames.string_of_kername kn, interp_prim p)) prims
 
-let interp_inductive_mapping (ind, (tyna, tags)) = 
-  (ind, (Caml_bytestring.bytestring_of_caml_string tyna, 
+let interp_inductive_mapping (ind, (tyna, tags)) =
+  (ind, (Caml_bytestring.bytestring_of_caml_string tyna,
     List.map Caml_nat.nat_of_caml_int tags))
 
 let interp_unsafe uns =
   { Erasure0.cofix_to_lazy = uns.cofix_to_lazy;
     Erasure0.inlining = uns.inlining;
     Erasure0.unboxing = uns.unboxing;
-    Erasure0.betared = uns.betared }
+    Erasure0.betared = uns.betared;
+    Erasure0.inductives_extraction = uns.inductives_extraction }
 
-let interp_pipeline_config c = 
-  let { 
-    erasure_config = 
-      { enable_unsafe = enable_unsafe; 
-        enable_typed_erasure = enable_typed_erasure; 
-        inlined_constants };
+let interp_extracted_inductive x =
+  { EProgram.cstrs = x.cstrs; EProgram.elim = x.elim }
+
+let interp_extracted_inductives (i, x) =
+  (i, List.map interp_extracted_inductive x)
+
+let interp_extracted_inductives =
+  List.map interp_extracted_inductives
+
+let interp_pipeline_config c =
+  let {
+    erasure_config =
+      { enable_unsafe = enable_unsafe;
+        enable_typed_erasure = enable_typed_erasure;
+        inlined_constants;
+        extracted_inductives };
     reorder_constructors = inductives_mapping;
     prims = prims } = c in
-  let erasure_config = 
-    Erasure0.({ 
-      enable_unsafe = interp_unsafe enable_unsafe; enable_typed_erasure; 
+  let erasure_config =
+    Erasure0.({
+      enable_unsafe = interp_unsafe enable_unsafe; enable_typed_erasure;
       dearging_config = default_dearging_config;
-      inlined_constants
+      inlined_constants;
+      extracted_inductives = interp_extracted_inductives extracted_inductives
       })
   in
-  Pipeline.{ 
+  Pipeline.{
     erasure_config;
     reorder_cstrs = List.map interp_inductive_mapping inductives_mapping;
     prims = interp_prims prims
@@ -67,10 +79,10 @@ let interp_pipeline_config c =
 
 let interp_program_type = function
   | Standalone_binary -> Serialize.Standalone
-  | Shared_library (modname, label) -> 
+  | Shared_library (modname, label) ->
   Serialize.Shared_lib (Caml_bytestring.bytestring_of_caml_string modname, Caml_bytestring.bytestring_of_caml_string label)
 
-let compile_malfunction conf pt p = 
+let compile_malfunction conf pt p =
   let conf = interp_pipeline_config conf in
   let pt = interp_program_type pt in
   let names, code = Pipeline.compile_malfunction_gen conf pt p in
@@ -81,11 +93,14 @@ let extract = extract compile_malfunction
 
 }
 
-VERNAC COMMAND EXTEND Verified_Extraction CLASSIFIED AS QUERY
+VERNAC COMMAND EXTEND Verified_Extraction_Help CLASSIFIED AS QUERY
 | [ "Verified" "Extraction" "-help" ] -> {
   let usage = "Verified (Bypass)? Extraction [term] [output_file]?" in
   Feedback.msg_notice (str usage)
   }
+END
+
+VERNAC COMMAND EXTEND Verified_Extraction_Compile CLASSIFIED AS QUERY STATE opaque_access
 | [ "Verified" "Extraction" extract_args_list(l) constr(c) string_opt(dest) ] -> {
     let env = Global.env () in
     let evm = Evd.from_env env in
@@ -93,5 +108,8 @@ VERNAC COMMAND EXTEND Verified_Extraction CLASSIFIED AS QUERY
     let (c, _) = Constrintern.interp_constr env evm c in
     extract ?loc l env evm c dest
   }
+END
+
+VERNAC COMMAND EXTEND Verified_Extraction_Eval CLASSIFIED AS QUERY
 | [ "Verified" "Eval" extract_args_list(l) reference(c) ] -> { eval_plugin l c }
 END

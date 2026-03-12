@@ -1,7 +1,7 @@
 From Stdlib Require Import String.
-From Ceres Require Import Ceres.
+From CeresBS Require Import Ceres CeresFormat CeresSerialize.
 Set Warnings "-masking-absolute-name".
-From Malfunction Require Import Pipeline Serialize CeresFormat CeresSerialize Interpreter.
+From Malfunction Require Import Pipeline Serialize Interpreter.
 
 From MetaRocq Require Import ETransform Common.Transform Utils.bytestring.
 From MetaRocq.Template Require All Loader TemplateMonad.
@@ -33,7 +33,7 @@ Definition eval_malfunction_sexp (cf := config.extraction_checker_flags) (p : As
 Section something.
 
 Import Loader All.
-Import MRMonadNotation.
+Import MonadNotation.
 
 Definition extract {A : Type} (a : A) :=
   t <- tmQuoteRec a ;;

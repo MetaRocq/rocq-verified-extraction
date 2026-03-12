@@ -36,6 +36,17 @@ VERNAC ARGUMENT EXTEND metaRocqRegister_extract_inductive
   { extract_inductive (inductive_of_qualid ~loc gr) (ty, cstrs) }
 END
 
+VERNAC ARGUMENT EXTEND metaRocqRegister_extract_inductive_constant
+| [ "[" reference_list(cstrs) "|" reference(elim) "]" ] ->
+  { { cstrs = List.map (constant_of_qualid ~loc) cstrs; elim = constant_of_qualid ~loc elim} }
+END
+
+
+VERNAC ARGUMENT EXTEND metaRocqRegister_extract_inductives_constant
+| [ reference(gr) "=>" "[" metaRocqRegister_extract_inductive_constant_list_sep(extr, ",") "]" ] ->
+  { (Kernames.inductive_mind (inductive_of_qualid ~loc gr), extr) }
+END
+
 VERNAC COMMAND EXTEND MetaRocqExtract_Register CLASSIFIED AS SIDEFF
 | [ "Verified" "Extract" "Constants" "[" metaRocqRegister_extract_cnst_list_sep(prims, ",") "]" "Packages" "[" string_list_sep(packages, ",") "]" ] -> {
     register prims packages
@@ -46,6 +57,9 @@ VERNAC COMMAND EXTEND MetaRocqExtract_Register CLASSIFIED AS SIDEFF
 | [ "Verified" "Extract" "Inductives" "[" metaRocqRegister_extract_inductive_list_sep(inds, ",") "]" ] -> {
     register_inductives inds
 }
+| [ "Verified" "Extract" "Inductives" "To" "Constants" "[" metaRocqRegister_extract_inductives_constant_list_sep(inds, ",") "]" ] -> {
+    register_constant_inductives inds
+}
 | [ "Verified" "Extract" "Inline" "[" metaRocqRegister_extract_inline_list_sep(csts, ",") "]" ] -> {
     register_inlines csts
 }
@@ -54,6 +68,7 @@ END
 ARGUMENT EXTEND unsafe_flag
 | [ "cofix-to-lazy" ] -> { CoFixToLazy }
 | [ "inlining" ] -> { Inlining }
+| [ "extract-inductives" ] -> { InductivesExtraction }
 | [ "unboxing" ] -> { Unboxing }
 | [ "betared" ] -> { BetaRed }
 END

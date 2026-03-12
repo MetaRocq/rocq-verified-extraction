@@ -1,16 +1,17 @@
 From Malfunction Require Import Malfunction.
-From Ceres Require Import Ceres.
-From Stdlib Require Import String List.
+From CeresBS Require Import Ceres.
+From Stdlib Require Import List.
+From MetaRocq.Utils Require Import bytestring.
 Import ListNotations.
 
 Local Open Scope list.
-Local Open Scope string.
+Local Open Scope bs_scope.
 
 #[export] Instance Deserialize_Ident : Deserialize Ident.t :=
   fun l e =>
     match e with
-    | Atom_ (Raw (String sym s)) => if String.eqb (String sym EmptyString) "$" then
-                             inr (bytestring.String.of_string s) else inl (DeserError l "identifier needs to start with an $")
+    | Atom_ (Raw (String.String sym s)) => if String.eqb (String.String sym String.EmptyString) "$" then
+                             inr s else inl (DeserError l "identifier needs to start with an $")
     | List _ => inl (DeserError l "could not read 'ident', got list")
     | _ => inl (DeserError l "could not read 'ident', got non-string atom")
     end.
@@ -53,7 +54,7 @@ Definition splitlast {A} (a : A) (l : list A) : (list A * A) :=
 Definition splitfirst (l : list binding) : (list binding * t) :=
   match rev l with
   | Unnamed b :: l => (rev l, b)
-  | _ => (nil, (Mvar ((bytestring.String.of_string "ERROR"))))
+  | _ => (nil, (Mvar (("ERROR"))))
   end.
 
 (* From ReductionEffect Require Import PrintingEffect. *)
@@ -66,13 +67,13 @@ Fixpoint ds (l : loc) (e : sexp) {struct e} : error + t :=
                     [
                       ("lambda", con2c Mlambda Deserialize_list ds);
                       ("apply", fun l f e => match _sexp_to_list ds [] 0 l e with
-                                             | inr (x :: l) => inr (Mapply (x, l)) 
+                                             | inr (x :: l) => inr (Mapply (x, l))
                                              | inr [] => inl (DeserError l (MsgStr "application without function"))
-                                             | inl er => inl er 
+                                             | inl er => inl er
                                              end);
 
-                      ("let", fun l f e => match e with 
-                                           | x :: e => 
+                      ("let", fun l f e => match e with
+                                           | x :: e =>
                                               let (e, last) := splitlast x e in
                                               match _sexp_to_list dsb [] 0 l e, ds l last with
                                               | inr bds, inr body => inr (Mlet (bds, body))
@@ -81,7 +82,7 @@ Fixpoint ds (l : loc) (e : sexp) {struct e} : error + t :=
                                               end
                                            | _ => inl (DeserError l (MsgStr "let without body"))
                                            end);
-                                           
+
                       ("switch", con2c Mswitch ds (@Deserialize_list _ (@Deserialize_prod _ _ _ ds)));
                       ("if", Deser.con3 Mif ds ds ds);
                       ("lazy", Deser.con1 Mlazy ds);
@@ -93,9 +94,9 @@ Fixpoint ds (l : loc) (e : sexp) {struct e} : error + t :=
     end end
 with dsb (l : loc) (e : sexp) {struct e} : error + binding :=
   match Deser.match_con "binding" nil
-                    [ 
+                    [
                       ("_", Deser.con1 Unnamed ds );
-                      ("rec", 
+                      ("rec",
                       fun l f e => match _sexp_to_list (@Deserialize_prod _ _ _ ds) [] 0 l e with inr l => inr (Recursive l) | inl er => inl er end)
                     ] l e
   with inr r => inr r
@@ -110,7 +111,7 @@ with dsb (l : loc) (e : sexp) {struct e} : error + binding :=
 
 #[export] Instance Deserialize_t : Deserialize t := ds.
 #[export] Instance Deserialize_binding : Deserialize binding := dsb.
-(* 
+(*
 Definition test input :=
   match parse_sexp input with
   | inr e => from_sexp e

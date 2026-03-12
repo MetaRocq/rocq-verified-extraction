@@ -1,16 +1,28 @@
 type inductive_mapping = Kernames.inductive * (string * int list) (* Target inductive type and mapping of constructor names to constructor tags *)
 type inductives_mapping = inductive_mapping list
 
-type unsafe_passes = 
+type unsafe_passes =
   { cofix_to_lazy : bool;
     inlining : bool;
     unboxing : bool;
-    betared : bool }
+    inductives_extraction : bool;
+    betared : bool;  }
 
-type erasure_configuration = { 
+type extract_inductive = { cstrs : Kernames.kername list; elim : Kernames.kername }
+
+type extract_inductives = (Kernames.kername * extract_inductive list) list
+
+type dearging_config =
+  { overridden_masks : Kernames.kername -> bool list option;
+    do_trim_const_masks : bool;
+    do_trim_ctor_masks : bool; }
+
+type erasure_configuration = {
   enable_unsafe : unsafe_passes;
   enable_typed_erasure : bool;
-  inlined_constants : Kernames.KernameSet.t }
+  dearging_config : dearging_config;
+  inlined_constants : Kernames.KernameSet.t;
+  extracted_inductives : extract_inductives }
 
 type prim_def =
 | Global of string * string
@@ -21,7 +33,7 @@ type prim = Kernames.kername * prim_def
 
 type primitives = prim list
 
-type malfunction_pipeline_config = { 
+type malfunction_pipeline_config = {
   erasure_config : erasure_configuration;
   reorder_constructors : inductives_mapping;
   prims : primitives }
@@ -30,11 +42,12 @@ type program_type =
   | Standalone of bool (* Link statically with Rocq's libraries *)
   | Plugin
 
-type unsafe_pass = 
+type unsafe_pass =
   | CoFixToLazy
   | Inlining
   | Unboxing
   | BetaRed
+  | InductivesExtraction
 
 type malfunction_command_args =
   | Unsafe of unsafe_pass list
@@ -48,7 +61,7 @@ type malfunction_command_args =
   | Format
   | Optimize
 
-type malfunction_plugin_config = 
+type malfunction_plugin_config =
   { malfunction_pipeline_config : malfunction_pipeline_config;
     bypass_qeds : bool;
     time : bool;
@@ -129,7 +142,7 @@ let statically_linked_pkgs =
     "unix";
     "zarith"]
 
-let notice opts pp = 
+let notice opts pp =
   if opts.verbose then
     Feedback.msg_notice ?loc:opts.loc (pp ())
   else ()
@@ -141,8 +154,8 @@ let time prefix f x =
   let () = Feedback.msg_info Pp.(prefix ++ str " executed in: " ++ Pp.real (stop -. start) ++ str "s") in
   res
 
-let time opts = 
-  if opts.time then (fun label fn arg -> time label fn arg) 
+let time opts =
+  if opts.time then (fun label fn arg -> time label fn arg)
   else fun _label fn arg -> fn arg
 
 (* Separate registration of primitive extraction *)
@@ -154,7 +167,7 @@ let globref_of_qualid ?loc (gr : Libnames.qualid) : Names.GlobRef.t  =
   | exception Not_found -> CErrors.user_err ?loc Pp.(Libnames.pr_qualid gr ++ str " not found.")
   | None -> CErrors.user_err ?loc Pp.(Libnames.pr_qualid gr ++ str " not found.")
   | Some g -> g
-    
+
 let quoted_globref_of_qualid ~loc (gr : Libnames.qualid) : Kernames.global_reference =
   Metarocq_template_plugin.Ast_quoter.quote_global_reference (globref_of_qualid ~loc gr)
 
@@ -164,20 +177,20 @@ let constant_of_qualid ~loc (gr : Libnames.qualid) : Kernames.kername =
   | Kernames.VarRef(v) -> CErrors.user_err ~loc Pp.(str "Expected a constant but found a variable. Only constants can be realized in Malfunction.")
   | Kernames.IndRef(i) -> CErrors.user_err ~loc Pp.(str "Expected a constant but found an inductive type. Only constants can be realized in Malfunction.")
   | Kernames.ConstructRef(_, _) -> CErrors.user_err ~loc Pp.(str "Expected a constant but found a constructor. Only constants can be realized in Malfunction. ")
-    
+
 let inductive_of_qualid ~loc (gr : Libnames.qualid) : Kernames.inductive =
   match quoted_globref_of_qualid ~loc gr with
   | Kernames.ConstRef kn -> CErrors.user_err ~loc Pp.(str "Expected an inductive name but found a constant. Only inductives can be translated in Malfunction.")
   | Kernames.VarRef(v) -> CErrors.user_err ~loc Pp.(str "Expected an inductive name but found a variable. Only constants can be translated in Malfunction.")
   | Kernames.IndRef(i) -> i
   | Kernames.ConstructRef(_, _) -> CErrors.user_err ~loc Pp.(str "Expected an inductive name but found a constructor. Only constants can be translated in Malfunction. ")
-  
+
 let extract_constant (gr : Kernames.kername) (s : string) : prim =
-  let s = String.split_on_char '.' s in 
+  let s = String.split_on_char '.' s in
   let label, module_ = CList.sep_last s in
   let module_ =  (String.concat "." module_) in
   (gr, Global (module_, label))
-  
+
 let extract_primitive (gr : Kernames.kername) (symb : string) (arity : int) : prim =
   (gr, Primitive (symb, arity))
 
@@ -186,9 +199,9 @@ let extract_inductive (gr : Kernames.inductive) (cstrs : string * int list) : in
 
 let extract_inline (gr : Kernames.kername) : Kernames.KernameSet.t =
   Kernames.KernameSet.singleton gr
-  
+
 (* Extract Inductive *)
-let global_inductive_registers = 
+let global_inductive_registers =
   Summary.ref ([] : inductives_mapping) ~name:"Verified Extraction Inductive Registration"
 
 let global_inductive_registers_name = "verified-extraction-inductive-registration"
@@ -197,9 +210,9 @@ let cache_inductive_registers inds =
   let inds' = !global_inductive_registers in
   global_inductive_registers := inds @ inds'
 
-let global_inductive_registers_input = 
-  let open Libobject in 
-  declare_object 
+let global_inductive_registers_input =
+  let open Libobject in
+  declare_object
     (global_object_nodischarge global_inductive_registers_name
     ~cache:(fun r -> cache_inductive_registers r)
     ~subst:None)
@@ -209,20 +222,43 @@ let register_inductives (inds : inductives_mapping) : unit =
 
 let get_global_inductives_mapping () = !global_inductive_registers
 
+(* Extract Inductive *)
+
+let global_inductive_constant_registers =
+  Summary.ref ([] : extract_inductives) ~name:"Verified Extraction Inductive to Constants Registration"
+
+let global_inductive_constant_registers_name = "verified-extraction-inductive-constants-registration"
+
+let cache_inductive_constant_registers inds =
+  let inds' = !global_inductive_constant_registers in
+  global_inductive_constant_registers := inds @ inds'
+
+let global_inductive_constant_registers_input =
+  let open Libobject in
+  declare_object
+    (global_object_nodischarge global_inductive_constant_registers_name
+    ~cache:(fun r -> cache_inductive_constant_registers r)
+    ~subst:None)
+
+let register_constant_inductives (extr : extract_inductives) : unit =
+  Lib.add_leaf (global_inductive_constant_registers_input extr)
+
+let get_global_inductives_constant_mapping () = !global_inductive_constant_registers
+
 (* Extract Inline *)
 
-let global_inlining_registers = 
+let global_inlining_registers =
   Summary.ref ~name:"Verified Extraction Inlining Registration" Kernames.KernameSet.empty
-  
+
 let global_inlining_registers_name = "verified-extraction-inlining-registration"
 
 let cache_inlining_registers csts =
   let csts' = !global_inlining_registers in
   global_inlining_registers := Kernames.KernameSet.union csts csts'
 
-let global_inlining_registers_input = 
-  let open Libobject in 
-  declare_object 
+let global_inlining_registers_input =
+  let open Libobject in
+  declare_object
     (global_object_nodischarge global_inlining_registers_name
     ~cache:(fun r -> cache_inlining_registers r)
     ~subst:None)
@@ -234,7 +270,7 @@ let get_global_inlinings_mapping () = !global_inlining_registers
 
 
 (* Primitives / Extract Constant *)
-let global_registers = 
+let global_registers =
   Summary.ref (([], []) : prim list * package list) ~name:"Verified Extraction Registration"
 
 let global_registers_name = "verified-extraction-registration"
@@ -243,9 +279,9 @@ let cache_registers (prims, packages) =
   let (prims', packages') = !global_registers in
   global_registers := (prims @ prims', packages @ packages')
 
-let global_registers_input = 
-  let open Libobject in 
-  declare_object 
+let global_registers_input =
+  let open Libobject in
+  declare_object
     (global_object_nodischarge global_registers_name
     ~cache:(fun r -> cache_registers r)
     ~subst:None)
@@ -267,53 +303,60 @@ let bytes_of_list l =
       fill (1 + acc) cs
   in fill 0 l
 
-let make_unsafe_flags b = 
-  { cofix_to_lazy = b; 
+let make_unsafe_flags b =
+  { cofix_to_lazy = b;
     inlining = b;
     unboxing = b;
-    betared = b }
+    betared = b;
+    inductives_extraction = b}
 
 let default_unsafe_flags = make_unsafe_flags false
 let all_unsafe_flags = make_unsafe_flags true
+let default_dearging_config =
+  { overridden_masks = (fun _ -> None);
+    do_trim_const_masks = true;
+    do_trim_ctor_masks = false; }
 
-let default_erasure_config inlined_constants = 
+let default_erasure_config inlined_constants extracted_inductives =
   { enable_unsafe = default_unsafe_flags; enable_typed_erasure = false;
-    inlined_constants }
+    inlined_constants; extracted_inductives; dearging_config = default_dearging_config }
 
-let default_malfunction_config inductives_mapping inlined_constants prims = 
-  { erasure_config = default_erasure_config inlined_constants; reorder_constructors = inductives_mapping; prims }
+let default_malfunction_config inductives_mapping inlined_constants extracted_inductives prims =
+  { erasure_config = default_erasure_config inlined_constants extracted_inductives; reorder_constructors = inductives_mapping; prims }
 
 let set_unsafe_flag fl = function
 | CoFixToLazy -> { fl with cofix_to_lazy = true }
 | Inlining -> { fl with inlining = true }
 | Unboxing -> { fl with unboxing = true }
 | BetaRed -> { fl with betared = true }
+| InductivesExtraction -> { fl with inductives_extraction = true }
 
 let make_options loc l =
   let inductives_mapping = get_global_inductives_mapping () in
+  let extracted_inductives = get_global_inductives_constant_mapping () in
   let inlining = get_global_inlinings_mapping () in
   let prims = get_global_prims () in
   let default = {
-    malfunction_pipeline_config = default_malfunction_config inductives_mapping inlining prims;
+    malfunction_pipeline_config = default_malfunction_config inductives_mapping inlining extracted_inductives prims;
     bypass_qeds = false; time = false; program_type = None; load = false; run = false;
     verbose = false; loc; format = false; optimize = false;
-    use_opam_env = get_use_opam_opt () }  
+    use_opam_env = get_use_opam_opt () }
   in
-  let parse_unsafe_flags unsafe l = 
+  let parse_unsafe_flags unsafe l =
     match l with
     | [] -> all_unsafe_flags
     | flags -> List.fold_left set_unsafe_flag unsafe flags
   in
-  let rec parse_options opts l = 
+  let rec parse_options opts l =
     match l with
     | [] -> opts
     | Unsafe flags :: l ->
       let erasure_config = opts.malfunction_pipeline_config.erasure_config in
-      parse_options { opts with 
-      malfunction_pipeline_config = { opts.malfunction_pipeline_config with erasure_config = 
+      parse_options { opts with
+      malfunction_pipeline_config = { opts.malfunction_pipeline_config with erasure_config =
       { erasure_config with enable_unsafe = parse_unsafe_flags erasure_config.enable_unsafe flags } } } l
-    | Typed :: l -> parse_options { opts with 
-      malfunction_pipeline_config = { opts.malfunction_pipeline_config with erasure_config = 
+    | Typed :: l -> parse_options { opts with
+      malfunction_pipeline_config = { opts.malfunction_pipeline_config with erasure_config =
       { opts.malfunction_pipeline_config.erasure_config with enable_typed_erasure = true } } } l
     | BypassQeds :: l -> parse_options { opts with bypass_qeds = true } l
     | Time :: l -> parse_options { opts with time = true } l
@@ -323,7 +366,7 @@ let make_options loc l =
     | Run :: l -> parse_options { opts with run = true } l
     | Format :: l -> parse_options { opts with format = true } l
     | Optimize :: l -> parse_options { opts with optimize = true } l
-  in 
+  in
   let check_options opts =
     match opts.program_type with
     | Some Plugin -> if opts.run then { opts with load = true } else opts
@@ -332,25 +375,25 @@ let make_options loc l =
   let opts = parse_options default l in
   check_options opts
 
-type line = 
+type line =
 | EOF
 | Info of string
 | Error of string
 
 let read_line stdout stderr =
   try Info (input_line stdout)
-  with End_of_file -> 
+  with End_of_file ->
     try Error (input_line stderr)
   with End_of_file -> EOF
 
 let push_line buf line =
-  Buffer.add_string buf line; 
+  Buffer.add_string buf line;
   Buffer.add_string buf "\n"
 
 let string_of_buffer buf = Bytes.to_string (Buffer.to_bytes buf)
 
 let execute cmd =
-  debug Pp.(fun () -> str "Executing: " ++ str cmd ++ str " in environemt: " ++ 
+  debug Pp.(fun () -> str "Executing: " ++ str cmd ++ str " in environemt: " ++
     prlist_with_sep spc str (Array.to_list (Unix.environment ())));
   let (stdout, stdin, stderr) = Unix.open_process_full cmd (Unix.environment ()) in
   let continue = ref true in
@@ -366,39 +409,39 @@ let execute cmd =
   let status = Unix.close_process_full (stdout, stdin, stderr) in
   status, string_of_buffer outbuf, string_of_buffer errbuf
 
-let run_command opts cmd = 
+let run_command opts cmd =
   let status, out, err = execute cmd in
   match status with
   | Unix.WEXITED 0 -> debug Pp.(fun () -> str "Execution result is" ++ spc () ++ str out);
     String.trim out
-  | _ -> 
+  | _ ->
     CErrors.user_err ?loc:opts.loc Pp.(str "Execution of" ++ spc () ++ str cmd ++ spc () ++ str "failed:" ++ fnl () ++
       str out ++ str err)
 
-let opam_command cmd = 
+let opam_command cmd =
   match get_opam_path_opt () with
   | Some s -> s ^ " exec -- " ^ cmd
   | None -> cmd
-      
+
 let execute opts cmd =
   let status, out, err = execute cmd in
   match status with
   | Unix.WEXITED 0 -> out, err
-  | Unix.WEXITED n -> 
+  | Unix.WEXITED n ->
     CErrors.user_err ?loc:opts.loc Pp.(str"Command" ++ spc () ++ str cmd ++ spc () ++
       str"exited with code " ++ int n ++ str "." ++ fnl () ++
       str"stdout: " ++ spc () ++ str out ++ fnl () ++ str "stderr: " ++ str err)
-  | Unix.WSIGNALED n | Unix.WSTOPPED n -> 
-    CErrors.user_err ?loc:opts.loc Pp.(str"Command" ++ spc () ++ str cmd ++ spc () ++ 
+  | Unix.WSIGNALED n | Unix.WSTOPPED n ->
+    CErrors.user_err ?loc:opts.loc Pp.(str"Command" ++ spc () ++ str cmd ++ spc () ++
     str"was signaled with code " ++ int n ++ str"." ++ fnl () ++
     str"stdout: " ++ spc () ++ str out ++ fnl () ++ str "stderr: " ++ str err)
 
-let get_prefix () = 
+let get_prefix () =
   match get_build_dir_opt () with
   | None -> "."
-  | Some s -> s 
+  | Some s -> s
 
-let build_fname f = 
+let build_fname f =
   Filename.concat (get_prefix ()) f
 
 let increment_subscript id =
@@ -430,7 +473,7 @@ let next_string_away_from s bad =
   let rec name_rec s = if bad s then name_rec (increment_subscript s) else s in
   name_rec s
 
-type malfunction_program_type = 
+type malfunction_program_type =
   | Standalone_binary
   | Shared_library of string * string
 
@@ -438,27 +481,27 @@ type plugin_function = Obj.t
 
 let register_plugins = Summary.ref ~name:"verified-extraction-plugins" (CString.Map.empty : plugin_function CString.Map.t)
 
-let cache_plugin (name, fn) = 
+let cache_plugin (name, fn) =
   register_plugins := CString.Map.add name fn !register_plugins
-  
+
 let plugin_input =
-  let open Libobject in 
-  declare_object 
+  let open Libobject in
+  declare_object
     (global_object_nodischarge "verified-extraction-plugins"
     ~cache:(fun r -> cache_plugin r)
     ~subst:None)
-  
+
 let register_plugin name fn : unit =
   Lib.add_leaf (plugin_input (name, fn))
-  
+
 module Reify =
 struct
 
   type reifyable_value_type =
   | IsInductive of Names.inductive * UVars.Instance.t * Constr.t list
   | IsPrimitive of Names.Constant.t * UVars.Instance.t * Constr.t list
-  
-  type reifyable_type = 
+
+  type reifyable_type =
   | IsThunk of reifyable_value_type
   | IsValue of reifyable_value_type
 
@@ -475,64 +518,64 @@ struct
 
   let find_nth_constant n ar =
     let open Inductiveops in
-    let rec aux i const = 
+    let rec aux i const =
       if Array.length ar <= i then raise Not_found
       else if CList.is_empty ar.(i).cs_args then  (* FIXME lets in constructors *)
-        if const = n then i 
+        if const = n then i
         else aux (i + 1) (const + 1)
       else aux (i + 1) const
     in aux 0 0
 
   let find_nth_non_constant n ar =
     let open Inductiveops in
-    let rec aux i nconst = 
+    let rec aux i nconst =
       if Array.length ar <= i then raise Not_found
-      else if not (CList.is_empty ar.(i).cs_args) then 
+      else if not (CList.is_empty ar.(i).cs_args) then
         if nconst = n then i
         else aux (i + 1) (nconst + 1)
       else aux (i + 1) nconst
     in aux 0 0
-    
-  let invalid_type ?loc env sigma ty = 
+
+  let invalid_type ?loc env sigma ty =
     CErrors.user_err ?loc
-      Pp.(str"Cannot reify values of non-inductive or non-primitive type: " ++ 
+      Pp.(str"Cannot reify values of non-inductive or non-primitive type: " ++
           Printer.pr_econstr_env env sigma ty)
-    
+
   let check_reifyable_value_type ?loc env sigma ty =
     (* We might have bound universes though. It's fine! *)
     try let (hd, u), args = Inductiveops.find_inductive env sigma ty in
       IsInductive (hd, EConstr.EInstance.kind sigma u, List.map (EConstr.to_constr sigma) args)
-    with Not_found -> 
+    with Not_found ->
       let hnf = Reductionops.whd_all env sigma ty in
       let hd, args = EConstr.decompose_app sigma hnf in
       match EConstr.kind sigma hd with
-      | Const (c, u) when Environ.is_primitive_type env c -> 
+      | Const (c, u) when Environ.is_primitive_type env c ->
         IsPrimitive (c, EConstr.EInstance.kind sigma u, CArray.map_to_list EConstr.Unsafe.to_constr args)
       | _ -> invalid_type ?loc env sigma hnf
 
   let check_reifyable_value ?loc env sigma c =
     check_reifyable_value_type ?loc env sigma (Retyping.get_type_of env sigma c)
-  
+
   let check_reifyable_thunk_or_value_type ?loc env sigma ty =
     debug Pp.(fun () -> str "Checking reifyability of " ++ Printer.pr_econstr_env env sigma ty);
     match EConstr.kind sigma ty with
-    | Constr.Prod (na, dom, codom) -> 
+    | Constr.Prod (na, dom, codom) ->
       (match Inductiveops.find_inductive env sigma dom with
       | exception Not_found -> invalid_type ?loc env sigma dom
-      | (hd, u), args -> 
+      | (hd, u), args ->
         if Environ.QGlobRef.equal env (Rocqlib.lib_ref "core.unit.type") (IndRef hd) then
           let tt = Rocqlib.lib_ref "core.unit.tt" in
           let sigma, ttc = Evd.fresh_global env sigma tt in
           IsThunk (check_reifyable_value_type ?loc env sigma (EConstr.Vars.subst1 ttc codom))
         else invalid_type ?loc env sigma dom)
     | _ -> IsValue (check_reifyable_value_type ?loc env sigma ty)
-  
+
   let check_reifyable_thunk_or_value ?loc env sigma v =
     check_reifyable_thunk_or_value_type ?loc env sigma (Retyping.get_type_of env sigma v)
-  
+
   let ill_formed env sigma ty =
     match ty with
-    | IsInductive _ -> 
+    | IsInductive _ ->
       CErrors.anomaly ~label:"verified-extraction-reify-ill-formed"
       Pp.(str "Ill-formed inductive value representation in MetaRocq's Extraction reification for type " ++
         pr_reifyable_value_type env sigma ty)
@@ -541,7 +584,7 @@ struct
       Pp.(str "Ill-formed primitive value representation in MetaRocq's Extraction reification for type " ++
         pr_reifyable_value_type env sigma ty)
 
-  (* let ocaml_get_boxed_ordinal v = 
+  (* let ocaml_get_boxed_ordinal v =
     (* tag is the header of the object *)
     let tag = Array.unsafe_get (Obj.magic v : Obj.t array) (-1) in
     (* We turn it into an ocaml int usable for arithmetic operations *)
@@ -572,14 +615,14 @@ struct
     with Not_found -> cstr
 
 
-  let reify env sigma m ty v : Constr.t = 
+  let reify env sigma m ty v : Constr.t =
     let open Declarations in
     let debug s = debug Pp.(fun () -> str ("reify: ") ++ s ()) in
     let rec aux ty v =
     Control.check_for_interrupt ();
     let () = debug Pp.(fun () -> str "Reifying value of type " ++ pr_reifyable_value_type env sigma ty) in
     match ty with
-    | IsInductive (hd, u, args) -> 
+    | IsInductive (hd, u, args) ->
       let open Inductive in
       let open Inductiveops in
       let qhd = match Metarocq_template_plugin.Ast_quoter.quote_global_reference (IndRef hd) with Kernames.IndRef i -> i | _ -> assert false in
@@ -592,31 +635,31 @@ struct
       if Obj.is_block v then
         let ord = Obj.tag v in
         let () = debug Pp.(fun () -> str (Printf.sprintf "Reifying constructor block of tag %i" ord)) in
-        let coqidx = 
-          try find_nth_non_constant ord cstrs 
+        let coqidx =
+          try find_nth_non_constant ord cstrs
           with Not_found -> ill_formed env sigma ty
         in
         let cstr = cstrs.(coqidx) in
         let coqidx = find_reverse_mapping qhd m coqidx in
         let ctx = EConstr.Vars.smash_rel_context cstr.cs_args in
         let vargs = List.init (List.length ctx) (Obj.field v) in
-        let args' = List.map2 (fun decl v -> 
-          let argty = check_reifyable_value env sigma 
+        let args' = List.map2 (fun decl v ->
+          let argty = check_reifyable_value env sigma
           (Context.Rel.Declaration.get_type decl) in
           aux argty v) (List.rev ctx) vargs in
         Term.applistc (Constr.mkConstructU ((hd, coqidx + 1), u)) (params @ args')
       else (* Constant constructor *)
         let ord = (Obj.magic v : int) in
         let () = debug Pp.(fun () -> str @@ Printf.sprintf "Reifying constant constructor: %i" ord) in
-        let coqidx = 
-          try find_nth_constant ord cstrs 
-          with Not_found -> ill_formed env sigma ty 
+        let coqidx =
+          try find_nth_constant ord cstrs
+          with Not_found -> ill_formed env sigma ty
         in
         let coqidx = find_reverse_mapping qhd m coqidx in
         let () = debug Pp.(fun () -> str @@ Printf.sprintf "Reifying constant constructor: %i is %i in Rocq" ord coqidx) in
         Term.applistc (Constr.mkConstructU ((hd, coqidx + 1), u)) params
-    | IsPrimitive (c, u, _args) -> 
-      if Environ.is_array_type env c then 
+    | IsPrimitive (c, u, _args) ->
+      if Environ.is_array_type env c then
         CErrors.user_err Pp.(str "Primitive arrays are not supported yet in MetaRocq r Extractioneification")
       else if Environ.is_float64_type env c then
         Constr.mkFloat (Obj.magic v)
@@ -635,11 +678,11 @@ end
 
 let loaded_modules = ref CString.Set.empty
 
-type compilation_result = 
+type compilation_result =
 | SharedLib of string list * Reify.reifyable_type list * string
 | StandaloneProgram of string
 
-let compile opts names tyinfos fname = 
+let compile opts names tyinfos fname =
   match opts.program_type with
   | None -> None
   | Some t ->
@@ -648,40 +691,40 @@ let compile opts names tyinfos fname =
     let packages = get_global_packages () in
     let optimize = if opts.optimize then "-O2" else "" in
     match t with
-    | Plugin -> 
-      let fname = 
+    | Plugin ->
+      let fname =
         let basename = Filename.chop_extension fname in
         let freshname = next_string_away_from basename (fun s -> CString.Set.mem s !loaded_modules) in
         let freshfname = freshname ^ ".mlf" in
-        if freshname <> basename then 
+        if freshname <> basename then
           ignore (execute opts (Printf.sprintf "mv %s %s" fname freshfname));
         loaded_modules := CString.Set.add freshname !loaded_modules;
         freshfname
       in
       let packages = "rocq_verified_extraction.plugin" :: packages in
-      let compile_cmd = 
-        Printf.sprintf "%s cmx %s -shared -package %s %s" malfunction optimize 
+      let compile_cmd =
+        Printf.sprintf "%s cmx %s -shared -package %s %s" malfunction optimize
           (String.concat "," packages) fname
       in
       let _out, _err = execute opts compile_cmd in (* we now have fname . cmx *)
       let cmxfile =  Filename.chop_extension fname ^ ".cmx" in
       let cmxsfile = Filename.chop_extension fname ^ ".cmxs" in
       (* Build the shared library *)
-      let link_cmd = 
-        Printf.sprintf "%s opt -shared -package %s -o %s %s" ocamlfind 
+      let link_cmd =
+        Printf.sprintf "%s opt -shared -package %s -o %s %s" ocamlfind
          (String.concat "," packages) cmxsfile cmxfile
       in
       let _out, _err = execute opts link_cmd in
       Some (SharedLib (names, tyinfos, cmxsfile))
-    | Standalone link_coq -> 
+    | Standalone link_coq ->
       let output = Filename.chop_extension fname in
       let flags, packages =
-        if link_coq then 
+        if link_coq then
           "-thread -linkpkg", String.concat "," (statically_linked_pkgs @ packages)
         else "-thread -linkpkg", String.concat "," packages
       in
-      let compile_cmd = 
-        Printf.sprintf "%s compile %s %s -package %s -o %s %s" 
+      let compile_cmd =
+        Printf.sprintf "%s compile %s %s -package %s -o %s %s"
           malfunction optimize flags packages output fname
       in
       let _out, _err = time opts Pp.(str "Compilation") (execute opts) compile_cmd in (* we now have fname . cmx *)
@@ -704,7 +747,7 @@ let run opts env sigma result : Constr.t list option =
       time opts Pp.(str "Dynamically linking " ++ str shared_lib) Dynlink.loadfile_private shared_lib;
       if opts.run then begin
         debug Pp.(fun () -> str"Loaded shared library: " ++ str shared_lib);
-        let run fn tyinfo = 
+        let run fn tyinfo =
           match CString.Map.find_opt fn !register_plugins with
           | None -> CErrors.anomaly Pp.(str"Couldn't find funtion " ++ str fn ++ str" which should have been registered by " ++ str shared_lib)
           | Some code -> time opts Pp.(str fn) (run_code opts env sigma tyinfo) code
@@ -713,7 +756,7 @@ let run opts env sigma result : Constr.t list option =
       end else None
     end else None
 
-  | StandaloneProgram s -> 
+  | StandaloneProgram s ->
     if opts.run then
       let out, err = time opts Pp.(str s) (execute opts) s in
       if err <> "" then Feedback.msg_warning (Pp.str err);
@@ -722,7 +765,7 @@ let run opts env sigma result : Constr.t list option =
     else None
 
 type malfunction_compilation_function =
-  malfunction_pipeline_config -> malfunction_program_type -> TemplateProgram.template_program -> 
+  malfunction_pipeline_config -> malfunction_program_type -> TemplateProgram.template_program ->
   string list * string
 
 let decompose_argument env sigma c =
@@ -739,10 +782,10 @@ let decompose_argument env sigma c =
 
 let set_opam_env opts =
   let path = Unix.getenv "PATH" in
-  let opam_binpath = 
+  let opam_binpath =
     match Unix.getenv "OPAM_SWITCH_PREFIX" with
     | exception Not_found ->
-      let opam_path = 
+      let opam_path =
       match get_opam_path_opt () with
       | Some s -> s
       | None -> run_command opts "which opam"
@@ -754,14 +797,14 @@ let set_opam_env opts =
 
 let set_opam_env opts = if opts.use_opam_env then set_opam_env opts else ()
 
-let extract_and_run
+let extract_and_run ~opaque_access
   (compile_malfunction : malfunction_compilation_function)
   ?loc opts env sigma c dest : (Constr.t list) option =
   let opts = make_options loc opts in
-  let () = set_opam_env opts in 
-  let prog = time opts Pp.(str"Quoting") (Ast_quoter.quote_term_rec ~bypass:opts.bypass_qeds env) sigma (EConstr.to_constr sigma c) in
-  let pt = match opts.program_type with 
-    | Some (Standalone _) | None -> Standalone_binary 
+  let () = set_opam_env opts in
+  let prog = time opts Pp.(str"Quoting") (Ast_quoter.quote_term_rec ~bypass:opts.bypass_qeds ~opaque_access env) sigma (EConstr.to_constr sigma c) in
+  let pt = match opts.program_type with
+    | Some (Standalone _) | None -> Standalone_binary
     | Some Plugin -> Shared_library ("Rocq_verified_extraction_plugin__Verified_extraction", "register_plugin")
   in
   let tyinfos =
@@ -770,17 +813,17 @@ let extract_and_run
   in
   let run_pipeline opts prog = compile_malfunction opts.malfunction_pipeline_config pt prog in
   let names, eprog = time opts Pp.(str"Extraction") (run_pipeline opts) prog in
-  let names = if opts.load then 
+  let names = if opts.load then
       match tyinfos, names with
       | [_], [] -> ["main"]
       | _ ->
       if not (List.length names = List.length (tyinfos)) then
-        CErrors.user_err ?loc Pp.(str "Extracted names " ++ prlist_with_sep spc str names ++ str " do not match argument types " ++ 
+        CErrors.user_err ?loc Pp.(str "Extracted names " ++ prlist_with_sep spc str names ++ str " do not match argument types " ++
           prlist_with_sep spc (Reify.pr_reifyable_type env sigma) tyinfos)
       else names
     else names
   in
-  let dest = 
+  let dest =
     match dest with
     | Some _ -> dest
     | None -> if not (Option.is_empty opts.program_type) then Some "verified_extraction_term.mlf" else None
@@ -799,7 +842,7 @@ let extract_and_run
   match dest with
   | None -> None
   | Some fname ->
-    if opts.format then 
+    if opts.format then
       let malfunction = run_command opts (opam_command "which malfunction") in
       let temp = fname ^ ".tmp" in
       ignore (execute opts (Printf.sprintf "%s fmt < %s > %s && mv %s %s" malfunction fname temp temp fname))
@@ -807,7 +850,7 @@ let extract_and_run
     match compile opts names tyinfos fname with
     | None -> None
     | Some result -> run opts env sigma result
-    
+
 let print_results env sigma = function
   | None -> ()
   | Some [res] ->
@@ -825,7 +868,7 @@ let eval_plugin_gen ?loc opts (gr : Libnames.qualid) =
   let env = Global.env () in
   let sigma = Evd.from_env env in
   let gr = globref_of_qualid gr in
-  let c = match gr with Names.GlobRef.ConstRef c -> c | _ -> 
+  let c = match gr with Names.GlobRef.ConstRef c -> c | _ ->
     CErrors.user_err Pp.(Printer.pr_global gr ++ str " does not bind to a reference") in
   let fn = Names.Constant.to_string c in
   let sigma, grc = Evd.fresh_global env sigma gr in
@@ -834,14 +877,14 @@ let eval_plugin_gen ?loc opts (gr : Libnames.qualid) =
   let c = run_code opts env sigma tyinfo code in
   env, sigma, c
 
-let eval_plugin ?loc opts (gr : Libnames.qualid) = 
+let eval_plugin ?loc opts (gr : Libnames.qualid) =
   let env, sigma, c = eval_plugin_gen ?loc opts gr in
   print_results env sigma (Some [c])
 
-let eval ?loc opts gr = 
+let eval ?loc opts gr =
   let env, sigma, c = eval_plugin_gen ?loc opts gr in
   c
 
-let extract compile_malfunction ?loc opts env sigma c dest = 
-  let res = extract_and_run compile_malfunction ?loc opts env sigma c dest in
+let extract ~opaque_access compile_malfunction ?loc opts env sigma c dest =
+  let res = extract_and_run ~opaque_access compile_malfunction ?loc opts env sigma c dest in
   print_results env sigma res

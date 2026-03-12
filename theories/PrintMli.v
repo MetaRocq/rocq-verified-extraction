@@ -14,7 +14,7 @@ Definition uncapitalize_char (c : Byte.byte) : Byte.byte :=
   else c.
 
 Definition uncapitalize (s : bytestring.string) : bytestring.string :=
-  match s with 
+  match s with
   | bytestring.String.EmptyString => bytestring.String.EmptyString
   | bytestring.String.String c s => bytestring.String.String (uncapitalize_char c) s
   end.
@@ -25,7 +25,7 @@ Definition capitalize_char (c : Byte.byte) : Byte.byte :=
   else c.
 
 Definition capitalize (s : bytestring.string) : bytestring.string :=
-  match s with 
+  match s with
   | bytestring.String.EmptyString => bytestring.String.EmptyString
   | bytestring.String.String c s => bytestring.String.String (capitalize_char c) s
   end.
@@ -36,9 +36,9 @@ Definition term_eqb (t1 t2 : term) :=
 Notation "t === u" := (term_eqb t u) (at level 70).
 
 Unset Guard Checking.
-  
+
 Section fix_global.
-  
+
   Variable Σ : global_declarations.
 
   Definition print_parens_around sep l :=
@@ -70,11 +70,11 @@ Section fix_global.
     | tProd {| binder_name := nNamed na |}  A B =>
         (if printf then "" else "(") ++
         print_type_def false names A ++ " -> " ++ print_type_def printf (("'" ++ uncapitalize na) :: names) B
-            ++ if printf then "" else ") (* higher-order functions are not safe to extract *)" 
+            ++ if printf then "" else ") (* higher-order functions are not safe to extract *)"
     | tProd _ A B =>
         (if printf then "" else "(") ++
           print_type_def false names A ++ " -> " ++ print_type_def printf ("Obj.t" :: names) B
-            ++ if printf then "" else ") (* higher-order functions are not safe to extract *)" 
+            ++ if printf then "" else ") (* higher-order functions are not safe to extract *)"
     | tApp f args =>
           if f === <% prod %> then
             match args with [A; B] => "(" ++ print_type_def printf names A ++ " * " ++ print_type_def printf names B ++ ")"
@@ -172,7 +172,7 @@ Fixpoint print_globals (Σ : global_declarations) :=
         || (na == (MPfile ["Datatypes"; "Init"; "Coq"], "option"))
       then print_globals l
       else print_globals l
-             ++ nl ++ print_inductive Σ na.2 m 
+             ++ nl ++ print_inductive Σ na.2 m
   | _ :: l => print_globals l
   end.
 
@@ -185,7 +185,7 @@ Fixpoint decompose_prod (t : Ast.term) : list Ast.term :=
 Definition print_mli names (p : program) :=
   print_globals (p.1.(declarations)) ++ nl ++ fold_right (fun '(na,t) str => "val " ++ (uncapitalize na) ++ " : " ++ print_type p.1.(declarations) t ++ nl ++ str) ""%bs (combine names (rev (decompose_prod p.2))).
 
-Import MRMonadNotation.
+Import MonadNotation.
 
 Fixpoint extract_names (t : Ast.term) : list ident :=
   match t with

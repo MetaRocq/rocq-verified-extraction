@@ -9,7 +9,7 @@ From Malfunction Require Import Pipeline.
     should use these same directives for consistency.
 *)
 
-Extraction Blacklist Classes config uGraph Universes Ast String List Nat Int
+Extraction Blacklist Classes config uGraph Universes Ast String List Monad Nat Int
            UnivSubst Typing Checker Retyping OrderedType Logic Common ws_cumul_pb Classes Numeral
            Uint63.
 Set Warnings "-extraction-opaque-accessed".
@@ -42,6 +42,6 @@ Extract Constant PCUICTyping.guard_checking => "(fun _ _ _ _ -> true)". *)
 
 Set Extraction Output Directory "plugin/plugin/extraction".
 
-Separate Extraction compile_malfunction 
+Separate Extraction compile_malfunction
          (* The following directives ensure separate extraction does not produce name clashes *)
-         Stdlib.Strings.String utils Template.UnivSubst ELiftSubst EGlobalEnv.
+         utils Template.UnivSubst ELiftSubst EGlobalEnv.

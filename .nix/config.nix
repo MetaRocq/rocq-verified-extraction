@@ -31,8 +31,6 @@ with (import <nixpkgs> {}).lib;
   ## /!\ Remove this field as soon as the package is available on nixpkgs.
   ## /!\ Manual overlays in `.nix/rocq-overlays` or `.nix/coq-overlays`
   ##     should be preferred then.
-  #buildInputs = [ "equations" "metarocq" ];
-  #nativeBuildInputs = [ "equations" ];
 
   ## Indicate the relative location of your _CoqProject
   ## If not specified, it defaults to "_CoqProject"
@@ -47,56 +45,16 @@ with (import <nixpkgs> {}).lib;
   ## alternative configuration
   ## When generating GitHub Action CI, one workflow file
   ## will be created per bundle
-  bundles.default = {
-    ## You can override Rocq and other Rocq rocqPackages
-    ## through the following attribute
-    rocqPackages.rocq-core.override.version = "9.1";
-    ## You can override Coq and other Coq coqPackages
-    ## through the following attribute
-    coqPackages.coq.override.version = "9.1";
-    coqPackages.equations.override.version = "v1.3.1-9.1";
-
-    coqPackages.metarocq.override.version = "v1.4.1-9.1";
-    coqPackages.ceres.override.version = "0.4.1";
-
-    ## In some cases, light overrides are not available/enough
-    ## in which case you can use either
-    # rocqPackages.<rocq-pkg>.overrideAttrs = o: <overrides>;
-    # coqPackages.<coq-pkg>.overrideAttrs = o: <overrides>;
-    ## or a "long" overlay to put in `.nix/rocq-overlays` or `.nix/coq-overlays`
-    ## you may use `nix-shell --run fetchOverlay <coq-pkg>`
-    ## to automatically retrieve the one from nixpkgs
-    ## if it exists and is correctly named/located
-
-    ## You can override Coq and other coqPackages
-    ## through the following attribute
-    ## If <ocaml-pkg> does not support light overrides,
-    ## you may use `overrideAttrs` or long overlays
-    ## located in `.nix/ocaml-overlays`
-    ## (there is no automation for this one)
-    #  ocamlPackages.<ocaml-pkg>.override.version = "x.xx";
-
-    ## You can also override packages from the nixpkgs toplevel
-    # <nix-pkg>.override.overrideAttrs = o: <overrides>;
-    ## Or put an overlay in `.nix/overlays`
-
-    ## you may mark a package as a main CI job (one to take deps and
-    ## rev deps from) as follows
-    # coqPackages.<main-pkg>.main-job = true;
-    ## by default the current package and its shell attributes are main jobs
-
-    ## you may mark a package as a CI job as follows
-    #  rocqPackages.<another-pkg>.job = "test";
-    #  coqPackages.<another-pkg>.job = "test";
-    ## It can then built through
-    ## nix-build --argstr bundle "default" --arg job "test";
-    ## in the absence of such a directive, the job "another-pkg" will
-    ## is still available, but will be automatically included in the CI
-    ## via the command genNixActions only if it is a dependency or a
-    ## reverse dependency of a job flagged as "main-job" (see above).
-
-    ## Run on push on following branches (default [ "master" ])
-    # push-branches = [ "master" "branch2" ];
+  bundles.default = { coqPackages = {
+      coq.override.version = "9.1";
+        equations.override.version = "1.3.1+9.1";
+        metarocq-utils.override.version = "1.5.1-9.1";
+        metarocq-erasure-plugin.override.version = "1.5.1-9.1";
+        ceres-bs.override.version = "1.0.0";
+    }; rocqPackages = {
+      rocq-core.override.version = "9.1";
+    };
+    push-branches = [ "master" "rocq-9.1" ];
   };
 
   ## Cachix caches to use in CI

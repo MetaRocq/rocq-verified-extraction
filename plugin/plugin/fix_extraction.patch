@@ -1,3 +1,18 @@
+--- extraction/ceresString.ml.orig
++++ extraction/ceresString.ml
+@@ -1,11 +1,11 @@
+ open Ascii
++open Nat0
+ open BinInt
+ open BinNums
+ open Byte
+ open ByteCompare
+ open Datatypes
+ open DecimalString
+-open Nat0
+ open PeanoNat
+ open Bytestring
+ 
 --- extraction/serialize.ml.orig	2025-04-10 11:58:52
 +++ extraction/serialize.ml	2025-04-10 12:02:37
 @@ -16,14 +16,14 @@
@@ -50,16 +65,15 @@
  
 --- extraction/serialize.mli.orig	2025-04-10 12:04:50
 +++ extraction/serialize.mli	2025-04-10 12:05:04
-@@ -16,14 +16,14 @@
+@@ -15,7 +15,6 @@ open Kernames
  open List0
  open ListDef
  open MRString
 -open Malfunction
--open Nat0
+ open Nat0
  open PeanoNat
- open PrimInt63
-+open Nat0
- open Sint63Axioms
+ open Serialize_util
+@@ -22,6 +23,7 @@ open Sint63Axioms
  open SpecFloat
  open String0
  open Bytestring

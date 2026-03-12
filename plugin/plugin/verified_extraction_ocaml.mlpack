@@ -81,6 +81,7 @@ OptimizePropDiscr
 EInlineProjections
 EConstructorsAsBlocks
 ECoInductiveToInductive
+ERemapInductives
 EReorderCstrs
 EUnboxing
 EImplementBox
@@ -102,6 +103,7 @@ CeresSerialize
 Sint63
 Malfunction
 Compile
+Serialize_util
 Serialize
 SemanticsSpec
 Pipeline
