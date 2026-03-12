@@ -500,7 +500,7 @@ Program Definition switchable_erasure_pipeline econf :=
 Next Obligation.
 Proof.
   unfold optional_unsafe_transforms, optional_self_transform.
-  destruct enable_unsafe as [[] ? ? ?] => //.
+  destruct enable_unsafe as [[] ? ? ? ?] => //.
 Qed.
 
 Program Definition malfunction_pipeline

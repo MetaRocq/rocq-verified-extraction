@@ -33,7 +33,7 @@ Definition eval_malfunction_sexp (cf := config.extraction_checker_flags) (p : As
 Section something.
 
 Import Loader All.
-Import MRMonadNotation.
+Import MonadNotation.
 
 Definition extract {A : Type} (a : A) :=
   t <- tmQuoteRec a ;;

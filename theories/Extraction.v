@@ -9,7 +9,7 @@ From Malfunction Require Import Pipeline.
     should use these same directives for consistency.
 *)
 
-Extraction Blacklist Classes config uGraph Universes Ast String List Nat Int
+Extraction Blacklist Classes config uGraph Universes Ast String List Monad Nat Int
            UnivSubst Typing Checker Retyping OrderedType Logic Common ws_cumul_pb Classes Numeral
            Uint63.
 Set Warnings "-extraction-opaque-accessed".

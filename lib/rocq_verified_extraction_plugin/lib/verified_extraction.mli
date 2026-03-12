@@ -1,7 +1,7 @@
 type inductive_mapping = Kernames.inductive * (string * int list) (* Target inductive type and mapping of constructor names to constructor tags *)
 type inductives_mapping = inductive_mapping list
 
-type unsafe_passes = 
+type unsafe_passes =
   { cofix_to_lazy : bool;
     inlining : bool;
     unboxing : bool;
@@ -17,7 +17,7 @@ type dearging_config =
     do_trim_const_masks : bool;
     do_trim_ctor_masks : bool; }
 
-type erasure_configuration = { 
+type erasure_configuration = {
   enable_unsafe : unsafe_passes;
   enable_typed_erasure : bool;
   dearging_config : dearging_config;
@@ -33,7 +33,7 @@ type prim = Kernames.kername * prim_def
 
 type primitives = prim list
 
-type malfunction_pipeline_config = { 
+type malfunction_pipeline_config = {
   erasure_config : erasure_configuration;
   reorder_constructors : inductives_mapping;
   prims : primitives }
@@ -41,8 +41,8 @@ type malfunction_pipeline_config = {
 type program_type =
   | Standalone of bool (* Link statically with Rocq's libraries *)
   | Plugin
-  
-type unsafe_pass = 
+
+type unsafe_pass =
   | CoFixToLazy
   | Inlining
   | Unboxing
@@ -77,7 +77,7 @@ val register_constant_inductives : extract_inductives -> unit
 val register_inlines : Kernames.kername list -> unit
 val register : prim list -> package list -> unit
 
-type malfunction_program_type = 
+type malfunction_program_type =
 | Standalone_binary
 | Shared_library of string * string
 
@@ -86,10 +86,11 @@ type plugin_function = Obj.t
 val register_plugin : string -> plugin_function -> unit
 
 type malfunction_compilation_function =
-  malfunction_pipeline_config -> malfunction_program_type -> TemplateProgram.template_program -> 
+  malfunction_pipeline_config -> malfunction_program_type -> TemplateProgram.template_program ->
   string list * string
 
-val extract : 
+val extract :
+  opaque_access:Global.indirect_accessor ->
   malfunction_compilation_function ->
   ?loc:Loc.t ->
   malfunction_command_args list ->
