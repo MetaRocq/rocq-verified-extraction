@@ -1,4 +1,4 @@
-Require Import List Uint63.
+From Stdlib Require Import List Uint63.
 Import ListNotations.
 
 Definition merge {T : Type} (leT : T -> T -> bool) :=
