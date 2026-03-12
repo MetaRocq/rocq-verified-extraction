@@ -54,7 +54,7 @@ with (import <nixpkgs> {}).lib;
     coqPackages.coq.override.version = "9.1";
     coqPackages.equations.override.version = "v1.3.1-9.1";
 
-    coqPackages.metarocq.override.version = "v1.5.1-9.1";
+    coqPackages.metarocq-erasure-plugin.override.version = "v1.5.1-9.1";
     coqPackages.ceres-bs.override.version = "1.0.0";
 
     ## In some cases, light overrides are not available/enough
