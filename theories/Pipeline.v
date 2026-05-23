@@ -446,7 +446,7 @@ Program Definition verified_named_erasure_pipeline `{Heap}:
  Transform.t global_env_ext_map _ _ _ _ EWcbvEvalNamed.value
              PCUICTransform.eval_pcuic_program
              (fun p v => ∥ EWcbvEvalNamed.eval p.1 [] p.2 v ∥) :=
-  verified_erasure_pipeline ▷
+  verified_erasure_pipeline default_erasure_config ▷
   post_verified_named_erasure_pipeline.
 
 Program Definition verified_malfunction_pipeline `{Heap} :
@@ -477,7 +477,7 @@ Section compile_malfunction_pipeline.
 
   Variable Normalisation : forall Σ0 : global_env_ext, wf_ext Σ0 -> NormalizationIn Σ0.
 
-  Definition compile_malfunction_pipeline := transform verified_malfunction_pipeline (Σ, t) (precond _ _ _ _ expΣ expt typing _).
+  Definition compile_malfunction_pipeline := transform verified_malfunction_pipeline (Σ, t) (precond _ _ _ _ expΣ expt typing _ default_erasure_config).
 
 End compile_malfunction_pipeline.
 
@@ -486,21 +486,14 @@ Arguments compile_malfunction_pipeline {_ _ _ _ _ _} _ _ _ {_}.
 Local Existing Instance CanonicalHeap.
 Local Existing Instance CanonicalPointer.
 
-Program Definition verified_typed_erasure_pipeline_unsafe econf :=
-  verified_typed_erasure_pipeline econf ▷ (optional_unsafe_transforms econf).
-Next Obligation.
-  unfold optional_unsafe_transforms, optional_self_transform in H |- *.
-  destruct enable_unsafe as [[] [] [] [] []] => //.
-Qed.
-
 (* This also optionally runs typed erasure and/or the cofix to fix translation *)
 Program Definition switchable_erasure_pipeline econf :=
-  if econf.(enable_typed_erasure) then verified_typed_erasure_pipeline_unsafe econf
-  else verified_erasure_pipeline_mapping ▷ (optional_unsafe_transforms econf).
+  if econf.(enable_typed_erasure) then verified_typed_erasure_pipeline econf
+  else verified_erasure_pipeline_mapping econf ▷ (optional_unsafe_transforms econf).
 Next Obligation.
 Proof.
-  unfold optional_unsafe_transforms, optional_self_transform.
-  destruct enable_unsafe as [[] ? ? ? ?] => //.
+  unfold optional_unsafe_transforms; cbn.
+  destruct econf as [[[] ? ? ?] ? ? ? ?]=> //.
 Qed.
 
 Program Definition malfunction_pipeline
