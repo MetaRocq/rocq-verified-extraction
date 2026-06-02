@@ -40,7 +40,6 @@ let interp_inductive_mapping (ind, (tyna, tags)) =
 
 let interp_unsafe uns =
   { Erasure0.cofix_to_lazy = uns.cofix_to_lazy;
-    Erasure0.inlining = uns.inlining;
     Erasure0.unboxing = uns.unboxing;
     Erasure0.betared = uns.betared;
     Erasure0.inductives_extraction = uns.inductives_extraction }
@@ -59,6 +58,7 @@ let interp_pipeline_config c =
     erasure_config =
       { enable_unsafe = enable_unsafe;
         enable_typed_erasure = enable_typed_erasure;
+        no_inlining = no_inlining;
         inlined_constants;
         extracted_inductives };
     reorder_constructors = inductives_mapping;
@@ -67,6 +67,7 @@ let interp_pipeline_config c =
     Erasure0.({
       enable_unsafe = interp_unsafe enable_unsafe; enable_typed_erasure;
       dearging_config = default_dearging_config;
+      inlining = not no_inlining;
       inlined_constants;
       extracted_inductives = interp_extracted_inductives extracted_inductives
       })
@@ -95,7 +96,7 @@ let extract = extract compile_malfunction
 
 VERNAC COMMAND EXTEND Verified_Extraction_Help CLASSIFIED AS QUERY
 | [ "Verified" "Extraction" "-help" ] -> {
-  let usage = "Verified (Bypass)? Extraction [term] [output_file]?" in
+  let usage = "Verified (Bypass)? Extraction [-typed] [-no-inline] [-unsafe] [term] [output_file]?" in
   Feedback.msg_notice (str usage)
   }
 END

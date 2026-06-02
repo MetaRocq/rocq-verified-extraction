@@ -3,7 +3,6 @@ type inductives_mapping = inductive_mapping list
 
 type unsafe_passes =
   { cofix_to_lazy : bool;
-    inlining : bool;
     unboxing : bool;
     inductives_extraction : bool;
     betared : bool;  }
@@ -20,6 +19,7 @@ type dearging_config =
 type erasure_configuration = {
   enable_unsafe : unsafe_passes;
   enable_typed_erasure : bool;
+  no_inlining : bool;
   dearging_config : dearging_config;
   inlined_constants : Kernames.KernameSet.t;
   extracted_inductives : extract_inductives }
@@ -44,7 +44,6 @@ type program_type =
 
 type unsafe_pass =
   | CoFixToLazy
-  | Inlining
   | Unboxing
   | BetaRed
   | InductivesExtraction
@@ -53,6 +52,7 @@ type malfunction_command_args =
   | Unsafe of unsafe_pass list
   | Verbose
   | Time
+  | NoInlining
   | Typed
   | BypassQeds
   | ProgramType of program_type
@@ -305,7 +305,6 @@ let bytes_of_list l =
 
 let make_unsafe_flags b =
   { cofix_to_lazy = b;
-    inlining = b;
     unboxing = b;
     betared = b;
     inductives_extraction = b}
@@ -319,6 +318,7 @@ let default_dearging_config =
 
 let default_erasure_config inlined_constants extracted_inductives =
   { enable_unsafe = default_unsafe_flags; enable_typed_erasure = false;
+    no_inlining = false;
     inlined_constants; extracted_inductives; dearging_config = default_dearging_config }
 
 let default_malfunction_config inductives_mapping inlined_constants extracted_inductives prims =
@@ -326,7 +326,6 @@ let default_malfunction_config inductives_mapping inlined_constants extracted_in
 
 let set_unsafe_flag fl = function
 | CoFixToLazy -> { fl with cofix_to_lazy = true }
-| Inlining -> { fl with inlining = true }
 | Unboxing -> { fl with unboxing = true }
 | BetaRed -> { fl with betared = true }
 | InductivesExtraction -> { fl with inductives_extraction = true }
@@ -358,6 +357,9 @@ let make_options loc l =
     | Typed :: l -> parse_options { opts with
       malfunction_pipeline_config = { opts.malfunction_pipeline_config with erasure_config =
       { opts.malfunction_pipeline_config.erasure_config with enable_typed_erasure = true } } } l
+    | NoInlining :: l -> parse_options { opts with
+      malfunction_pipeline_config = { opts.malfunction_pipeline_config with erasure_config =
+      { opts.malfunction_pipeline_config.erasure_config with no_inlining = true } } } l
     | BypassQeds :: l -> parse_options { opts with bypass_qeds = true } l
     | Time :: l -> parse_options { opts with time = true } l
     | Verbose :: l -> parse_options { opts with verbose = true } l

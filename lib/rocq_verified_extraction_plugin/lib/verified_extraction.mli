@@ -3,7 +3,6 @@ type inductives_mapping = inductive_mapping list
 
 type unsafe_passes =
   { cofix_to_lazy : bool;
-    inlining : bool;
     unboxing : bool;
     inductives_extraction : bool;
     betared : bool; }
@@ -20,6 +19,7 @@ type dearging_config =
 type erasure_configuration = {
   enable_unsafe : unsafe_passes;
   enable_typed_erasure : bool;
+  no_inlining : bool;
   dearging_config : dearging_config;
   inlined_constants : Kernames.KernameSet.t;
   extracted_inductives : extract_inductives }
@@ -44,7 +44,6 @@ type program_type =
 
 type unsafe_pass =
   | CoFixToLazy
-  | Inlining
   | Unboxing
   | BetaRed
   | InductivesExtraction
@@ -53,6 +52,7 @@ type malfunction_command_args =
   | Unsafe of unsafe_pass list
   | Verbose
   | Time
+  | NoInlining
   | Typed
   | BypassQeds
   | ProgramType of program_type

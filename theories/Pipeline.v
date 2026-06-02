@@ -488,12 +488,17 @@ Local Existing Instance CanonicalPointer.
 
 (* This also optionally runs typed erasure and/or the cofix to fix translation *)
 Program Definition switchable_erasure_pipeline econf :=
-  if econf.(enable_typed_erasure) then verified_typed_erasure_pipeline econf
+  if econf.(enable_typed_erasure) then verified_typed_erasure_pipeline econf ▷ (optional_unsafe_transforms econf)
   else verified_erasure_pipeline_mapping econf ▷ (optional_unsafe_transforms econf).
 Next Obligation.
 Proof.
   unfold optional_unsafe_transforms; cbn.
-  destruct econf as [[[] ? ? ?] ? ? ? ?]=> //.
+  destruct econf as [[[] ? ? ?] ? ? [] ?]=> //.
+Qed.
+Next Obligation.
+Proof.
+  unfold optional_unsafe_transforms; cbn.
+  destruct econf as [[[] ? ? ?] ? ? [] ?]=> //.
 Qed.
 
 Program Definition malfunction_pipeline
