@@ -9,7 +9,6 @@ type t_ = { this : tree ; is_ok : Obj.t (* not supported *) ;  }
 type dearging_config = { overridden_masks : (modpath * t) -> (bool  list)  option ; do_trim_const_masks : bool ; do_trim_ctor_masks : bool ;  }
 type unsafe_passes = { cofix_to_lazy : bool;
     reorder_constructors : bool;
-    inlining : bool;
     unboxing : bool;
     inductives_extraction : bool;
     betared : bool }
@@ -20,6 +19,7 @@ type extracted_inductive = { cstrs : (modpath * t) list; elim : (modpath * t) }
 type erasure_configuration = { enable_unsafe : unsafe_passes ; 
    enable_typed_erasure : bool ; 
    dearging_config : dearging_config ; 
+   inlining : bool;
    inlined_constants : t_;
    extracted_inductives: (inductive * extracted_inductive) list }
 type 'id prim_def = Global of 'id * 'id | Primitive of t * nat | Erased 

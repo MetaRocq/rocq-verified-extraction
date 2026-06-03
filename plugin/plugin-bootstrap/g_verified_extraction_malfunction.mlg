@@ -247,7 +247,6 @@ let interp_inlining knset =
 let interp_unsafe uns =
   { Compile_malfunction.cofix_to_lazy = uns.cofix_to_lazy;
     reorder_constructors = true;
-    inlining = uns.inlining;
     unboxing = uns.unboxing;
     betared = uns.betared;
     inductives_extraction = uns.inductives_extraction }
@@ -262,6 +261,7 @@ let interp_pipeline_config c : Compile_malfunction.malfunction_pipeline_config =
   let { erasure_config = erasure_config; reorder_constructors = inductives_mapping; prims = prims } = c in
   let { enable_unsafe;
         enable_typed_erasure;
+        no_inlining;
         inlined_constants;
         extracted_inductives } = erasure_config in
 
@@ -277,6 +277,7 @@ let interp_pipeline_config c : Compile_malfunction.malfunction_pipeline_config =
         { do_trim_ctor_masks = false;
           do_trim_const_masks = true;
           overridden_masks = (fun _ -> None) };
+      inlining = not no_inlining;
       inlined_constants = interp_inlining inlined_constants;
       extracted_inductives = interp_extracted_inductives extracted_inductives } )
   in

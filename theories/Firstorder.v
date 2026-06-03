@@ -491,7 +491,7 @@ ind_universes0 ind_variance0) x Hparam Hfo'); eauto.
     isFunction v = true.
   Proof.
     intros Hnerase ? ? ? ? ? Heval. pose Normalisation.
-    unshelve epose proof (Hfunction := transform_erasure_pipeline_function' _ _ _ _ _).
+    unshelve epose proof (Hfunction := transform_erasure_pipeline_function' _ _ _  default_erasure_config _ _).
     6: eauto. all: eauto.
     - destruct Hfunction as [v'[Heval' ?]].
       unshelve eapply (Transform.preservation post_verified_named_erasure_pipeline) in Heval' as [v'' [Heval' [? [? ?]]]].
@@ -506,7 +506,7 @@ ind_universes0 ind_variance0) x Hparam Hfo'); eauto.
       unfold Transform.transform at 1 in Heval. cbn - [Transform.transform] in Heval.
       unfold verified_named_erasure_pipeline in Heval.
       revert Heval; destruct_compose; intros.
-      set (precond _ _ _ _ _ _ _ _) in Heval.
+      set (precond _ _ _ _ _ _ _ _ _) in Heval.
       pose proof (ProofIrrelevance.proof_irrelevance _ p0 p). subst.
       eapply CompileCorrect.compile_correct with (Σ' := Σ') (Γ' := empty_locals) (h:=h) in Heval'.
       2: { intros. split; eapply assume_can_be_extracted; eauto. }
@@ -546,7 +546,7 @@ ind_universes0 ind_variance0) x Hparam Hfo'); eauto.
     let Σ_t := (Transform.transform verified_named_erasure_pipeline
     (Σ, tConstruct i n inst)
     (ErasureCorrectness.precond Σ (tConstruct i n inst)
-       (mkApps (tInd i inst) []) HΣ expΣ expt wt Normalisation)).1 in
+       (mkApps (tInd i inst) []) HΣ expΣ expt wt Normalisation  default_erasure_config)).1 in
     forall Σ' (HΣ' : CompileCorrect.malfunction_env_prop Σ_t Σ')
       (Hax : PCUICClassification.axiom_free Σ) h,
     eval Σ' empty_locals h (compile_pipeline Σ (tConstruct i n inst) HΣ expΣ expt (existT _ _ wt))
@@ -651,7 +651,7 @@ ind_universes0 ind_variance0) x Hparam Hfo'); eauto.
   let Σ_t := (Transform.transform verified_named_erasure_pipeline
   (Σ, t)
   (ErasureCorrectness.precond Σ t
-     (mkApps (tInd i inst) []) HΣ expΣ expt wt Normalisation)).1 in
+     (mkApps (tInd i inst) []) HΣ expΣ expt wt Normalisation default_erasure_config)).1 in
   forall Σ' (HΣ' : CompileCorrect.malfunction_env_prop Σ_t Σ')
     (Hax : PCUICClassification.axiom_free Σ) h,
   let Σ_v := (Transform.transform
@@ -659,7 +659,7 @@ ind_universes0 ind_variance0) x Hparam Hfo'); eauto.
   (Σ, t)
   (ErasureCorrectness.precond2 Σ t
      (mkApps (tInd i inst) []) HΣ expΣ expt wt
-     Normalisation t
+     Normalisation default_erasure_config t
      (red_eval H H0 Σ Hax HΣ expΣ
         (mkApps (tConstruct i n inst) args)
         expt t i
@@ -1080,7 +1080,7 @@ Proof.
   let Σ : global_env_ext_map := (build_global_env_map (mk_global_env univ [(kn , InductiveDecl mind)] retro), univ_decl) in
   forall t T HΣ expΣ expt typing Normalisation,
   let Σ_erase := (Transform.transform verified_named_erasure_pipeline (Σ, t)
-                  (precond Σ t T HΣ expΣ expt typing Normalisation)).1 in
+                  (precond Σ t T HΣ expΣ expt typing Normalisation default_erasure_config)).1 in
   CompileCorrect.malfunction_env_prop Σ_erase [].
   Proof.
     red. intros. cbn in *. unfold EGlobalEnv.declared_constant, EGlobalEnv.declared_inductive,
@@ -1504,14 +1504,14 @@ Proof.
           unfold vv; clear vv Hcompile. revert Hlv_eval; intro.
           rewrite -/ t. rewrite <- (map_id v'). specialize (Hlv_eval h).
           eapply Forall2_map_eq. set (Σ0 := mk_global_env _ _ _) in Σ.
-          rewrite -/ Σ -/ Σ0. set (precond2 _ _ _ _ _ _ _ _ _ _). unfold t.
+          rewrite -/ Σ -/ Σ0. set (precond2 _ _ _ _ _ _ _ _ _ _ _). unfold t.
           set (f := compile_value_mf' _ _).
           eapply Forall2_Forall_mix; try apply Hirred.
           erewrite Hnparam, skipn_0 in H3.
           2: cbn; now erewrite ReflectEq.eqb_refl.
           set (ff:= fun v : term => _) in H3.
           eapply (Forall_map ff) in H3.
-          eapply Forall2_Forall_mix; try apply H3. set (precond2 _ _ _ _ _ _ _ _ _ _).
+          eapply Forall2_Forall_mix; try apply H3. set (precond2 _ _ _ _ _ _ _ _ _ _ _).
           eapply (Forall2_impl (fun x y => firstorder_evalue_block (Transform.transform verified_named_erasure_pipeline (Σ, t) p0).1 (ff (x.π1.π1.1))
               -> irred Σ [] x.π1.π1.1 -> f (x.π1.π1.1) = y.1)) in Hlv_eval.
           {
@@ -1531,13 +1531,13 @@ Proof.
               t0 e t0 _ [] [] _ Normalisation s _ _); eauto.
             { eapply red_eval with (args:=[]); eauto. }
             unfold Σ_t. erewrite (ProofIrrelevance.proof_irrelevance _ p).
-            set (p2 := precond2 _ _ _ _ _ _ _ _ _ _) in Hfo'.
+            set (p2 := precond2 _ _ _ _ _ _ _ _ _ _ _) in Hfo'.
             erewrite (ProofIrrelevance.proof_irrelevance _ p2) in Hfo'.
             unfold Σ_t in H5.
             erewrite (ProofIrrelevance.proof_irrelevance _ p) in H5.
             unshelve erewrite compile_value_mf_fo. 4,7,8,10:eauto.
             1,2,4: eauto.
-            set (pt0 := precond _ _ _ _ _ _ _ _). clearbody pt0.
+            set (pt0 := precond _ _ _ _ _ _ _ _ _). clearbody pt0.
             unshelve epose proof (Heval' := verified_malfunction_pipeline_theorem_gen P HHeap Σ wfΣ expΣ
               t0 e t0 _ [] [] _ Hnparam Normalisation s _ _ _ _ h); eauto.
             { eapply red_eval with (args:=[]); eauto. }
@@ -1550,7 +1550,7 @@ Proof.
             unshelve eapply eval_det in H4 as [? ?]; try apply Heval'; eauto.
             2: { intros. inversion H7. }
             2: { intros; econstructor. }
-            set (pt0' := precond2 _ _ _ _ _ _ _ _ _ _) in H7. clearbody pt0'.
+            set (pt0' := precond2 _ _ _ _ _ _ _ _ _ _ _) in H7. clearbody pt0'.
             eapply isPure_value_vrel_eq in H7.
             2:{
               eapply (compile_value_pure Σ); eauto. destruct s as [s].
@@ -2427,7 +2427,7 @@ Proof. reflexivity. Qed.
 
 Lemma compile_malfunction_pipeline_eq {H : Pointer} {H0 : Heap} {Σ : global_env_ext_map} {t wfΣ expΣ expt} {pre : sigT (fun T => ∥ Σ ;;; [] |- t : T ∥)} {Normalisation} :
   compile_malfunction_pipeline (T:=pre.π1) expΣ expt pre.π2 (Normalisation:=Normalisation) =
-  Transform.transform verified_malfunction_pipeline (Σ, t) (precond Σ t pre.π1 wfΣ expΣ expt pre.π2 Normalisation).
+  Transform.transform verified_malfunction_pipeline (Σ, t) (precond Σ t pre.π1 wfΣ expΣ expt pre.π2 Normalisation default_erasure_config).
 Proof. reflexivity. Qed.
 
 Opaque compile_pipeline compile_malfunction_pipeline.
@@ -2461,7 +2461,7 @@ Proof.
   { clear Hu Hu' Happ. sq.  eapply PCUICValidity.type_App'; eauto. }
   exists exptu, wtu.
   rewrite compile_pipeline_eq compile_malfunction_pipeline_eq.
-  set (precond _ _ _ _ _ _ _ _).
+  set (precond _ _ _ _ _ _ _ _ _).
   pose proof (compile_malfunction_pipeline_app _ _ _ _ _ p Herase expt) as [pre' [pre'' Happeq]].
   rewrite Happeq. clear Happeq.
   inversion Happ; subst.

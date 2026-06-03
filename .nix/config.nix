@@ -48,8 +48,10 @@ with (import <nixpkgs> {}).lib;
   bundles.default = { coqPackages = {
       coq.override.version = "9.1";
         equations.override.version = "1.3.1+9.1";
-        metarocq-utils.override.version = "1.5.1-9.1";
-        metarocq-erasure-plugin.override.version = "1.5.1-9.1";
+        metarocq.job = true;
+        metarocq.override.version = "9.1";
+        metarocq-utils.override.version = "9.1";
+        metarocq-erasure-plugin.override.version = "9.1";
         ceres-bs.override.version = "1.0.0";
     }; rocqPackages = {
       rocq-core.override.version = "9.1";

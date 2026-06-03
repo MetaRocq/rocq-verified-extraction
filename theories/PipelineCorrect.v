@@ -260,7 +260,7 @@ Section compile_value_mf.
   Lemma verified_named_erasure_pipeline_lookup_env_in kn
   (efl := EInlineProjections.switch_no_params all_env_flags)  {has_rel : has_tRel} {has_box : has_tBox}
   T (typing : ∥Σ ;;; [] |- t : T∥) :
-  let Σ_t := (transform verified_named_erasure_pipeline (Σ, t) (precond _ _ _ _ expΣ expt typing _)).1 in
+  let Σ_t := (transform verified_named_erasure_pipeline (Σ, t) (precond _ _ _ _ expΣ expt typing _ default_erasure_config)).1 in
   forall decl,
     EGlobalEnv.lookup_env Σ_t kn = Some decl ->
     exists decl',
@@ -277,7 +277,7 @@ Section compile_value_mf.
     intro Hlookup. set (EGlobalEnv.lookup_env _ _) in Hlookup. case_eq o.
     2:{ intro Heq; rewrite Heq in Hlookup; inversion Hlookup. }
     intros decl' Heq.
-    unshelve epose proof (verified_erasure_pipeline_lookup_env_in _ _ _ _ _ _ _ _ _ _ Heq) as [? [? ?]]; eauto.
+    unshelve epose proof (verified_erasure_pipeline_lookup_env_in _ _ _ _ _ _ _ _ _ _ _ Heq) as [? [? ?]]; eauto.
     eexists; split; eauto. rewrite Heq in Hlookup.
     inversion Hlookup; subst; clear Hlookup.
     destruct decl', x; cbn in *; eauto.
@@ -292,8 +292,8 @@ Section compile_value_mf.
   Let Σ_t := (compile_malfunction_pipeline expΣ expt typing).1.
   Variable Heval : ∥PCUICWcbvEval.eval Σ t v∥.
 
-  Let Σ_v := (transform verified_named_erasure_pipeline (Σ, v) (precond2 _ _ _ _ expΣ expt typing _ _ Heval)).1.
-  Let Σ_t' := (transform verified_named_erasure_pipeline (Σ, t) (precond _ _ _ _ expΣ expt typing _)).1.
+  Let Σ_v := (transform verified_named_erasure_pipeline (Σ, v) (precond2 _ _ _ _ expΣ expt typing _ _ _ Heval)).1.
+  Let Σ_t' := (transform verified_named_erasure_pipeline (Σ, t) (precond _ _ _ _ expΣ expt typing _ default_erasure_config)).1.
 
   Let compile_value_mf Σ v := compile_value_mf' Σ Σ_v v.
 
@@ -350,8 +350,8 @@ Section malfunction_pipeline_theorem.
   Let Σ_t := (compile_malfunction_pipeline expΣ expt typing).1.
   Variable Heval : ∥PCUICWcbvEval.eval Σ t v∥.
 
-  Let Σ_v := (transform verified_named_erasure_pipeline (Σ, v) (precond2 _ _ _ _ expΣ expt typing _ _ Heval)).1.
-  Let Σ_t' := (transform verified_named_erasure_pipeline (Σ, t) (precond _ _ _ _ expΣ expt typing _)).1.
+  Let Σ_v := (transform verified_named_erasure_pipeline (Σ, v) (precond2 _ _ _ _ expΣ expt typing _ _ _ Heval)).1.
+  Let Σ_t' := (transform verified_named_erasure_pipeline (Σ, t) (precond _ _ _ _ expΣ expt typing _ default_erasure_config)).1.
 
   Variable (Henvflags:EWellformed.EEnvFlags).
 
@@ -373,8 +373,8 @@ Section malfunction_pipeline_theorem.
     intro Hlookup.
     rewrite lookup_env_annotate. rewrite lookup_env_annotate in Hlookup.
     rewrite lookup_env_implement_box. rewrite lookup_env_implement_box in Hlookup.
-    case_eq (EGlobalEnv.lookup_env (transform verified_erasure_pipeline (Σ, v)
-               (precond2 Σ t ( mkApps (tInd i u) args) HΣ expΣ expt typing Normalisation v Heval)).1 kn).
+    case_eq (EGlobalEnv.lookup_env (transform (verified_erasure_pipeline default_erasure_config) (Σ, v)
+               (precond2 Σ t ( mkApps (tInd i u) args) HΣ expΣ expt typing Normalisation default_erasure_config v Heval)).1 kn).
     2: { intros He. rewrite He in Hlookup; inversion Hlookup. }
     intros ? Heq. rewrite Heq in Hlookup. cbn in Hlookup.
     eapply extends_lookup in Heq. rewrite Heq. eauto.
@@ -415,7 +415,7 @@ Section malfunction_pipeline_theorem.
     forall (h:heap), eval Σ' empty_locals h (compile_malfunction_pipeline expΣ expt typing).2 h (compile_value_mf Σ v).
   Proof.
     intros HΣ'; cbn.
-    unshelve epose proof (verified_erasure_pipeline_theorem _ _ _ _ _ _ _ _ _ _ _ _ _ Heval); eauto.
+    unshelve epose proof (verified_erasure_pipeline_theorem _ _ _ _ _ _ _ _ _ _ _ _ _ Heval default_erasure_config); eauto.
     unfold compile_value_mf; rewrite compile_value_mf_eq; eauto.
     { eapply fo_v; eauto. }
     unfold compile_named_value. rewrite <- verified_malfunction_pipeline_compat.
@@ -423,7 +423,7 @@ Section malfunction_pipeline_theorem.
          unfold transform at 1; cbn -[transform].
          unfold transform at 1; cbn -[transform].
          unfold transform at 1; cbn -[transform].
-         unshelve epose proof (verified_erasure_pipeline_firstorder_evalue_block _ _ _ _ _ _ _ _ _ _ _ typing _ _); eauto.
+         unshelve epose proof (verified_erasure_pipeline_firstorder_evalue_block _ _ _ _ _ _ _ _ _ _ _ typing _ _ default_erasure_config); eauto.
          eapply annotate_firstorder_evalue_block.
          eapply implement_box_firstorder_evalue_block.
          eassumption.
@@ -476,7 +476,7 @@ Section malfunction_pipeline_theorem.
   Proof.
     unfold Σ_v, verified_named_erasure_pipeline, post_verified_named_erasure_pipeline.
     repeat (destruct_compose; simpl; intro).
-    unshelve epose proof ErasureCorrectness.verified_erasure_pipeline_firstorder_evalue_block _ _ _ _ _ _ _ _ _ _ _ typing _ _; eauto using Heval.
+    unshelve epose proof ErasureCorrectness.verified_erasure_pipeline_firstorder_evalue_block _ _ _ _ _ _ _ _ _ _ _ typing _ _ default_erasure_config; eauto using Heval.
     set (v' := compile_value_box _ _ _) in *. clearbody v'.
     clear -H2. eapply firstorder_evalue_block_elim; eauto. clear. intros; econstructor; eauto.
     clear -H0. cbn in *.
@@ -554,8 +554,8 @@ Section malfunction_pipeline_theorem_red.
     intros [t' ht]. eauto.
   Qed.
 
-  Let Σ_v := (transform verified_named_erasure_pipeline (Σ, v) (precond2 _ _ _ _ expΣ expt typing _ _ red_eval)).1.
-  Let Σ_t' := (transform verified_named_erasure_pipeline (Σ, t) (precond _ _ _ _ expΣ expt typing _)).1.
+  Let Σ_v := (transform verified_named_erasure_pipeline (Σ, v) (precond2 _ _ _ _ expΣ expt typing _ default_erasure_config _ red_eval)).1.
+  Let Σ_t' := (transform verified_named_erasure_pipeline (Σ, t) (precond _ _ _ _ expΣ expt typing _ default_erasure_config)).1.
 
   Let compile_value_mf Σ v := compile_value_mf' Σ Σ_v v.
 
@@ -597,7 +597,7 @@ Section malfunction_pipeline_wellformed.
     trapp = (trapp.1, EAst.tApp trt.2 tru.2).
   Proof.
     set (P := Transform.pre _). intros.
-    unshelve epose proof (erasure_pipeline_extends_app _ _ _ pre _ _) as [pre' [pre'' [ [? ?] Happ]]]; eauto.
+    unshelve epose proof (erasure_pipeline_extends_app _ _ _ pre  default_erasure_config _ _) as [pre' [pre'' [ [? ?] Happ]]]; eauto.
     exists pre', pre''. unfold verified_named_erasure_pipeline, post_verified_named_erasure_pipeline.
     repeat (destruct_compose; intros).
     unfold transform at 1 4 7 10 13 16 19 22. cbn -[P transform].
@@ -652,7 +652,7 @@ Section malfunction_pipeline_wellformed.
 
   Variable typing : ∥Σ ;;; [] |- t : A∥.
 
-  Let Σ_t := (transform verified_named_erasure_pipeline (Σ, t) (precond _ _ _ _ expΣ expt typing _)).1.
+  Let Σ_t := (transform verified_named_erasure_pipeline (Σ, t) (precond _ _ _ _ expΣ expt typing _ default_erasure_config)).1.
 
   Lemma verified_malfunction_pipeline_wellformed (efl := named_extraction_env_flags_mlf) :
     CompileCorrect.wellformed (map fst (compile_env Σ_t)) [] (compile_malfunction_pipeline expΣ expt typing).2.
@@ -668,7 +668,7 @@ Section malfunction_pipeline_wellformed.
   Lemma verified_named_erasure_pipeline_inductive_irrel t' expt'
   (efl := EInlineProjections.switch_no_params all_env_flags) {has_rel : has_tRel} {has_box : has_tBox}
   T' (typing' : ∥Σ ;;; [] |- t' : T'∥) :
-  let Σ_u := (transform verified_named_erasure_pipeline (Σ, t') (precond _ _ _ _ expΣ expt' typing' _)).1 in
+  let Σ_u := (transform verified_named_erasure_pipeline (Σ, t') (precond _ _ _ _ expΣ expt' typing' _ default_erasure_config)).1 in
   forall kn m m',
     EGlobalEnv.lookup_env Σ_t kn = Some (EAst.InductiveDecl m) ->
     EGlobalEnv.lookup_env Σ_u kn = Some (EAst.InductiveDecl m')  -> m = m'.
@@ -685,7 +685,7 @@ Section malfunction_pipeline_wellformed.
   Opaque EGlobalEnv.lookup_env.
 
   Lemma compile_value_mf_fo' `{Pointer} (efl := named_extraction_env_flags) X u expu T' (typing' : ∥Σ ;;; [] |- u : T'∥) :
-     let Σ_u := (Transform.transform verified_named_erasure_pipeline (Σ, u) (precond _ _ _ _ expΣ expu typing' _)).1 in
+     let Σ_u := (Transform.transform verified_named_erasure_pipeline (Σ, u) (precond _ _ _ _ expΣ expu typing' _ default_erasure_config)).1 in
      firstorder_evalue_block Σ_t X ->
      firstorder_evalue_block Σ_u X ->
      (forall kn m m',
@@ -714,7 +714,7 @@ Section malfunction_pipeline_wellformed.
   Transparent EGlobalEnv.lookup_env.
 
   Lemma compile_value_mf_fo `{Pointer} (efl := named_extraction_env_flags) X u expu T' (typing' : ∥Σ ;;; [] |- u : T'∥) :
-  let Σ_u := (Transform.transform verified_named_erasure_pipeline (Σ, u) (precond _ _ _ _ expΣ expu typing' _)).1 in
+  let Σ_u := (Transform.transform verified_named_erasure_pipeline (Σ, u) (precond _ _ _ _ expΣ expu typing' _  default_erasure_config)).1 in
   firstorder_evalue_block Σ_t X ->
   firstorder_evalue_block Σ_u X ->
   compile_value_mf_aux Σ_u X =

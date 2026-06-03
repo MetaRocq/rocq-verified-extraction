@@ -67,7 +67,6 @@ END
 
 ARGUMENT EXTEND unsafe_flag
 | [ "cofix-to-lazy" ] -> { CoFixToLazy }
-| [ "inlining" ] -> { Inlining }
 | [ "extract-inductives" ] -> { InductivesExtraction }
 | [ "unboxing" ] -> { Unboxing }
 | [ "betared" ] -> { BetaRed }
@@ -77,6 +76,7 @@ ARGUMENT EXTEND extract_args
 | [ "-unsafe" unsafe_flag_list(fl )] -> { Unsafe fl }
 | [ "-time" ] -> { Time }
 | [ "-typed" ] -> { Typed }
+| [ "-no-inlining" ] -> { NoInlining }
 | [ "-bypass-qeds" ] -> { BypassQeds }
 | [ "-compile-plugin" ] -> { ProgramType Plugin }
 | [ "-compile-with-coq" ] -> { ProgramType (Standalone true) }
