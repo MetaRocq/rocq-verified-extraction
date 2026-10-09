@@ -193,7 +193,7 @@ Definition binary_op_to_float (op : binary_arith_op) v1 v2 : float :=
 Definition binary_comparison_to_bool op e1 e2 :=
   match op with
   | Lt => PrimFloat.ltb e1 e2
-  | Gt => PrimFloat.ltb e2 e2
+  | Gt => PrimFloat.ltb e2 e1
   | Lte => PrimFloat.leb e1 e2
   | Gte => PrimFloat.leb e2 e1
   | Eq => PrimFloat.eqb e1 e2

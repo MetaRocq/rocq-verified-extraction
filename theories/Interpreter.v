@@ -164,7 +164,7 @@ Fixpoint interpret `{Pointer} `{Heap} (h : heap)
       let e2 := as_float e2' in
       let res := match op with
              | Lt => PrimFloat.ltb e1 e2
-             | Gt => PrimFloat.ltb e2 e2
+             | Gt => PrimFloat.ltb e2 e1
              | Lte => PrimFloat.leb e1 e2
              | Gte => PrimFloat.leb e2 e1
              | Eq => PrimFloat.eqb e1 e2
