@@ -302,14 +302,14 @@ Inductive eval (locals : @Ident.Map.t value) : heap -> t -> heap -> value -> Pro
   nth 0 vals (fail "") = lazy ->
   isNotEvaluated lazy = false ->
   eval locals h (Mforce e) h' lazy 
-| eval_force h h' h'' h''' ptr vals locals' e v :
+| eval_force h h' h'' h''' ptr vals locals' e e' v :
   eval locals h e h' (Thunk ptr) ->
   deref h' ptr vals ->
   List.length vals = 2 ->
   isNotEvaluated (nth 0 vals (fail "")) = true -> 
-  nth 1 vals (fail "") = Lazy (locals' , e) ->
-  eval locals' h' e h'' v ->
-  update h'' ptr [v; Lazy (locals' , e)] h''' ->
+  nth 1 vals (fail "") = Lazy (locals' , e') ->
+  eval locals' h' e' h'' v ->
+  update h'' ptr [v; Lazy (locals' , e')] h''' ->
   eval locals h (Mforce e) h''' v  
 | eval_force_fail h h' e v :
   eval locals h e h' v ->
@@ -592,16 +592,16 @@ forall P : Ident.Map.t -> heap -> t -> heap -> value -> Prop,
         isNotEvaluated lazy = false -> P locals h (Mforce e) h' lazy) ->
        (forall (locals : Ident.Map.t) (h h' h'' : heap)
           (h''' : heapGen value) (ptr : pointer) (vals : list value)
-          (locals' : Ident.Map.t) (e : t) (v : value),
+          (locals' : Ident.Map.t) (e e' : t) (v : value),
         eval locals h e h' (Thunk ptr) ->
         P locals h e h' (Thunk ptr) ->
         deref h' ptr vals ->
         Datatypes.length vals = 2 ->
         isNotEvaluated (nth 0 vals (fail "")) = true ->
-        nth 1 vals (fail "") = Lazy (locals', e) ->
-        eval locals' h' e h'' v ->
-        P locals' h' e h'' v ->
-        update h'' ptr [v; Lazy (locals', e)] h''' ->
+        nth 1 vals (fail "") = Lazy (locals', e') ->
+        eval locals' h' e' h'' v ->
+        P locals' h' e' h'' v ->
+        update h'' ptr [v; Lazy (locals', e')] h''' ->
         P locals h (Mforce e) h''' v) ->
        (forall (locals : Ident.Map.t) (h h' : heap) (e : t) (v : value),
         eval locals h e h' v ->
