@@ -10,7 +10,8 @@ From MetaRocq.Erasure Require EAstUtils ErasureFunction ErasureCorrectness EImpl
 From MetaRocq Require Import ETransform EConstructorsAsBlocks.
 From MetaRocq.Erasure Require Import EWcbvEvalNamed.
 From MetaRocq.ErasurePlugin Require Import Erasure ErasureCorrectness.
-From Malfunction Require Import CompileCorrect SemanticsSpec FFI.
+From Malfunction Require Import ErasureCorrectnessGuard.
+From Malfunction Require Import CompileCorrect SemanticsSpec FFI Supported.
 From CeresBS Require Import CeresSerialize.
 Import PCUICProgram.
 (* Import TemplateProgram (template_eta_expand).
@@ -149,6 +150,78 @@ Definition check_good_for_extraction fl (p : program (list (kername × EAst.glob
     check_good_for_extraction_rec fl p.1
   else ignore (coq_msg_info "Warning: term contains constructors for which extraction is not verified") (check_good_for_extraction_rec fl p.1).
 
+(** A strict, sound decision procedure for [good_for_extraction].
+    [check_good_for_extraction] above only produces diagnostics. The bounds are
+    compared in [Z], so that the check also runs live with [Eval lazy]. *)
+
+Definition check_inductive_bodies (P : EAst.one_inductive_body -> bool) (Σ : EAst.global_declarations) : bool :=
+  forallb (fun d => match d.2 with
+                    | EAst.InductiveDecl mb => forallb P mb.(EAst.ind_bodies)
+                    | EAst.ConstantDecl _ => true
+                    end) Σ.
+
+Lemma check_inductive_bodies_spec P Σ i mb ob :
+  check_inductive_bodies P Σ ->
+  EGlobalEnv.lookup_inductive Σ i = Some (mb, ob) -> P ob.
+Proof.
+  unfold EGlobalEnv.lookup_inductive, EGlobalEnv.lookup_minductive.
+  induction Σ as [|[kn d] Σ IH]; cbn; [congruence|].
+  move/andP => [Hd HΣ].
+  destruct (eq_kername (inductive_mind i) kn); [|now apply IH].
+  destruct d as [|mb']; cbn; [congruence|].
+  destruct nth_error eqn:Hnth; cbn; [|congruence]. intros [= <- <-].
+  eapply forallb_forall in Hd; [exact Hd|]. now eapply nth_error_In.
+Qed.
+
+Fixpoint check_wf_glob {efl : EWellformed.EEnvFlags} (Σ : EAst.global_declarations) : bool :=
+  match Σ with
+  | [] => true
+  | (kn, d) :: Σ =>
+      check_wf_glob Σ && EWellformed.wf_global_decl Σ d &&
+      forallb (fun x => negb (eq_kername x.1 kn)) Σ
+  end.
+
+Lemma check_wf_glob_sound {efl : EWellformed.EEnvFlags} Σ :
+  check_wf_glob Σ -> EWellformed.wf_glob Σ.
+Proof.
+  induction Σ as [|[kn d] Σ IH]; cbn; [constructor|].
+  move/andP => [/andP [HΣ Hd] Hfresh].
+  constructor; auto.
+  eapply Forall_forall. intros x Hx.
+  eapply forallb_forall in Hfresh; [|exact Hx].
+  destruct (eqb_spec x.1 kn); cbn in Hfresh; congruence.
+Qed.
+
+Definition is_good_for_extraction (fl : EWellformed.EEnvFlags)
+  (p : program (list (kername × EAst.global_decl)) EAst.term) : bool :=
+  let Σ := p.1 in
+  check_inductive_bodies (fun ob =>
+    let args := map EAst.cstr_nargs (EAst.ind_ctors ob) in
+    blocks_until #|args| args <? 200) Σ &&
+  check_inductive_bodies (fun ob => Z.of_nat #|EAst.ind_ctors ob| <? Malfunction.Int63.wB)%Z Σ &&
+  check_inductive_bodies (fun ob =>
+    forallb (fun b => Z.of_nat (EAst.cstr_nargs b) <? array_length_Z)%Z (EAst.ind_ctors ob)) Σ &&
+  @check_wf_glob fl Σ &&
+  @EWellformed.wellformed fl Σ 0 p.2.
+
+Lemma is_good_for_extraction_sound fl p :
+  is_good_for_extraction fl p -> good_for_extraction fl p.
+Proof.
+  unfold is_good_for_extraction.
+  move/andP => [/andP [/andP [/andP [Hblocks Hctors] Hargs] Hglob] Hterm].
+  constructor; auto.
+  - intros i args. unfold lookup_constructor_args.
+    destruct EGlobalEnv.lookup_inductive as [[mb ob]|] eqn:Hl; [|congruence].
+    intros [= <-]. eapply check_inductive_bodies_spec in Hl; [|exact Hblocks].
+    cbn in Hl. now apply Nat.ltb_lt.
+  - intros i mb ob Hl. eapply check_inductive_bodies_spec in Hl; [|exact Hctors].
+    cbn in Hl. apply Z.ltb_lt in Hl. lia.
+  - intros i mb ob Hl n b Hb. eapply check_inductive_bodies_spec in Hl; [|exact Hargs].
+    cbn -[array_length_Z] in Hl. eapply forallb_forall in Hl; [|now eapply nth_error_In].
+    apply Z.ltb_lt in Hl. unfold array_length_Z in Hl. unfold int_to_nat. lia.
+  - now apply check_wf_glob_sound.
+Qed.
+
 #[local] Obligation Tactic := try now program_simpl.
 
 Definition extraction_term_flags_mlf :=
@@ -184,7 +257,18 @@ Definition extraction_env_flags_mlf :=
 Definition named_extraction_env_flags_mlf :=
   switch_env_flags_to_named (EImplementBox.switch_off_box extraction_env_flags_mlf).
 
-Axiom assume_can_be_extracted : forall erased_program, good_for_extraction extraction_env_flags_mlf erased_program.
+(** Returned by [enforce_extraction_conditions] for programs that fail the
+    check: it is good for extraction, and its name shows up in the output. *)
+Definition not_extractable_kn : kername :=
+  (MPfile ["VerifiedExtraction"], "ERROR_program_not_good_for_extraction").
+
+Definition not_extractable_program : program EAst.global_declarations EAst.term :=
+  ([(not_extractable_kn, EAst.ConstantDecl {| EAst.cst_body := Some EAst.tBox |})],
+   EAst.tConst not_extractable_kn).
+
+Lemma not_extractable_program_good :
+  is_good_for_extraction extraction_env_flags_mlf not_extractable_program.
+Proof. reflexivity. Qed.
 
 Program Definition enforce_extraction_conditions `{Pointer} `{Heap} :
   t EAst.global_declarations EAst.global_declarations EAst.term EAst.term EAst.term
@@ -193,18 +277,37 @@ Program Definition enforce_extraction_conditions `{Pointer} `{Heap} :
   {|
     name := "Enforce the term is extractable" ;
     transform p _ :=
-      let r := check_good_for_extraction extraction_env_flags_mlf p in
-      ignore r p ;
-    (* if check_good_for_extraction extraction_env_flags_mlf p then p else p ; *)
+      if is_good_for_extraction extraction_env_flags_mlf p then p else not_extractable_program ;
     pre p := True ;
     post p := good_for_extraction extraction_env_flags_mlf p ;
-    obseq p1 _ p2 v1 v2 := p1 = p2 /\ v1 = v2
+    obseq p1 _ p2 v1 v2 :=
+      is_good_for_extraction extraction_env_flags_mlf p1 -> p1 = p2 /\ v1 = v2
   |}.
 Next Obligation.
-  program_simpl. apply assume_can_be_extracted.
+  intros ? ? ? p pr; cbn. apply is_good_for_extraction_sound.
+  destruct (is_good_for_extraction extraction_env_flags_mlf p) eqn:Hgood; [exact Hgood|].
+  exact not_extractable_program_good.
 Qed.
 Next Obligation.
-  program_simpl. red. program_simpl.  exists v. auto.
+  intros ? ? ? p v pr ev; cbn.
+  destruct (is_good_for_extraction extraction_env_flags_mlf p) eqn:Hgood.
+  - exists v. auto.
+  - exists EAst.tBox. split; [|congruence].
+    sq. econstructor; [reflexivity|reflexivity|].
+    now apply EWcbvEval.eval_atom.
+Qed.
+
+Lemma enforce_extraction_conditions_transform `{Pointer} `{Heap} p pr :
+  transform enforce_extraction_conditions p pr =
+  if is_good_for_extraction extraction_env_flags_mlf p then p else not_extractable_program.
+Proof. reflexivity. Qed.
+
+Lemma enforce_extraction_conditions_id `{Pointer} `{Heap} p pr :
+  is_good_for_extraction extraction_env_flags_mlf p ->
+  transform enforce_extraction_conditions p pr = p.
+Proof.
+  intros Hgood. unfold enforce_extraction_conditions, transform at 1.
+  now rewrite Hgood.
 Qed.
 
 From MetaRocq.Erasure Require Import EImplementBox EWellformed EProgram.
@@ -246,6 +349,19 @@ Next Obligation.
   econstructor.
   eapply implement_box_eval; cbn; eauto.
   all: reflexivity.
+Qed.
+
+Lemma implement_box_transformation_transform p pr :
+  transform implement_box_transformation p pr = EImplementBox.implement_box_program p.
+Proof. reflexivity. Qed.
+
+Lemma enforce_implement_box_transform `{Pointer} `{Heap} hpp p pr :
+  is_good_for_extraction extraction_env_flags_mlf p ->
+  transform (Transform.compose enforce_extraction_conditions implement_box_transformation hpp) p pr =
+  EImplementBox.implement_box_program p.
+Proof.
+  intros Hg. cbv [transform compose run time enforce_extraction_conditions implement_box_transformation].
+  now rewrite Hg.
 Qed.
 
 #[global]
@@ -434,6 +550,37 @@ Next Obligation.
   red. intros. exists (compile_value p.1 v); eauto.
 Qed.
 
+(** Programs that are good for extraction (with the named Malfunction flags)
+    lie in the fragment supported by [CompileCorrect.compile_correct]. *)
+Lemma good_for_extraction_supported_env p :
+  good_for_extraction named_extraction_env_flags_mlf p -> supported_env p.1.
+Proof.
+  intros H. eapply (wf_glob_supported_env (efl := named_extraction_env_flags_mlf)); [reflexivity..|].
+  exact (right_flags_in_glob _ _ H).
+Qed.
+
+Lemma good_for_extraction_supported_term p :
+  good_for_extraction named_extraction_env_flags_mlf p -> supported p.2.
+Proof.
+  intros H. eapply (wellformed_supported (efl := named_extraction_env_flags_mlf)); [reflexivity..|].
+  exact (right_flags_in_term _ _ H).
+Qed.
+
+(** The input of [compile_to_malfunction] in the verified pipeline, for an
+    erased program that passes the extraction check, is in the supported
+    fragment. *)
+Lemma implement_box_annotate_supported p :
+  good_for_extraction extraction_env_flags_mlf p ->
+  supported_env (annotate_env [] (implement_box_env p.1)) /\
+  supported (annotate [] (implement_box p.2)).
+Proof.
+  intros Hg. destruct (correctness implement_box_transformation p Hg) as [H1 H2].
+  pose proof (name_annotation_good_for_extraction _ H1 H2) as Hn.
+  split.
+  - exact (good_for_extraction_supported_env _ Hn).
+  - exact (good_for_extraction_supported_term _ Hn).
+Qed.
+
 Program Definition post_verified_named_erasure_pipeline `{Heap}:
  Transform.t EAst.global_declarations _ _ _ _ EWcbvEvalNamed.value
  (eval_eprogram EConstructorsAsBlocks.block_wcbv_flags)
@@ -441,6 +588,16 @@ Program Definition post_verified_named_erasure_pipeline `{Heap}:
   enforce_extraction_conditions ▷
   implement_box_transformation ▷
   name_annotation.
+
+Lemma post_verified_named_erasure_pipeline_good `{Heap} p pr :
+  good_for_extraction named_extraction_env_flags_mlf (transform post_verified_named_erasure_pipeline p pr).
+Proof. exact (proj1 (correctness post_verified_named_erasure_pipeline p pr)). Qed.
+
+(** The verified pipeline is generic in the guard-checking implementation
+    [guard]: theorems about it hold for every [abstract_guard_impl], in
+    particular without assuming the properties of [fake_guard_impl]. *)
+Section verified_guard.
+Context {guard : abstract_guard_impl}.
 
 Program Definition verified_named_erasure_pipeline `{Heap}:
  Transform.t global_env_ext_map _ _ _ _ EWcbvEvalNamed.value
@@ -461,7 +618,30 @@ Next Obligation.
   eexists. split. 2:sq. all:eauto.
 Qed.
 
+End verified_guard.
+
+Lemma name_annotation_transform p pr :
+  transform name_annotation p pr = (annotate_env [] p.1, annotate [] p.2).
+Proof. reflexivity. Qed.
+
+Lemma compile_to_malfunction_transform `{Heap} p pr :
+  transform compile_to_malfunction p pr = compile_program p.
+Proof. reflexivity. Qed.
+
+Lemma run_transform {env env' term term' value value' eval eval'}
+  (x : Transform.t env env' term term' value value' eval eval') p pr :
+  run x p pr = transform x p pr.
+Proof. reflexivity. Qed.
+
+(** Rewrites the back half of the pipeline into plain functions, outermost
+    first, so that no precondition proof depends on an inner transform. *)
+Ltac simpl_back_transforms :=
+  rewrite ?run_transform ?compile_to_malfunction_transform ?name_annotation_transform
+          ?implement_box_transformation_transform ?enforce_extraction_conditions_transform.
+
 Section compile_malfunction_pipeline.
+
+  Context {guard : abstract_guard_impl}.
 
   Variable HP : Pointer.
   Variable HH : Heap.
@@ -481,15 +661,18 @@ Section compile_malfunction_pipeline.
 
 End compile_malfunction_pipeline.
 
-Arguments compile_malfunction_pipeline {_ _ _ _ _ _} _ _ _ {_}.
+Arguments compile_malfunction_pipeline {_ _ _ _ _ _ _} _ _ _ {_}.
 
 Local Existing Instance CanonicalHeap.
 Local Existing Instance CanonicalPointer.
 
-(* This also optionally runs typed erasure and/or the cofix to fix translation *)
+(* This also optionally runs typed erasure and/or the cofix to fix translation.
+   Executable path (plugin / [Eval lazy]): it uses [fake_guard_impl]
+   explicitly; the fake guard is justified by the kernel having checked the
+   input. The verified theorems are about the guard-generic pipeline above. *)
 Program Definition switchable_erasure_pipeline econf :=
-  if econf.(enable_typed_erasure) then verified_typed_erasure_pipeline econf ▷ (optional_unsafe_transforms econf)
-  else verified_erasure_pipeline_mapping econf ▷ (optional_unsafe_transforms econf).
+  if econf.(enable_typed_erasure) then verified_typed_erasure_pipeline (guard := fake_guard_impl) econf ▷ (optional_unsafe_transforms econf)
+  else verified_erasure_pipeline_mapping (guard := fake_guard_impl) econf ▷ (optional_unsafe_transforms econf).
 Next Obligation.
 Proof.
   unfold optional_unsafe_transforms; cbn.
@@ -501,21 +684,49 @@ Proof.
   destruct econf as [[[] ? ? ?] ? ? [] ?]=> //.
 Qed.
 
-Program Definition malfunction_pipeline
-  (config : malfunction_pipeline_config) :
-  Transform.t _ _ _ _ _ _ eval_template_program_mapping
-             (fun _ _ => True) :=
+(** The pipeline that is run (by the plugin, or live with [Eval lazy]) is
+    split where [good_for_extraction] is needed: [malfunction_front] erases,
+    then [is_good_for_extraction] decides whether the verified
+    [malfunction_back] runs, or the same functions without guarantee. *)
+
+Program Definition malfunction_front (config : malfunction_pipeline_config) :=
   pre_erasure_pipeline_mapping ▷
-  switchable_erasure_pipeline config ▷
-  post_verified_named_erasure_pipeline ▷
-  compile_to_malfunction.
+  switchable_erasure_pipeline config.
 Next Obligation.
   unfold switchable_erasure_pipeline.
   destruct enable_typed_erasure => //.
 Qed.
+
+Program Definition malfunction_back :
+  Transform.t _ _ _ _ _ _ (eval_eprogram block_wcbv_flags) (fun _ _ => True) :=
+  implement_box_transformation ▷
+  name_annotation ▷
+  compile_to_malfunction.
 Next Obligation.
   intuition auto; destruct H; intuition eauto.
 Qed.
+
+Definition unverified_malfunction_back (p : program EAst.global_declarations EAst.term) : Malfunction.program :=
+  let p' := EImplementBox.implement_box_program p in
+  compile_program (annotate_env [] p'.1, annotate [] p'.2).
+
+Lemma malfunction_back_unverified p pr :
+  transform malfunction_back p pr = unverified_malfunction_back p.
+Proof. reflexivity. Qed.
+
+Definition malfunction_back_run (p : program EAst.global_declarations EAst.term) : Malfunction.program :=
+  match is_good_for_extraction extraction_env_flags_mlf p as b
+        return is_good_for_extraction extraction_env_flags_mlf p = b -> _ with
+  | true => fun H => run malfunction_back p (is_good_for_extraction_sound _ _ H)
+  | false => fun _ =>
+      let r := check_good_for_extraction extraction_env_flags_mlf p in
+      let w := coq_msg_info "Warning: the program is not good for extraction, its extraction is not verified" in
+      ignore r (ignore w (unverified_malfunction_back p))
+  end eq_refl.
+
+Definition malfunction_pipeline_run (config : malfunction_pipeline_config) p
+  (pr : pre (malfunction_front config) p) : Malfunction.program :=
+  malfunction_back_run (run (malfunction_front config) p pr).
 
 Fixpoint extract_names (t : Ast.term) : list ident :=
   match t with
@@ -524,11 +735,11 @@ Fixpoint extract_names (t : Ast.term) : list ident :=
   | _ => []
   end.
 
-Axiom trust_coq_kernel : forall conf p, pre (malfunction_pipeline conf) (conf.(reorder_cstrs), p).
+Axiom trust_coq_kernel : forall conf p, pre (malfunction_front conf) (conf.(reorder_cstrs), p).
 
 Definition compile_malfunction_gen config (pt : program_type) (p : Ast.Env.program) : list string * string := (* Exported names, code *)
   let nms := extract_names p.2 in
-  let p' := run (malfunction_pipeline config) (config.(reorder_cstrs), p) (trust_coq_kernel config p) in
+  let p' := malfunction_pipeline_run config (config.(reorder_cstrs), p) (trust_coq_kernel config p) in
   let serialize p_c := @to_string _ (Serialize_module config.(prims) pt (rev nms)) p_c in
   let code := time "Pretty printing"%bs serialize p' in
   (nms, code).

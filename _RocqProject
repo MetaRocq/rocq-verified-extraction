@@ -19,10 +19,13 @@ theories/Serialize.v
 theories/Deserialize.v
 
 theories/Compile.v
+theories/ErasureCorrectnessGuard.v
 theories/Pipeline.v
 
+theories/Supported.v
 theories/CompileCorrect.v
 theories/PipelineCorrect.v
+theories/GoodForExtraction.v
 
 theories/RealizabilitySemantics.v
 theories/Firstorder.v

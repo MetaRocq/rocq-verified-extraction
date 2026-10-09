@@ -17,6 +17,7 @@ Import PCUICProgram.
  *)
 Import PCUICTransform (template_to_pcuic_transform, pcuic_expand_lets_transform).
 From Malfunction Require Import Pipeline.
+From Malfunction Require Import ErasureCorrectnessGuard.
 
 Import EWcbvEval EWellformed.
 
@@ -172,7 +173,33 @@ Fixpoint eval_fo (t: EAst.term) : EWcbvEvalNamed.value :=
   end.
 
 
+(** Eliminates the check in [enforce_extraction_conditions] once it has been
+    unfolded, using a hypothesis [forall pr, is_good_for_extraction _ (transform _ _ pr) = true]. *)
+Ltac good_branch :=
+  match goal with
+  | |- context [if is_good_for_extraction ?f ?p then _ else _] =>
+      let E := fresh "Egood" in
+      destruct (is_good_for_extraction f p) eqn:E;
+      [| exfalso;
+         match goal with H : forall pr, is_good_for_extraction _ (transform _ ?q pr) = true |- _ =>
+           match p with context [q] =>
+             assert (is_good_for_extraction f p = true) by (exact (H _)) end end;
+         congruence ]
+  end.
+
+(** Solves [is_good_for_extraction _ (transform _ q _)] with the hypothesis
+    about the syntactically same program [q]; trying the others would make
+    unification unfold the erasure pipeline. *)
+Ltac solve_good :=
+  repeat intro;
+  match goal with
+  | |- context [is_good_for_extraction _ (transform _ ?q _)] =>
+      match goal with H : forall pr, is_good_for_extraction _ (transform _ q pr) = true |- _ => apply H end
+  end.
+
 Section compile_value_mf.
+
+  Context {guard : abstract_guard_impl}.
 
   Variable HP : Pointer.
   Variable HH : Heap.
@@ -184,6 +211,10 @@ Section compile_value_mf.
 
   Variable t : term.
   Variable expt : expanded Σ.1 [] t.
+
+  (** The erased program passes the extraction check. *)
+  Variable Hgood_t : forall pr, is_good_for_extraction extraction_env_flags_mlf
+    (transform (verified_erasure_pipeline default_erasure_config) (Σ, t) pr) = true.
 
   Variable v : term.
 
@@ -258,7 +289,7 @@ Section compile_value_mf.
 
 
   Lemma verified_named_erasure_pipeline_lookup_env_in kn
-  (efl := EInlineProjections.switch_no_params all_env_flags)  {has_rel : has_tRel} {has_box : has_tBox}
+  (efl := ERemoveParams.switch_no_params all_env_flags)  {has_rel : has_tRel} {has_box : has_tBox}
   T (typing : ∥Σ ;;; [] |- t : T∥) :
   let Σ_t := (transform verified_named_erasure_pipeline (Σ, t) (precond _ _ _ _ expΣ expt typing _ default_erasure_config)).1 in
   forall decl,
@@ -273,7 +304,7 @@ Section compile_value_mf.
     intros ? decl. unfold Σ_t, verified_named_erasure_pipeline.
     destruct_compose; intro; cbn. rewrite lookup_env_annotate. unfold run, time.
     destruct_compose; intro; cbn. rewrite lookup_env_implement_box.
-    unfold enforce_extraction_conditions. unfold transform at 1.
+    rewrite enforce_extraction_conditions_id; [apply Hgood_t|].
     intro Hlookup. set (EGlobalEnv.lookup_env _ _) in Hlookup. case_eq o.
     2:{ intro Heq; rewrite Heq in Hlookup; inversion Hlookup. }
     intros decl' Heq.
@@ -323,6 +354,8 @@ End compile_value_mf.
 
 Section malfunction_pipeline_theorem.
 
+  Context {guard : abstract_guard_impl}.
+
   Variable HP : Pointer.
   Variable HH : Heap.
 
@@ -350,6 +383,12 @@ Section malfunction_pipeline_theorem.
   Let Σ_t := (compile_malfunction_pipeline expΣ expt typing).1.
   Variable Heval : ∥PCUICWcbvEval.eval Σ t v∥.
 
+  (** The erased program and the erased value pass the extraction check. *)
+  Variable Hgood_t : forall pr, is_good_for_extraction extraction_env_flags_mlf
+    (transform (verified_erasure_pipeline default_erasure_config) (Σ, t) pr) = true.
+  Variable Hgood_v : forall pr, is_good_for_extraction extraction_env_flags_mlf
+    (transform (verified_erasure_pipeline default_erasure_config) (Σ, v) pr) = true.
+
   Let Σ_v := (transform verified_named_erasure_pipeline (Σ, v) (precond2 _ _ _ _ expΣ expt typing _ _ _ Heval)).1.
   Let Σ_t' := (transform verified_named_erasure_pipeline (Σ, t) (precond _ _ _ _ expΣ expt typing _ default_erasure_config)).1.
 
@@ -370,16 +409,17 @@ Section malfunction_pipeline_theorem.
     unfold transform at 1 3; cbn -[transform].
     repeat (destruct_compose; intro).
     unfold transform at 1 3; cbn -[transform].
+    rewrite ?implement_box_transformation_transform.
+    repeat good_branch.
     intro Hlookup.
     rewrite lookup_env_annotate. rewrite lookup_env_annotate in Hlookup.
     rewrite lookup_env_implement_box. rewrite lookup_env_implement_box in Hlookup.
-    case_eq (EGlobalEnv.lookup_env (transform (verified_erasure_pipeline default_erasure_config) (Σ, v)
-               (precond2 Σ t ( mkApps (tInd i u) args) HΣ expΣ expt typing Normalisation default_erasure_config v Heval)).1 kn).
+    match type of Hlookup with context [EGlobalEnv.lookup_env ?Σv kn] => case_eq (EGlobalEnv.lookup_env Σv kn) end.
     2: { intros He. rewrite He in Hlookup; inversion Hlookup. }
     intros ? Heq. rewrite Heq in Hlookup. cbn in Hlookup.
     eapply extends_lookup in Heq. rewrite Heq. eauto.
-    2: { eapply verified_erasure_pipeline_extends; eauto. }
-    epose proof (correctness _ _ H4). cbn in H5. now destruct H4.
+    2: { eapply (verified_erasure_pipeline_extends (guard := guard)); eauto. }
+    eapply right_flags_in_glob, is_good_for_extraction_sound, Hgood_t.
   Qed.
 
 
@@ -415,7 +455,7 @@ Section malfunction_pipeline_theorem.
     forall (h:heap), eval Σ' empty_locals h (compile_malfunction_pipeline expΣ expt typing).2 h (compile_value_mf Σ v).
   Proof.
     intros HΣ'; cbn.
-    unshelve epose proof (verified_erasure_pipeline_theorem _ _ _ _ _ _ _ _ _ _ _ _ _ Heval default_erasure_config); eauto.
+    unshelve epose proof (verified_erasure_pipeline_theorem (guard := guard) _ _ _ _ _ _ _ _ _ _ _ _ _ Heval default_erasure_config); eauto.
     unfold compile_value_mf; rewrite compile_value_mf_eq; eauto.
     { eapply fo_v; eauto. }
     unfold compile_named_value. rewrite <- verified_malfunction_pipeline_compat.
@@ -423,10 +463,11 @@ Section malfunction_pipeline_theorem.
          unfold transform at 1; cbn -[transform].
          unfold transform at 1; cbn -[transform].
          unfold transform at 1; cbn -[transform].
+         simpl_back_transforms. repeat good_branch.
          unshelve epose proof (verified_erasure_pipeline_firstorder_evalue_block _ _ _ _ _ _ _ _ _ _ _ typing _ _ default_erasure_config); eauto.
          eapply annotate_firstorder_evalue_block.
          eapply implement_box_firstorder_evalue_block.
-         eassumption.
+         simpl_back_transforms. repeat good_branch. eassumption.
        }
     unfold compile_malfunction_pipeline, verified_malfunction_pipeline, verified_named_erasure_pipeline,
        post_verified_named_erasure_pipeline in *.
@@ -434,16 +475,20 @@ Section malfunction_pipeline_theorem.
     unfold compile_to_malfunction. unfold transform at 1. simpl.
     repeat (destruct_compose ; intros). unfold name_annotation. unfold transform at 1 4.
     repeat (destruct_compose ; intros). simpl. unfold enforce_extraction_conditions. unfold transform at 1 3.
+    repeat good_branch.
+    rewrite enforce_extraction_conditions_id in H3; [apply Hgood_t|].
     unshelve epose proof (Himpl := implement_box_transformation.(preservation) _ _ _ _); try eapply H1; eauto.
     destruct Himpl as [? [Himpl_eval Himpl_obs]].
     unfold obseq in Himpl_obs. simpl in Himpl_obs. rewrite Himpl_obs in Himpl_eval.
     unshelve epose proof (Hname := name_annotation.(preservation) _ _ _ _); try eapply H2; eauto.
-    { rewrite Himpl_obs; eauto. }
+    { rewrite Himpl_obs enforce_implement_box_transform; [apply Hgood_t|].
+      now rewrite implement_box_transformation_transform in Himpl_eval. }
     destruct Hname as [? [Hname_eval Hname_obs]]. simpl in *. revert Hname_eval. destruct_compose; intros.
     unfold Σ_t'. repeat (destruct_compose ; intros).
     unfold ignore in *.
     unfold name_annotation. unfold transform at 3.
     repeat (destruct_compose ; intros). simpl. unfold enforce_extraction_conditions. unfold transform at 3. sq.
+    repeat good_branch.
     eapply compile_correct with (Γ := []). intros.
     -  rename H7 into H7'.  rename H8 into H7.  split.
       + eapply H3. unfold enforce_extraction_conditions. unfold transform at 1.
@@ -464,10 +509,15 @@ Section malfunction_pipeline_theorem.
       revert HΣ'. destruct_compose ; intros. unfold name_annotation in *.
       unfold transform at 1 4 7 in HΣ'.
       revert HΣ'. destruct_compose ; intros. simpl in HΣ'.
+      rewrite enforce_extraction_conditions_id in HΣ'; [apply Hgood_t|].
       eapply HΣ'; eauto.
+    - exact (proj1 (implement_box_annotate_supported _ (is_good_for_extraction_sound _ _ (Hgood_t _)))).
+    - reflexivity.
+    - exact (proj2 (implement_box_annotate_supported _ (is_good_for_extraction_sound _ _ (Hgood_t _)))).
     - rewrite Himpl_obs in Hname_obs.
       rewrite <- implement_box_fo in Hname_obs; eauto. 2: { eapply fo_v; eauto. }
       eapply represent_value_eval_fo in Hname_obs; eauto. 2: { eapply fo_v; eauto. }
+      rewrite implement_box_transformation_transform enforce_extraction_conditions_id in Hname_eval; [apply Hgood_t|].
       now rewrite Hname_obs in Hname_eval.
   Qed.
 
@@ -476,14 +526,14 @@ Section malfunction_pipeline_theorem.
   Proof.
     unfold Σ_v, verified_named_erasure_pipeline, post_verified_named_erasure_pipeline.
     repeat (destruct_compose; simpl; intro).
-    unshelve epose proof ErasureCorrectness.verified_erasure_pipeline_firstorder_evalue_block _ _ _ _ _ _ _ _ _ _ _ typing _ _ default_erasure_config; eauto using Heval.
+    unshelve epose proof ErasureCorrectnessGuard.verified_erasure_pipeline_firstorder_evalue_block _ _ _ _ _ _ _ _ _ _ _ typing _ _ default_erasure_config; eauto using Heval.
     set (v' := compile_value_box _ _ _) in *. clearbody v'.
-    clear -H2. eapply firstorder_evalue_block_elim; eauto. clear. intros; econstructor; eauto.
-    clear -H0. cbn in *.
+    clear -H2 Hgood_v. eapply firstorder_evalue_block_elim; eauto. clear -Hgood_v. intros; econstructor; eauto.
+    clear -H0 Hgood_v. cbn in *.
     unfold EGlobalEnv.lookup_constructor_pars_args, EGlobalEnv.lookup_constructor,
     EGlobalEnv.lookup_inductive, EGlobalEnv.lookup_minductive in *. cbn.
     rewrite lookup_env_annotate lookup_env_implement_box.
-    unfold enforce_extraction_conditions. unfold transform at 1.
+    simpl_back_transforms. repeat good_branch.
     destruct EGlobalEnv.lookup_env; [|inversion H0].
     destruct g; inversion H0; subst; eauto.
   Qed.
@@ -491,7 +541,7 @@ Section malfunction_pipeline_theorem.
   Transparent compose.
 
   Lemma verified_named_erasure_pipeline_lookup_env_in' kn
-  (efl := EInlineProjections.switch_no_params all_env_flags)  {has_rel : has_tRel} {has_box : has_tBox}  :
+  (efl := ERemoveParams.switch_no_params all_env_flags)  {has_rel : has_tRel} {has_box : has_tBox}  :
   forall decl,
     EGlobalEnv.lookup_env Σ_v kn = Some decl ->
     exists decl',
@@ -501,13 +551,17 @@ Section malfunction_pipeline_theorem.
      /\ erase_decl_equal (fun decl' => ERemoveParams.strip_inductive_decl (ErasureFunction.erase_mutual_inductive_body decl'))
                           decl decl'.
   Proof.
-    intros; eapply verified_named_erasure_pipeline_lookup_env_in. 1-2: eauto.
-    apply verified_malfunction_pipeline_lookup in H. exact H.
+    intros. apply verified_malfunction_pipeline_lookup in H.
+    clear Hgood_v.
+    eapply verified_named_erasure_pipeline_lookup_env_in with (t := t) (typing := typing).
+    all: first [exact Hgood_t | exact H | eauto].
   Qed.
 
 End malfunction_pipeline_theorem.
 
 Section malfunction_pipeline_theorem_red.
+
+  Context {guard : abstract_guard_impl}.
 
   Variable HP : Pointer.
   Variable HH : Heap.
@@ -563,18 +617,26 @@ Section malfunction_pipeline_theorem_red.
 
   Variable (Haxiom_free : Extract.axiom_free Σ).
 
+  (** The erased program and the erased value pass the extraction check. *)
+  Variable Hgood_t : forall pr, is_good_for_extraction extraction_env_flags_mlf
+    (transform (verified_erasure_pipeline default_erasure_config) (Σ, t) pr) = true.
+  Variable Hgood_v : forall pr, is_good_for_extraction extraction_env_flags_mlf
+    (transform (verified_erasure_pipeline default_erasure_config) (Σ, v) pr) = true.
+
   Import SemanticsSpec.
 
   Lemma verified_malfunction_pipeline_theorem (efl := extraction_env_flags_mlf) Σ' :
     malfunction_env_prop Σ_t' Σ' ->
     forall h, eval Σ' empty_locals h (compile_malfunction_pipeline expΣ expt typing).2 h (compile_value_mf Σ v).
   Proof.
-    now eapply verified_malfunction_pipeline_theorem_gen.
+    eapply verified_malfunction_pipeline_theorem_gen; first [exact Hgood_t | exact Hgood_v | eauto].
   Qed.
 
 End malfunction_pipeline_theorem_red.
 
 Section malfunction_pipeline_wellformed.
+
+  Context {guard : abstract_guard_impl}.
 
   Variable HP : Pointer.
   Variable HH : Heap.
@@ -586,7 +648,13 @@ Section malfunction_pipeline_wellformed.
 
   Opaque implement_box.
 
-  Lemma verified_named_erasure_pipeline_eta_app t u pre :
+  Lemma verified_named_erasure_pipeline_eta_app t u pre
+    (Hgood_app : forall pr, is_good_for_extraction extraction_env_flags_mlf
+      (transform (verified_erasure_pipeline default_erasure_config) (Σ, tApp t u) pr) = true)
+    (Hgood_t : forall pr, is_good_for_extraction extraction_env_flags_mlf
+      (transform (verified_erasure_pipeline default_erasure_config) (Σ, t) pr) = true)
+    (Hgood_u : forall pr, is_good_for_extraction extraction_env_flags_mlf
+      (transform (verified_erasure_pipeline default_erasure_config) (Σ, u) pr) = true) :
     ∥ Extract.nisErasable Σ [] (tApp t u) ∥ ->
    PCUICEtaExpand.expanded Σ.1 [] t ->
     exists pre' pre'',
@@ -597,25 +665,29 @@ Section malfunction_pipeline_wellformed.
     trapp = (trapp.1, EAst.tApp trt.2 tru.2).
   Proof.
     set (P := Transform.pre _). intros.
-    unshelve epose proof (erasure_pipeline_extends_app _ _ _ pre  default_erasure_config _ _) as [pre' [pre'' [ [? ?] Happ]]]; eauto.
+    unshelve epose proof (erasure_pipeline_extends_app (guard := guard) _ _ _ pre  default_erasure_config _ _) as [pre' [pre'' [ [? ?] Happ]]]; eauto.
     exists pre', pre''. unfold verified_named_erasure_pipeline, post_verified_named_erasure_pipeline.
     repeat (destruct_compose; intros).
     unfold transform at 1 4 7 10 13 16 19 22. cbn -[P transform].
     repeat (destruct_compose; intros).
     unfold transform at 1 4 7 10 13 16 19 22. cbn -[P transform].
+    repeat (rewrite enforce_extraction_conditions_id; [solve_good|]).
     repeat split.
     { unshelve eapply annotate_extends, implement_box_env_extends.
       - exact extraction_env_flags_mlf.
       - eauto.
       - exact H1.
-      - now eapply right_flags_in_glob.
-      - now eapply right_flags_in_glob. }
-    { unshelve eapply annotate_extends, implement_box_env_extends.
+      - eapply right_flags_in_glob, is_good_for_extraction_sound; solve_good.
+      - eapply right_flags_in_glob, is_good_for_extraction_sound; solve_good. }
+    { repeat (rewrite enforce_extraction_conditions_id; [solve_good|]).
+      unshelve eapply annotate_extends, implement_box_env_extends.
       - exact extraction_env_flags_mlf.
       - eauto.
       - exact H2.
-      - now eapply right_flags_in_glob.
-      - now eapply right_flags_in_glob. }
+      - eapply right_flags_in_glob, is_good_for_extraction_sound; solve_good.
+      - eapply right_flags_in_glob, is_good_for_extraction_sound; solve_good. }
+    rewrite ?implement_box_transformation_transform.
+    repeat (rewrite enforce_extraction_conditions_id; [solve_good|]).
     rewrite Happ.  now rewrite (implement_box_mkApps _ [_]).
   Qed.
 
@@ -624,14 +696,20 @@ Section malfunction_pipeline_wellformed.
   Variable Normalisation : forall Σ0 : global_env_ext, wf_ext Σ0 -> NormalizationIn Σ0.
 
   Lemma compile_malfunction_pipeline_app : forall t u Hpre,
+  (forall pr, is_good_for_extraction extraction_env_flags_mlf
+    (transform (verified_erasure_pipeline default_erasure_config) (Σ, tApp t u) pr) = true) ->
+  (forall pr, is_good_for_extraction extraction_env_flags_mlf
+    (transform (verified_erasure_pipeline default_erasure_config) (Σ, t) pr) = true) ->
+  (forall pr, is_good_for_extraction extraction_env_flags_mlf
+    (transform (verified_erasure_pipeline default_erasure_config) (Σ, u) pr) = true) ->
   ∥Extract.nisErasable Σ [] (tApp t u) ∥ ->
   expanded Σ.1 [] t ->
   exists pre' pre'',
   (transform verified_malfunction_pipeline (Σ, tApp t u) Hpre).2 =
   Mapply_u (transform verified_malfunction_pipeline (Σ, t) pre').2 (transform verified_malfunction_pipeline (Σ, u) pre'').2.
   Proof.
-    intros ? ? ? Herase Hexpand. unfold verified_malfunction_pipeline.
-    unshelve epose proof (verified_named_erasure_pipeline_eta_app _ _ Hpre Herase Hexpand) as [pre' [pre'' [[? ?] Happ]]].
+    intros ? ? ? Hgood_app Hgood_t Hgood_u Herase Hexpand. unfold verified_malfunction_pipeline.
+    unshelve epose proof (verified_named_erasure_pipeline_eta_app _ _ Hpre Hgood_app Hgood_t Hgood_u Herase Hexpand) as [pre' [pre'' [[? ?] Happ]]].
     exists pre', pre''.
     repeat (destruct_compose; intros).
     unfold transform at 1 3 5. cbn -[transform].
@@ -652,6 +730,10 @@ Section malfunction_pipeline_wellformed.
 
   Variable typing : ∥Σ ;;; [] |- t : A∥.
 
+  (** The erased program passes the extraction check. *)
+  Variable Hgood_t : forall pr, is_good_for_extraction extraction_env_flags_mlf
+    (transform (verified_erasure_pipeline default_erasure_config) (Σ, t) pr) = true.
+
   Let Σ_t := (transform verified_named_erasure_pipeline (Σ, t) (precond _ _ _ _ expΣ expt typing _ default_erasure_config)).1.
 
   Lemma verified_malfunction_pipeline_wellformed (efl := named_extraction_env_flags_mlf) :
@@ -660,22 +742,24 @@ Section malfunction_pipeline_wellformed.
     unfold Σ_t, compile_malfunction_pipeline, verified_malfunction_pipeline.
     destruct_compose; intro; cbn.
     unfold compile_to_malfunction, transform at 1. cbn.
-    epose proof (correctness (@verified_named_erasure_pipeline _ _) _ _) as [? [? [? ?]]]. destruct H2.
+    epose proof (correctness (@verified_named_erasure_pipeline _ _ _) _ _) as [? [? [? ?]]]. destruct H2.
     eapply (compile_wellformed _ 0); eauto.
     eapply few_enough_blocks; eauto.
   Qed.
 
   Lemma verified_named_erasure_pipeline_inductive_irrel t' expt'
-  (efl := EInlineProjections.switch_no_params all_env_flags) {has_rel : has_tRel} {has_box : has_tBox}
-  T' (typing' : ∥Σ ;;; [] |- t' : T'∥) :
+  (efl := ERemoveParams.switch_no_params all_env_flags) {has_rel : has_tRel} {has_box : has_tBox}
+  T' (typing' : ∥Σ ;;; [] |- t' : T'∥)
+  (Hgood_t' : forall pr, is_good_for_extraction extraction_env_flags_mlf
+    (transform (verified_erasure_pipeline default_erasure_config) (Σ, t') pr) = true) :
   let Σ_u := (transform verified_named_erasure_pipeline (Σ, t') (precond _ _ _ _ expΣ expt' typing' _ default_erasure_config)).1 in
   forall kn m m',
     EGlobalEnv.lookup_env Σ_t kn = Some (EAst.InductiveDecl m) ->
     EGlobalEnv.lookup_env Σ_u kn = Some (EAst.InductiveDecl m')  -> m = m'.
   Proof.
     intros ? ? ? ? Hdecl Hdecl'.
-    eapply verified_named_erasure_pipeline_lookup_env_in in Hdecl as [? [? ?]]; eauto.
-    eapply verified_named_erasure_pipeline_lookup_env_in in Hdecl' as [? [? ?]]; eauto.
+    eapply verified_named_erasure_pipeline_lookup_env_in in Hdecl as [? [? ?]]; try solve_good; eauto.
+    eapply verified_named_erasure_pipeline_lookup_env_in in Hdecl' as [? [? ?]]; try solve_good; eauto.
     rewrite H1 in H. inversion H; subst. clear H H1. cbn in H0, H2.
     destruct x; inversion H2. now subst.
   Qed.
@@ -713,7 +797,9 @@ Section malfunction_pipeline_wellformed.
 
   Transparent EGlobalEnv.lookup_env.
 
-  Lemma compile_value_mf_fo `{Pointer} (efl := named_extraction_env_flags) X u expu T' (typing' : ∥Σ ;;; [] |- u : T'∥) :
+  Lemma compile_value_mf_fo `{Pointer} (efl := named_extraction_env_flags) X u expu T' (typing' : ∥Σ ;;; [] |- u : T'∥)
+    (Hgood_u : forall pr, is_good_for_extraction extraction_env_flags_mlf
+      (transform (verified_erasure_pipeline default_erasure_config) (Σ, u) pr) = true) :
   let Σ_u := (Transform.transform verified_named_erasure_pipeline (Σ, u) (precond _ _ _ _ expΣ expu typing' _  default_erasure_config)).1 in
   firstorder_evalue_block Σ_t X ->
   firstorder_evalue_block Σ_u X ->
@@ -721,7 +807,7 @@ Section malfunction_pipeline_wellformed.
   compile_value_mf_aux Σ_t X.
   Proof.
     intros ? Hfo Hfo'. eapply compile_value_mf_fo'. 1: exact Hfo. 1: exact Hfo'.
-    eapply verified_named_erasure_pipeline_inductive_irrel; eauto.
+    eapply verified_named_erasure_pipeline_inductive_irrel; try solve_good; eauto.
   Qed.
 
 End malfunction_pipeline_wellformed.

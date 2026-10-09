@@ -727,12 +727,9 @@ Proof.
       inversion H9; subst. all: try rewrite <- H10 in H1; try inversion H1.    
       all: try rewrite <- H13 in H1; try inversion H1. rewrite <- H14 in H11. inversion H11.
     + eapply IHHeval1 in H6 as [? ?]; eauto. inversion H6; subst. pose proof (Hptr:=H15). eapply deref_compat in H15; eauto.
-      eapply IHHeval2 in H11 as [? ?]; eauto. eapply update_compat in H13; try exact Hptr; eauto. 
-      repeat econstructor; eauto.  
-      unshelve epose proof (Forall2_nth _ _ _ _ _ 1 (fail "") (fail "") H15 _); [econstructor|].
-      rewrite H2 H10 in H14. inversion H14; subst; eauto.    
-      unshelve epose proof (Forall2_nth _ _ _ _ _ 1 (fail "") (fail "") H15 _); [econstructor|].
-      rewrite H2 H10 in H12. inversion H12; subst; eauto.  
+      unshelve epose proof (Forall2_nth _ _ _ _ _ 1 (fail "") (fail "") H15 _) as Hlazy; [econstructor|].
+      rewrite H2 H10 in Hlazy. inversion Hlazy; subst.
+      eapply IHHeval2 in H11 as [? ?]; eauto. eapply update_compat in H13; try exact Hptr; eauto.
     + eapply IHHeval1 in H6 as [? ?]; eauto. inversion H6; subst. inversion H8.
   (* eval_force_fail *)  
   - inversion 1; subst.
@@ -942,7 +939,7 @@ Lemma eval_sim {P : Pointer} {H : CompatiblePtr P P}
     eapply (Forall2_nth _ _ _ vals vals' 1 (fail "") (fail "")) in H5_copy; [|econstructor].
     rewrite H2 in H5_copy. inversion H5_copy; subst; clear H5_copy.   
     specialize (IHHeval2 _ _ H8 Hheap1) as [[ih2 [iv2 [? [Hheap2 ?]]]]]. 
-    eapply update_sim with (v':=[iv2; Lazy (locals'0, e)]) in H3 as [ih3 [? ?]]; eauto.
+    eapply update_sim with (v':=[iv2; Lazy (locals'0, e')]) in H3 as [ih3 [? ?]]; eauto.
     2: repeat econstructor; eauto. sq.   
     exists ih3. exists iv2. repeat split; eauto. econstructor 18; eauto.
     + erewrite <- Forall2_length; eauto. 

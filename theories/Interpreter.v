@@ -20,7 +20,7 @@ Definition CanonicalHeap : @Heap CanonicalPointer :=
 {| heapGen := fun value => (int * (int -> array value))%type;
    fresh :=  fun _ '(max_ptr , h) => let ptr := Int63.add max_ptr (int_of_nat 1) : @pointer CanonicalPointer in (ptr ,(ptr, h));
    deref :=  fun _ '(_,h) ptr => h ptr;
-   update := fun _ '(max_ptr , h) ptr arr => (max_ptr , fun ptr' => if Int63.eqb ptr ptr' then arr else h ptr) |}.
+   update := fun _ '(max_ptr , h) ptr arr => (max_ptr , fun ptr' => if Int63.eqb ptr ptr' then arr else h ptr') |}.
 
 Definition heap `{Heap} := heapGen value.
 
@@ -164,7 +164,7 @@ Fixpoint interpret `{Pointer} `{Heap} (h : heap)
       let e2 := as_float e2' in
       let res := match op with
              | Lt => PrimFloat.ltb e1 e2
-             | Gt => PrimFloat.ltb e2 e2
+             | Gt => PrimFloat.ltb e2 e1
              | Lte => PrimFloat.leb e1 e2
              | Gte => PrimFloat.leb e2 e1
              | Eq => PrimFloat.eqb e1 e2
@@ -808,5 +808,5 @@ Proof.
     unfold int_to_nat. rewrite Z2Nat.id.
     pose (to_Z_bounded (PArray.length (deref ih ptr'))); lia.
     econstructor.
-  Admitted. (* FIXME assert false in kernel/conversion.ml # 790 *)
+  Qed.
 Set Guard Checking.

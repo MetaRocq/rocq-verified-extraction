@@ -81,7 +81,8 @@ Section Compile.
 
   Definition compile_array (values : list Malfunction.t) (default : Malfunction.t) : Malfunction.t :=
     let init := Mvecnew (Array, num_of_nat (List.length values), default) in
-    fold_left_i (fun v idx arr => Mvecset (Array, arr, num_of_nat idx, v)) values init.
+    let stores := mapi (fun idx v => Unnamed (Mvecset (Array, Mvar "__arr", num_of_nat idx, v))) values in
+    Mlet (Named ("__arr", init) :: stores, Mvar "__arr").
 
   (* Definition to_primitive (compile : term -> Malfunction.t) 
     (v : EPrimitive.prim_val EAst.term) : Malfunction.t := *)
