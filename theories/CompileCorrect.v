@@ -6,7 +6,7 @@ From Malfunction Require Import Mcase.
 From MetaRocq.Utils Require Import ReflectEq bytestring MRList.
 From MetaRocq Require Import EWcbvEvalNamed.
 
-From Malfunction Require Import Compile SemanticsSpec utils_array.
+From Malfunction Require Import Compile SemanticsSpec utils_array Supported.
 
 From Equations Require Import Equations.
 
@@ -425,20 +425,6 @@ Qed.
 
 Opaque Malfunction.Int63.wB PArray.max_length.
 
-Axiom unsupported_strings : forall `{Heap} Σ Σ' Γ Γ_ h a p', 
-  EWcbvEval.eval_primitive (EWcbvEvalNamed.eval Σ Γ) (Primitive.primString; EPrimitive.primStringModel a) p' ->
-  eval Σ' Γ_ h (compile Σ (EAst.tPrim (Primitive.primString; EPrimitive.primStringModel a))) h (to_primitive p').
-
-Axiom unsupported_arrays : forall `{Heap} Σ Σ' Γ Γ_ h a p', 
-  EWcbvEval.eval_primitive (EWcbvEvalNamed.eval Σ Γ) (Primitive.primArray; EPrimitive.primArrayModel a) p' ->
-  eval Σ' Γ_ h (compile Σ (EAst.tPrim (Primitive.primArray; EPrimitive.primArrayModel a))) h (to_primitive p').
-
-Axiom unsupported_lazy : forall `{Heap} Σ Σ' Γ Γ_ h t , 
-  eval Σ' Γ_ h (Malfunction.Mlazy (compile Σ t)) h (compile_value Σ (vLazy t Γ)).
-
-Axiom unsupported_force : forall `{Heap} Σ Σ' Γ_ h t v, 
-  eval Σ' Γ_ h (Malfunction.Mforce (compile Σ t)) h (compile_value Σ v).
-
 (* We disable primitive arrays and fix/cofix for correctness. *)
 Definition extraction_env_flags_mlf := 
   let nolazy_array_term_flags := {|
@@ -476,13 +462,17 @@ Lemma compile_correct `{Heap} Σ Σ' s t Γ Γ' :
   (forall i mb ob, EGlobalEnv.lookup_inductive Σ i = Some (mb, ob) -> #|ob.(EAst.ind_ctors)| < Z.to_nat Malfunction.Int63.wB /\ forall n b, nth_error ob.(EAst.ind_ctors) n = Some b -> b.(EAst.cstr_nargs) < int_to_nat PArray.max_length) ->
   (forall na, Malfunction.Ident.Map.find na Γ' =  match lookup Γ na with Some v => compile_value Σ v | _ => fail "notfound" end) ->
    malfunction_env_prop Σ Σ' -> 
+   supported_env Σ -> supported_ctx Γ -> supported s ->
    EWcbvEvalNamed.eval Σ Γ s t ->
    forall h, SemanticsSpec.eval Σ' Γ' h (compile Σ s) h (compile_value Σ t).
 Proof.
   rename H into HP; rename H0 into HH. 
-  intros Hextr HΓ HΣ Heval h.
+  intros Hextr HΓ HΣ HsΣ HsΓ Hs Heval h.
   revert Γ' HΓ.
-  induction Heval; intros Γ_ HΓ; simp compile; try rewrite <- !compile_equation_1.
+  revert HsΓ Hs.
+  induction Heval; intros HsΓ Hs Γ_ HΓ; simp compile; try rewrite <- !compile_equation_1;
+    cbn [supported] in Hs.
+  all: try now discriminate Hs.
   - (* variables *)
     specialize (HΓ na).
     unfold EWcbvEvalNamed.lookup, lookup in *.
@@ -511,6 +501,12 @@ Proof.
   (*     * reflexivity. *)
   (*     * econstructor. *)
   - (* beta *)
+    destruct (andb_andI Hs) as [Hsf1 Hsa].
+    pose proof (eval_supported _ _ _ _ HsΣ Heval1 HsΓ Hsf1) as Hsclos; cbn in Hsclos.
+    destruct (andb_andI Hsclos) as [Hsb HsΓ'].
+    pose proof (eval_supported _ _ _ _ HsΣ Heval2 HsΓ Hsa) as Hsa'.
+    specialize (IHHeval1 HsΓ Hsf1). specialize (IHHeval2 HsΓ Hsa).
+    specialize (IHHeval3 (supported_ctx_add _ _ _ Hsa' HsΓ') Hsb).
     destruct (Mapply_u_spec (compile Σ f1) (compile Σ a)) as [(fn & arg & E & ->) | (E & ->) ].
     + destruct f1; simp compile; intros [? [=]].
       * destruct (compile Σ f1_1); cbn in H0; try congruence. destruct p, l; cbn in *; congruence.
@@ -580,6 +576,10 @@ Proof.
     rewrite lookup_map.
     now destruct lookup.
   - (* let *)
+    destruct (andb_andI Hs) as [Hsb0 Hsb1].
+    pose proof (eval_supported _ _ _ _ HsΣ Heval1 HsΓ Hsb0) as Hsb0'.
+    specialize (IHHeval1 HsΓ Hsb0).
+    specialize (IHHeval2 (supported_ctx_add _ _ _ Hsb0' HsΓ) Hsb1).
     cbn. econstructor.
     + now eapply IHHeval1.
     + econstructor. eapply IHHeval2.
@@ -593,6 +593,11 @@ Proof.
         -- congruence.
         -- rewrite <- HΓ. reflexivity.
   - (* case *)
+    destruct (andb_andI Hs) as [Hsd Hsbrs].
+    pose proof (eval_supported _ _ _ _ HsΣ Heval1 HsΓ Hsd) as Hsargs; cbn in Hsargs.
+    specialize (IHHeval1 HsΓ Hsd).
+    specialize (IHHeval2 (supported_ctx_add_multiple _ _ _ HsΓ Hsargs)
+                  (nth_error_forallb (p := fun br : list BasicAst.name * EAst.term => supported br.2) e1 Hsbrs)).
     destruct brs.
     { destruct c; invs e1. }
     simp compile. set (p :: brs) as brs' in *. clearbody brs'. clear p brs. rename brs' into brs.
@@ -652,6 +657,14 @@ Proof.
           unfold Kernames.ident, Malfunction.Ident.t in *.
           destruct (eqb_spec na a); eauto.
    - (* recursion *)
+    destruct (andb_andI Hs) as [Hsf5 Hsa].
+    pose proof (eval_supported _ _ _ _ HsΣ Heval1 HsΓ Hsf5) as Hsclos; cbn in Hsclos.
+    destruct (andb_andI Hsclos) as [Hsmfix HsΓ'].
+    pose proof (eval_supported _ _ _ _ HsΣ Heval3 HsΓ Hsa) as Hsa'.
+    pose proof (nth_error_forallb (p := fun d : Kernames.ident * EAst.term => supported d.2) e0 Hsmfix) as Hsfn; cbn in Hsfn.
+    specialize (IHHeval1 HsΓ Hsf5). specialize (IHHeval3 HsΓ Hsa).
+    specialize (IHHeval2 (supported_ctx_add _ _ _ Hsa'
+                            (supported_ctx_add_multiple _ _ _ HsΓ' (supported_fix_env _ _ Hsmfix HsΓ'))) Hsfn).
     cbn.
     cbn - [compile_value] in *. subst.
     destruct (Mapply_u_spec (compile Σ f5) (compile Σ a)) as [(fn_ & arg & E & ->) | (E & ->) ].
@@ -774,6 +787,7 @@ Proof.
   - (* global *)
     econstructor. eapply HΣ; eauto.
   - (* constructor application *)
+    pose proof (All2_over_supported a IHa HsΓ Hs) as IHa'. clear IHa. rename IHa' into IHa.
     cbn. destruct args; simp compile;
     unfold lookup_constructor_args, EGlobalEnv.lookup_constructor in *;
       destruct (EGlobalEnv.lookup_inductive) as [ [] | ] eqn:Elo; cbn -[EGlobalEnv.lookup_inductive] in *; try congruence;
@@ -797,7 +811,7 @@ Proof.
           assert (EAst.cstr_nargs cdecl < int_to_nat PArray.max_length). {  destruct nth_error eqn:E; try congruence.
           invs e. specialize (He2 _ _ E). cbn. abs_max_length; lia. }
           cbn in *. abs_max_length; lia. }      
-      induction a.
+      clear Hs. induction a.
       * econstructor.
       * cbn. econstructor.
         -- eapply a0; eauto.
@@ -814,9 +828,7 @@ Proof.
     destruct nth_error eqn:E; try congruence.
     eapply nth_error_Some_length in E. lia.
   - destruct p as [? []]. 1-2:inversion ev; subst; simp compile; econstructor.
-    cbn. now eapply unsupported_strings. now eapply unsupported_arrays.
-  - now eapply unsupported_lazy.
-  - now eapply unsupported_force.
+    all: discriminate Hs.
 Qed.
 Print Assumptions compile_correct.
 
