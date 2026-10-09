@@ -28,7 +28,7 @@ Definition CanonicalHeap : @Heap CanonicalPointer :=
    fresh :=  fun _ '(ptr,h) (fresh_ptr : @pointer CanonicalPointer) '(ptr',h') => Int63.ltb ptr fresh_ptr = true /\ fresh_ptr = ptr' /\ h = h' ;
    deref := fun _ '(_,h) ptr val => h ptr = val;
    update := fun _ '(max_ptr,h) ptr arr '(max_ptr',h') => 
-     max_ptr' = int_of_nat (max (int_to_nat max_ptr) (int_to_nat ptr)) /\ forall ptr', h' ptr' = if Int63.eqb ptr ptr' then arr else h ptr |}. 
+     max_ptr' = int_of_nat (max (int_to_nat max_ptr) (int_to_nat ptr)) /\ forall ptr', h' ptr' = if Int63.eqb ptr ptr' then arr else h ptr' |}. 
 
 Inductive rec_value `{Pointer} := 
   | RFunc of Ident.t * t
