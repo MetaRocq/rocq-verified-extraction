@@ -75,6 +75,20 @@ Section Compile.
   Definition Mapply_u t a :=
     match t with Mapply (fn, args) => Mapply (fn, List.app args [a]) | _ => Mapply (t, [a]) end.
 
+  (* n-ary lambdas: [fun x => fun y => b] is compiled to [(lambda (x y) b)] instead of
+     [(lambda (x) (lambda (y) b))]. This is semantically transparent: the Malfunction
+     semantics ([SemanticsSpec.eval_lambda]) evaluates [Mlambda (x :: ids, e)] to
+     [Func (locals, x, Mlambda (ids, e))], i.e. to exactly the value of the nested form,
+     so [compile_value] and every downstream statement are unchanged. It matters for the
+     generated code: Malfunction/OCaml compile n-ary lambdas to functions of arity n,
+     whereas the nested form yields a chain of unary closures that allocates one closure
+     per argument on every call. *)
+  Definition Mlambda_merge (nm : Ident.t) (t : Malfunction.t) : Malfunction.t :=
+    match t with
+    | Mlambda (id :: ids, body) => Mlambda (nm :: id :: ids, body)
+    | _ => Mlambda ([nm], t)
+    end.
+
   Obligation Tactic := idtac.
 
   Definition num_of_nat n := Mnum (numconst_Int (int_of_nat n)).
@@ -126,7 +140,7 @@ Section Compile.
   Equations? compile (t: term) : Malfunction.t
     by wf t (fun x y : EAst.term => size x < size y) :=
       | tVar na => Mvar na
-      | tLambda nm bod => Mlambda ([(BasicAst.string_of_name nm)], compile bod)
+      | tLambda nm bod => Mlambda_merge (BasicAst.string_of_name nm) (compile bod)
       | tLetIn nm dfn bod => Mlet ([Named ((BasicAst.string_of_name nm), compile dfn)], compile bod)
       | tApp fn arg =>
           Mapply_u (compile fn) (compile arg)
@@ -184,7 +198,11 @@ Section Compile.
  
 End Compile.
 
-Definition compile_constant_decl Σ cb := 
+(* Keep [Mlambda_merge] folded under [cbn]/[simpl]; the proofs reason about it
+   through [CompileCorrect.Mlambda_merge_spec]. *)
+#[global] Arguments Mlambda_merge : simpl never.
+
+Definition compile_constant_decl Σ cb :=
   option_map (compile Σ) cb.(cst_body).
 
 Fixpoint compile_env Σ : list (string * option t) := 
