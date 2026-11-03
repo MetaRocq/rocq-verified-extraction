@@ -58,7 +58,45 @@ Fixpoint compile_value `{Heap} (Σ : EAst.global_declarations) (s : EWcbvEvalNam
   
 From Stdlib Require Import FunctionalExtensionality.
 
-Lemma to_string_of_string s : 
+(* n-ary lambdas ([Compile.Mlambda_merge]). A merged lambda [Mlambda (nm :: ids, body)]
+   evaluates ([eval_lambda]) to [Func (locals, nm, Mlambda (ids, body))], i.e. to the very
+   same value as the nested [Mlambda ([nm], Mlambda (ids, body))], so [compile_value] and
+   all statements below are unchanged; only the syntactic shape differs. *)
+Lemma Mlambda_merge_spec nm t :
+  Mlambda_merge nm t = Malfunction.Mlambda ([nm], t) \/
+  exists id ids body, Mlambda_merge nm t = Malfunction.Mlambda (nm :: id :: ids, body) /\
+                      t = Malfunction.Mlambda (id :: ids, body).
+Proof.
+  unfold Mlambda_merge. destruct t; eauto.
+  destruct p as [[|id ids] body]; eauto.
+  right. do 3 eexists. split; reflexivity.
+Qed.
+
+Lemma eval_Mlambda_merge `{Heap} globals locals h nm t :
+  SemanticsSpec.eval globals locals h (Mlambda_merge nm t) h (Func (locals, nm, t)).
+Proof.
+  destruct (Mlambda_merge_spec nm t) as [-> | (id & ids & body & -> & ->)].
+  - eapply eval_lambda_sing.
+  - eapply eval_lambda. cbn; lia.
+Qed.
+
+Lemma Mlambda_merge_not_Mapply nm t fn args :
+  Mlambda_merge nm t <> Malfunction.Mapply (fn, args).
+Proof.
+  destruct (Mlambda_merge_spec nm t) as [-> | (id & ids & body & -> & _)]; congruence.
+Qed.
+
+(* Case split on the shape of [Mlambda_merge nm t] occurring in the goal; the
+   remaining goals are closed by computation in all uses below. *)
+Ltac destruct_Mlambda_merge :=
+  match goal with
+  | |- context [Mlambda_merge ?nm ?t] =>
+      let E := fresh "E" in
+      destruct (Mlambda_merge_spec nm t) as [-> | (? & ? & ? & -> & E)];
+      [ | try rewrite E in *; try clear E ]
+  end.
+
+Lemma to_string_of_string s :
   String.to_string (String.of_string s) = s.
 Proof.
   induction s; cbn.
@@ -388,7 +426,7 @@ Proof.
       destruct x, y; cbn in *. destruct H; subst. reflexivity.
     - unfold RFunc_build. clear - Hall Hlam. induction Hall; cbn in *; f_equal; rtoProp; eauto.
       destruct x, y; cbn in *; rtoProp. destruct H. subst.
-      destruct t2; cbn in *; eauto. now simp compile.
+      destruct t2; cbn in *; eauto. simp compile. now destruct_Mlambda_merge.
     - eauto.
   + pose proof (find_none _ _ E). cbn in *.
     rewrite <- Hlocals. clear E.
@@ -513,6 +551,7 @@ Proof.
   - (* beta *)
     destruct (Mapply_u_spec (compile Σ f1) (compile Σ a)) as [(fn & arg & E & ->) | (E & ->) ].
     + destruct f1; simp compile; intros [? [=]].
+      * eapply Mlambda_merge_not_Mapply; eassumption.
       * destruct (compile Σ f1_1); cbn in H0; try congruence. destruct p, l; cbn in *; congruence.
       * revert H0. destruct args; simp compile; destruct lookup_constructor_args; cbn.
         all: congruence.
@@ -573,7 +612,7 @@ Proof.
                                        | Some v => v
                                        | None => fail "notfound"
                                        end)).
-    econstructor.
+    eapply eval_Mlambda_merge.
     intros x. specialize (HΓ (x)).
     unfold Malfunction.Ident.Map.find in HΓ.
     rewrite HΓ.
@@ -656,6 +695,7 @@ Proof.
     cbn - [compile_value] in *. subst.
     destruct (Mapply_u_spec (compile Σ f5) (compile Σ a)) as [(fn_ & arg & E & ->) | (E & ->) ].
     + destruct f5; simp compile; intros [? [=]].
+      * eapply Mlambda_merge_not_Mapply; eassumption.
       * destruct (compile Σ f5_1); cbn in H0; try congruence. destruct p, l; cbn in *; congruence.
       * revert H0. destruct args; simp compile; destruct lookup_constructor_args; cbn.  all: congruence.
       * revert H0. destruct brs; simp compile; try congruence.
@@ -684,7 +724,7 @@ Proof.
               2:{ unfold RFunc_build. rewrite !map_map. eapply map_ext_in. intros [] ?; cbn.
                   eapply forallb_forall in Hbodies; eauto. cbn in *.
                   destruct t; cbn in *; try congruence.
-                  now simp compile. }
+                  simp compile. now destruct_Mlambda_merge. }
                   clear.
               ** induction mfix; cbn; econstructor; eauto. destruct a; cbn. tauto.
               ** cbn. clear - n. 
@@ -709,7 +749,7 @@ Proof.
               2:{ unfold RFunc_build. rewrite !map_map. eapply map_ext_in. intros [] ?; cbn.
                   eapply forallb_forall in Hbodies; eauto. cbn in *.
                   destruct t; cbn in *; try congruence.
-                  now simp compile. }
+                  simp compile. now destruct_Mlambda_merge. }
                   clear.
               ** induction mfix; cbn; econstructor; eauto. destruct a; cbn. tauto.
               ** cbn. clear - n. 
@@ -767,8 +807,8 @@ Proof.
       destruct x; cbn in *; subst. reflexivity.
     + clear - f6 Hbodies. induction f6; cbn; f_equal. 
       * destruct x; cbn in *. rtoProp. subst.
-        destruct dbody; cbn in *; eauto. 
-        now simp compile.
+        destruct dbody; cbn in *; eauto.
+        simp compile. now destruct_Mlambda_merge.
       * rewrite IHf6. 2: cbn in *; rtoProp; tauto.
         reflexivity.
   - (* global *)
@@ -923,13 +963,22 @@ Proof.
       intros ?. rewrite !in_app_iff. intros [ ] ; eauto.
 Qed.
 
+Lemma wellformed_Mlambda_merge Σ Γ nm t :
+  wellformed Σ (nm :: Γ) t -> wellformed Σ Γ (Mlambda_merge nm t).
+Proof.
+  intros H.
+  destruct (Mlambda_merge_spec nm t) as [-> | (id & ids & body & -> & ->)]; cbn in *; eauto.
+  eapply wellformed_subset. 2: eauto.
+  intros x. cbn. rewrite !in_app_iff. cbn. tauto.
+Qed.
+
 Lemma force_lambda_id Σ t :
   EAst.isLambda t ->
   force_lambda (compile Σ t) = compile Σ t.
 Proof.
   intros H.
   destruct t; cbn in H; try congruence.
-  simp compile. reflexivity.
+  simp compile. now destruct_Mlambda_merge.
 Qed.
 
 Lemma filter_first_lt (i : nat) (p : nat -> bool) (n : nat) l2 : 
@@ -959,7 +1008,7 @@ Proof.
     subst; try now tauto.
   - cbn. eapply nth_error_In  in e. destruct in_dec; eauto; tauto.
   - cbn in e. congruence.
-  - cbn. rtoProp. repeat split; eauto. 
+  - cbn. rtoProp. eapply wellformed_Mlambda_merge; eauto.
   - unfold Mapply_u. destruct (compile Σ b0); cbn; rtoProp; try split; eauto.
   - unfold Mapply_u. destruct (compile Σ s0); cbn; rtoProp; try split; eauto.
     destruct p; cbn. rtoProp; repeat split; eauto.
@@ -1214,6 +1263,7 @@ Qed.
 Lemma compile_app_not_nil Σ t : ~ (exists t', compile Σ t = Malfunction.Mapply (t', [])).
 Proof. 
   induction t; intros [t' Ht']; try solve [inversion Ht'].
+  - simp compile in Ht'. eapply Mlambda_merge_not_Mapply; eassumption.
   - erewrite compile_equation_7 in Ht'. destruct (compile _ t1); cbn in Ht' ; inversion Ht'.
     destruct p; inversion Ht'. destruct l; inversion H2.
   - destruct args.
