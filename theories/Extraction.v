@@ -10,7 +10,7 @@ From Malfunction Require Import Pipeline.
 *)
 
 Extraction Blacklist Classes config uGraph Universes Ast String List Monad Nat Int
-           UnivSubst Typing Checker Retyping OrderedType Logic Common ws_cumul_pb Classes Numeral
+           UnivSubst Typing Checker Retyping OrderedType Logic Common Common0 ws_cumul_pb Classes Numeral
            Uint63.
 Set Warnings "-extraction-opaque-accessed".
 Set Warnings "-extraction-reserved-identifier".

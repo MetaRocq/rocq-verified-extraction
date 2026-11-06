@@ -1,6 +1,7 @@
 MSetWeakList
 EqdepFacts
 Ssrbool
+MRInstances
 ListDef
 PosDef
 IntDef
@@ -8,7 +9,16 @@ IntDef
 Utils
 Utils_array
 
-WGraph
+Common1
+Interfaces
+HornClauses
+InitialSemilattice
+HornSemilatticeEquiv
+Model
+Models
+PartialLoopChecking
+Deciders
+UnivLoopChecking
 UGraph0
 EtaExpand
 
@@ -38,6 +48,7 @@ PCUICEquality
 PCUICTyping
 PCUICInduction
 PCUICWfUniverses
+PCUICGlobalEnv
 PCUICNormal
 PCUICPosition
 PCUICPretty

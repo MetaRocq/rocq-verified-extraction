@@ -1178,7 +1178,7 @@ Proof.
         hnf in hty. destruct hty as [onb [s [onty eq]]]. cbn in *. destruct eq; try subst s.
         eapply typing_wf_universes in onty => //. 2:apply wfΣ.
         move/andP: onty => [hdecl _]. eapply wf_universes_closedu in hdecl => //.
-        red. cbn. intro. csets. }
+        red. cbn. intro. ucsets. }
       assert (Hcstr : forall b n, nth_error (ind_ctors x) n = Some b ->
              #|cstr_args b| = context_assumptions (cstr_args b)).
         { intros b m hx; eapply Hcstr_gen in hx as [hctx _].
@@ -1999,7 +1999,7 @@ Proof.
   cbn. unfold isConstruct_ind.
   epose proof (Hdecomp := PCUICAstUtils.decompose_app_mkApps (tConstruct i n ui) args).
   forward Hdecomp; eauto.
-  rewrite Hdecomp Hindlt.
+  rewrite Hdecomp Nat.eqb_refl. cbv beta iota. rewrite Hindlt.
 
   set (tv := mkApps (tConstruct i n ui) args) in *.
 
@@ -2097,7 +2097,7 @@ Proof.
     hnf in hty. destruct hty as [onb [s [onty eq]]]. cbn in *. destruct eq as [eqs _]; try subst s.
     eapply typing_wf_universes in onty => //. 2:apply wfΣ.
     move/andP: onty => [hdecl _]. unshelve eapply wf_universes_closedu in hdecl => //; tea. eapply wfΣ.
-    red. cbn. intro. csets. }
+    red. cbn. intro. ucsets. }
   assert (Hcstr: forall x n, nth_error (ind_ctors indbody) n = Some x -> #|cstr_args x| = cstr_arity x).
   { now intros b m hx; eapply Hcstr_gen in hx as [hctx []]. }
   cbn in Hlookup'. repeat rewrite nth_error_map in Hlookup'.
