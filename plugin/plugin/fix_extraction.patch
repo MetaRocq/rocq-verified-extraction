@@ -1,5 +1,5 @@
---- extraction/ceresString.ml.orig
-+++ extraction/ceresString.ml
+--- extraction/ceresString.ml.orig	2026-11-06 14:10:43.171799166 +0100
++++ extraction/ceresString.ml	2026-11-06 14:10:43.183534413 +0100
 @@ -1,11 +1,11 @@
  open Ascii
 +open Nat0
@@ -13,24 +13,16 @@
  open PeanoNat
  open Bytestring
  
---- extraction/serialize.ml.orig	2025-04-10 11:58:52
-+++ extraction/serialize.ml	2025-04-10 12:02:37
-@@ -16,14 +16,14 @@
- open List0
- open ListDef
- open MRString
--open Malfunction
--open Nat0
- open PeanoNat
- open PrimInt63
-+open Nat0
- open Sint63Axioms
- open SpecFloat
- open String0
- open Bytestring
-+open Malfunction
+@@ -16,8 +16,8 @@
  
- (** val _escape_ident : String.t -> String.t -> String.t **)
+ (** val byte_compare : byte -> byte -> comparison **)
+ 
+-let byte_compare =
+-  compare
++let byte_compare x y =
++  BinNat.N.compare (ByteCompare.ByteN.to_N x) (ByteCompare.ByteN.to_N y)
+ 
+ (** val leb_byte : byte -> byte -> bool **)
  
 --- extraction/compile.ml.orig	2025-04-08 00:49:09
 +++ extraction/compile.ml	2025-04-08 00:49:25

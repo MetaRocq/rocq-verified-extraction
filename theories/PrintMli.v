@@ -31,7 +31,7 @@ Definition capitalize (s : bytestring.string) : bytestring.string :=
   end.
 
 Definition term_eqb (t1 t2 : term) :=
-  @eq_term config.default_checker_flags init_graph t1 t2.
+  @eq_term config.default_checker_flags init_model t1 t2.
 
 Notation "t === u" := (term_eqb t u) (at level 70).
 

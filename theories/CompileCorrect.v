@@ -987,7 +987,7 @@ Proof.
       rtoProp. repeat split.
       * eapply Nat.leb_le.
         enough ( blocks_until i (map EAst.cstr_nargs (EAst.ind_ctors o)) <= 199).
-        rewrite int_to_of_nat; eauto.
+        rewrite int_to_of_nat; [ lia | ].
         transitivity  (Z.of_nat 200).
         eapply inj_lt.  lia.
         eapply wB_200.
